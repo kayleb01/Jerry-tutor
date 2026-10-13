@@ -142,3 +142,16 @@ it('edits a tutor\'s email, rejecting one that is taken', function () {
         'email' => 'TAKEN@example.com',
     ])->assertSessionHasErrors('email');
 });
+
+it('keeps a student able to log in after an admin adds an email', function () {
+    $student = User::factory()->student()->unverified()->create(['email' => null, 'username' => 'ava.okafor']);
+
+    $this->actingAs($this->admin)->put(route('admin.users.update', $student), [
+        'name' => $student->name,
+        'username' => 'ava.okafor',
+        'email' => 'ava@home.test',
+        'year_group' => 5,
+    ]);
+
+    $this->actingAs($student->fresh())->get(route('dashboard'))->assertOk();
+});

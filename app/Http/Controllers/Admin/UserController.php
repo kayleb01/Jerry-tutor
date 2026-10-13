@@ -111,6 +111,10 @@ class UserController extends Controller
             $user->studentProfile()->update(['year_group' => (int) $request->validated('year_group')]);
         }
 
+        if ($user->isDirty('email') && $user->email !== null) {
+            $user->forceFill(['email_verified_at' => now()]);
+        }
+
         $user->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$user->name} has been updated."]);

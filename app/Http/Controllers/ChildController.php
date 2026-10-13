@@ -66,7 +66,13 @@ class ChildController extends Controller
     public function update(UpdateChildRequest $request, User $child): RedirectResponse
     {
         $child->fill($request->safe()->only(['name', 'email']));
-        $child->forceFill(['username' => $request->validated('username')])->save();
+        $child->forceFill(['username' => $request->validated('username')]);
+
+        if ($child->isDirty('email') && $child->email !== null) {
+            $child->forceFill(['email_verified_at' => now()]);
+        }
+
+        $child->save();
         $child->studentProfile()->update(['year_group' => (int) $request->validated('year_group')]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$child->name}'s details have been saved."]);

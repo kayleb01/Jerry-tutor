@@ -134,3 +134,18 @@ it('is only for guardians', function (string $state) {
         ->get(route('children.index'))
         ->assertForbidden();
 })->with(['tutor', 'student', 'admin']);
+
+it('keeps a child able to log in after the guardian adds an email', function () {
+    $guardian = User::factory()->guardian()->create();
+    $child = User::factory()->student()->unverified()->create(['email' => null, 'username' => 'ava.okafor']);
+    $guardian->linkChild($child);
+
+    $this->actingAs($guardian)->put(route('children.update', $child), [
+        'name' => $child->name,
+        'username' => 'ava.okafor',
+        'email' => 'ava@home.test',
+        'year_group' => 5,
+    ])->assertRedirect(route('children.index'));
+
+    $this->actingAs($child->fresh())->get(route('dashboard'))->assertOk();
+});
