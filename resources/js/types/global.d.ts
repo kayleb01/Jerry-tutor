@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import type { Toast } from '@/types/ui';
 
 declare module 'react' {
     interface InputHTMLAttributes<T> {
@@ -13,6 +14,9 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             [key: string]: unknown;
+        };
+        flashDataType: {
+            toast?: Toast;
         };
     }
 }

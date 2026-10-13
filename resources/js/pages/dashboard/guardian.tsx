@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import {
     Card,
     CardContent,
@@ -6,6 +7,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import { index as childrenIndex } from '@/routes/children';
 
 export default function GuardianDashboard() {
     return (
@@ -14,11 +16,18 @@ export default function GuardianDashboard() {
                 <CardHeader>
                     <CardTitle>Add your children</CardTitle>
                     <CardDescription>
-                        You'll be able to add your children, see their
-                        attendance and manage subscriptions here.
+                        Add your children so they can log in, and soon see their
+                        attendance and quiz progress here.
                     </CardDescription>
                 </CardHeader>
-                <CardContent />
+                <CardContent>
+                    <Link
+                        href={childrenIndex()}
+                        className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-card hover:bg-primary-hover"
+                    >
+                        Manage children
+                    </Link>
+                </CardContent>
             </Card>
         </AppLayout>
     );
