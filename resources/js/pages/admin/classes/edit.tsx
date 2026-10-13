@@ -18,6 +18,7 @@ import {
     destroy as withdrawStudent,
     store as enrolStudent,
 } from '@/routes/admin/classes/students';
+import { show as register } from '@/routes/lessons/register';
 import type { Option } from '@/types';
 
 export type EditableClassGroup = ClassGroupDefaults & {
@@ -34,8 +35,16 @@ type Student = {
     enrolledOn: string;
 };
 
+type ClassLesson = {
+    id: number;
+    when: string;
+    status: string;
+    recorded: number;
+};
+
 type EditClassProps = {
     classGroup: EditableClassGroup;
+    lessons: ClassLesson[];
     students: Student[];
     candidates: Option[];
     tutors: Option[];
@@ -45,6 +54,7 @@ type EditClassProps = {
 
 export default function EditClass({
     classGroup,
+    lessons,
     students,
     candidates,
     tutors,
@@ -178,6 +188,49 @@ export default function EditClass({
                                             <span className="sr-only">
                                                 {' '}
                                                 {student.name}
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </CardContent>
+                </Card>
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Lessons</CardTitle>
+                        <CardDescription>
+                            Recent and upcoming lessons. Open a register to view
+                            or correct attendance.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {lessons.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                No lessons scheduled. Give the class a day, time
+                                and tutor to schedule lessons.
+                            </p>
+                        ) : (
+                            <ul className="divide-y">
+                                {lessons.map((lesson) => (
+                                    <li
+                                        key={lesson.id}
+                                        className="flex items-center justify-between gap-3 py-2 text-sm"
+                                    >
+                                        <span className="font-medium">
+                                            {lesson.when}
+                                        </span>
+                                        <span className="text-muted-foreground">
+                                            {lesson.recorded} recorded
+                                        </span>
+                                        <Link
+                                            href={register(lesson.id)}
+                                            className="font-medium text-primary underline-offset-4 hover:underline"
+                                        >
+                                            Register
+                                            <span className="sr-only">
+                                                {' '}
+                                                for {lesson.when}
                                             </span>
                                         </Link>
                                     </li>

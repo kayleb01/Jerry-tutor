@@ -8,6 +8,7 @@ use App\Enums\YearGroup;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ClassGroupRequest;
 use App\Models\ClassGroup;
+use App\Models\Lesson;
 use App\Models\User;
 use App\Services\LessonScheduler;
 use Illuminate\Database\Eloquent\Builder;
@@ -82,6 +83,21 @@ class ClassGroupController extends Controller
                     'yearGroup' => $student->studentProfile?->year_group->label(),
                     'enrolledOn' => Carbon::parse($student->pivot->enrolled_at)->format('j M Y'),
                 ]),
+            'lessons' => $classGroup->lessons()
+                ->withCount('attendanceRecords')
+                ->where('starts_at', '<=', now())
+                ->orderByDesc('starts_at')
+                ->limit(4)
+                ->get()
+                ->reverse()
+                ->merge($classGroup->lessons()->withCount('attendanceRecords')->where('starts_at', '>', now())->orderBy('starts_at')->limit(4)->get())
+                ->map(fn (Lesson $lesson): array => [
+                    'id' => $lesson->id,
+                    'when' => $lesson->localStart()->format('D j M, H:i'),
+                    'status' => $lesson->status->value,
+                    'recorded' => $lesson->attendance_records_count,
+                ])
+                ->values(),
             'candidates' => User::query()
                 ->where('role', Role::Student)
                 ->whereDoesntHave('enrolledClassGroups', fn (Builder $query) => $query
