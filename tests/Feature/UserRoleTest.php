@@ -22,3 +22,14 @@ it('checks a user against one or more roles', function () {
         ->and($admin->hasRole(Role::Tutor, Role::Admin))->toBeTrue()
         ->and($admin->hasRole(Role::Student))->toBeFalse();
 });
+
+it('ignores a mass-assigned role so users cannot promote themselves', function () {
+    $user = User::create([
+        'name' => 'Sneaky',
+        'email' => 'sneaky@example.com',
+        'password' => 'password',
+        'role' => Role::Admin->value,
+    ]);
+
+    expect($user->fresh()->role)->toBe(Role::Guardian);
+});
