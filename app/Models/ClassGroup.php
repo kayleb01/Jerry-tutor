@@ -53,12 +53,13 @@ class ClassGroup extends Model
     }
 
     /**
-     * Times are kept as "HH:MM" whatever the database returns (SQLite/MySQL may add seconds).
+     * Read as "HH:MM"; stored as "HH:MM:00" so dirty checks match what MySQL and SQLite return.
      */
     protected function startTime(): Attribute
     {
         return Attribute::make(
             get: fn (?string $value): ?string => $value === null ? null : substr($value, 0, 5),
+            set: fn (?string $value): ?string => $value === null ? null : substr($value, 0, 5).':00',
         );
     }
 

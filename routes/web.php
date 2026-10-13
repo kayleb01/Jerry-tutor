@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ClassGroupController;
 use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
@@ -26,6 +27,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::resource('users', UserController::class)->except(['show'])->withTrashed(['edit']);
     Route::post('users/{user}/restore', RestoreUserController::class)->withTrashed()->name('users.restore');
     Route::put('users/{user}/password', UserPasswordController::class)->name('users.password.update');
+
+    Route::resource('classes', ClassGroupController::class)
+        ->except(['show', 'destroy'])
+        ->parameters(['classes' => 'classGroup']);
 });
 
 if (app()->isLocal()) {

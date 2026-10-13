@@ -4,6 +4,7 @@ import AppLogo from '@/components/app-logo';
 import Toast from '@/components/toast';
 import { Badge } from '@/components/ui/badge';
 import { dashboard, logout } from '@/routes';
+import { index as adminClassesIndex } from '@/routes/admin/classes';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as childrenIndex } from '@/routes/children';
 import type { Role } from '@/types';
@@ -22,6 +23,7 @@ const navItems: Record<
     admin: [
         { label: 'Dashboard', href: dashboard },
         { label: 'Users', href: adminUsersIndex },
+        { label: 'Classes', href: adminClassesIndex },
     ],
     tutor: [{ label: 'Today', href: dashboard }],
     student: [{ label: 'Dashboard', href: dashboard }],
