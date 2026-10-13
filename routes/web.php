@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ClassEnrolmentController;
 use App\Http\Controllers\Admin\ClassGroupController;
+use App\Http\Controllers\Admin\LatenessReportController;
 use App\Http\Controllers\Admin\LessonReportController as AdminLessonReportController;
 use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\UserController;
@@ -46,6 +47,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
 
     Route::get('lesson-reports', [AdminLessonReportController::class, 'index'])->name('lesson-reports.index');
+
+    Route::get('lateness/export', [LatenessReportController::class, 'export'])->name('lateness.export');
+    Route::get('lateness', [LatenessReportController::class, 'index'])->name('lateness.index');
+    Route::put('lateness/{latenessReport}', [LatenessReportController::class, 'update'])->name('lateness.update');
 });
 
 if (app()->isLocal()) {
