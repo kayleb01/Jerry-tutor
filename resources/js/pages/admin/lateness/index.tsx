@@ -121,11 +121,11 @@ export default function Lateness({
                 </Card>
             )}
 
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                 <Form
                     {...index.form()}
                     options={{ preserveState: true }}
-                    className="flex flex-wrap items-end gap-3"
+                    className="grid grid-cols-2 items-end gap-3 sm:grid-cols-3 lg:flex lg:flex-wrap"
                 >
                     <div className="flex flex-col gap-1.5">
                         <Label htmlFor="search">Name</Label>
@@ -133,7 +133,7 @@ export default function Lateness({
                             id="search"
                             name="search"
                             defaultValue={filters.search}
-                            className="w-48"
+                            className="lg:w-48"
                         />
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -142,7 +142,7 @@ export default function Lateness({
                             id="role"
                             name="role"
                             defaultValue={filters.role ?? ''}
-                            className="w-36"
+                            className="lg:w-36"
                         >
                             <option value="">Everyone</option>
                             <option value="student">Students</option>
@@ -155,7 +155,7 @@ export default function Lateness({
                             id="class"
                             name="class"
                             defaultValue={filters.class ?? ''}
-                            className="w-48"
+                            className="lg:w-48"
                         >
                             <option value="">All classes</option>
                             {classes.map((option) => (
@@ -172,7 +172,7 @@ export default function Lateness({
                             name="from"
                             type="date"
                             defaultValue={filters.from ?? ''}
-                            className="w-40"
+                            className="lg:w-40"
                         />
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -182,7 +182,7 @@ export default function Lateness({
                             name="to"
                             type="date"
                             defaultValue={filters.to ?? ''}
-                            className="w-40"
+                            className="lg:w-40"
                         />
                     </div>
                     <Button type="submit" variant="outline">
@@ -192,7 +192,7 @@ export default function Lateness({
                 <a
                     href={exportCsv.url({ query })}
                     download
-                    className="inline-flex h-10 items-center rounded-md border border-input bg-surface px-4 text-sm font-medium hover:bg-surface-muted"
+                    className="inline-flex h-10 w-fit shrink-0 items-center rounded-md border border-input bg-surface px-4 text-sm font-medium whitespace-nowrap hover:bg-surface-muted"
                 >
                     Export CSV
                 </a>

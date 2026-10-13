@@ -8,7 +8,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { create, edit } from '@/routes/children';
+import { attendance, create, edit } from '@/routes/children';
 
 type Child = {
     id: number;
@@ -16,6 +16,8 @@ type Child = {
     username: string | null;
     email: string | null;
     yearGroup: string | null;
+    attendance: number | null;
+    late: number;
 };
 
 export default function ChildrenIndex({ children }: { children: Child[] }) {
@@ -54,18 +56,46 @@ export default function ChildrenIndex({ children }: { children: Child[] }) {
                                         </span>
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="flex items-center justify-between">
-                                    {child.yearGroup && (
-                                        <Badge tone="brand">
-                                            {child.yearGroup}
-                                        </Badge>
-                                    )}
-                                    <Link
-                                        href={edit(child.id)}
-                                        className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-                                    >
-                                        Edit
-                                    </Link>
+                                <CardContent className="flex flex-col gap-3">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {child.yearGroup && (
+                                            <Badge tone="brand">
+                                                {child.yearGroup}
+                                            </Badge>
+                                        )}
+                                        <span className="text-sm text-muted-foreground">
+                                            {child.attendance === null
+                                                ? 'No classes recorded yet'
+                                                : `${child.attendance}% attendance · last 30 days`}
+                                        </span>
+                                        {child.late > 0 && (
+                                            <Badge tone="late">
+                                                {child.late} late
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <Link
+                                            href={attendance(child.id)}
+                                            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                        >
+                                            View attendance
+                                            <span className="sr-only">
+                                                {' '}
+                                                for {child.name}
+                                            </span>
+                                        </Link>
+                                        <Link
+                                            href={edit(child.id)}
+                                            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                        >
+                                            Edit
+                                            <span className="sr-only">
+                                                {' '}
+                                                {child.name}
+                                            </span>
+                                        </Link>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </li>

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\LessonReportController as AdminLessonReportContro
 use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
+use App\Http\Controllers\ChildAttendanceController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ChildPasswordController;
 use App\Http\Controllers\DashboardController;
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:guardian'])->group(function () {
     Route::resource('children', ChildController::class)->except(['show', 'destroy']);
     Route::put('children/{child}/password', ChildPasswordController::class)->name('children.password.update');
+    Route::get('children/{child}/attendance', ChildAttendanceController::class)->name('children.attendance');
 });
 
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {

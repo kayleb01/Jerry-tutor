@@ -7,6 +7,7 @@ use App\Enums\YearGroup;
 use App\Http\Requests\StoreChildRequest;
 use App\Http\Requests\UpdateChildRequest;
 use App\Models\User;
+use App\Services\AttendanceStats;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,19 +15,25 @@ use Inertia\Response;
 
 class ChildController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, AttendanceStats $stats): Response
     {
         $children = $request->user()->children()
             ->with('studentProfile')
             ->orderBy('name')
             ->get()
-            ->map(fn (User $child): array => [
-                'id' => $child->id,
-                'name' => $child->name,
-                'username' => $child->username,
-                'email' => $child->email,
-                'yearGroup' => $child->studentProfile?->year_group->label(),
-            ]);
+            ->map(function (User $child) use ($stats): array {
+                $summary = $stats->forUser($child);
+
+                return [
+                    'id' => $child->id,
+                    'name' => $child->name,
+                    'username' => $child->username,
+                    'email' => $child->email,
+                    'yearGroup' => $child->studentProfile?->year_group->label(),
+                    'attendance' => $summary['attendance'],
+                    'late' => $summary['late'],
+                ];
+            });
 
         return Inertia::render('children/index', ['children' => $children]);
     }
