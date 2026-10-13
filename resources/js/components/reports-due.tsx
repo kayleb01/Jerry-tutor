@@ -7,6 +7,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { buttonClasses } from '@/components/ui/button';
 import { edit as editReport } from '@/routes/lessons/report';
 
 export type ReportDue = {
@@ -22,10 +23,13 @@ export default function ReportsDue({ reports }: { reports: ReportDue[] }) {
     }
 
     return (
-        <Card>
+        <Card className="border-secondary-90 bg-secondary-95 dark:border-secondary-20 dark:bg-secondary-20/40">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Icon name="book" className="text-gold-600" />
+                    <Icon
+                        name="report"
+                        className="text-secondary-40 dark:text-secondary-80"
+                    />
                     Reports to write
                 </CardTitle>
                 <CardDescription>
@@ -33,14 +37,14 @@ export default function ReportsDue({ reports }: { reports: ReportDue[] }) {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <ul className="divide-y">
+                <ul className="divide-y divide-secondary-90 dark:divide-secondary-20">
                     {reports.map((report) => (
                         <li
                             key={report.id}
                             className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
                         >
                             <div>
-                                <p className="font-medium">
+                                <p className="font-semibold">
                                     {report.className}
                                 </p>
                                 <p className="text-muted-foreground">
@@ -49,7 +53,7 @@ export default function ReportsDue({ reports }: { reports: ReportDue[] }) {
                             </div>
                             <Link
                                 href={editReport(report.id)}
-                                className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-card hover:bg-primary-hover"
+                                className={buttonClasses('primary')}
                             >
                                 Write report
                                 <span className="sr-only">

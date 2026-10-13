@@ -1,5 +1,7 @@
 import { Link } from '@inertiajs/react';
+import Icon from '@/components/icon';
 import { Badge } from '@/components/ui/badge';
+import { buttonClasses } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -40,7 +42,7 @@ export default function TutorDashboard({
     reportsDue,
 }: TutorDashboardProps) {
     return (
-        <AppLayout title="Today">
+        <AppLayout title="Today" subtitle="Your classes">
             <ReportsDue reports={reportsDue} />
             {today.length === 0 ? (
                 <Card>
@@ -53,45 +55,69 @@ export default function TutorDashboard({
                     <CardContent />
                 </Card>
             ) : (
-                <ul className="grid gap-4 md:grid-cols-2">
+                <ul className="grid gap-4 lg:grid-cols-2">
                     {today.map((lesson) => (
                         <li key={lesson.id}>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>{lesson.className}</CardTitle>
-                                    <CardDescription>
+                            <article className="relative flex h-full flex-col gap-5 overflow-hidden rounded-lg bg-brand p-6 text-brand-foreground">
+                                <span
+                                    aria-hidden="true"
+                                    className="absolute -top-8 -right-8 size-28 rounded-bl-full bg-secondary-key"
+                                />
+                                <div className="relative flex flex-col gap-1.5">
+                                    <p className="text-xs font-semibold tracking-[0.08em] text-secondary-80 uppercase">
                                         {lesson.time}
+                                    </p>
+                                    <h2 className="text-2xl leading-8 font-bold">
+                                        {lesson.className}
+                                    </h2>
+                                    <p className="text-[15px] text-primary-90">
                                         {lesson.location
-                                            ? ` · ${lesson.location}`
-                                            : ''}{' '}
-                                        · {lesson.students} students
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex flex-wrap items-center gap-3">
+                                            ? `${lesson.location} · `
+                                            : ''}
+                                        {lesson.students} students
+                                    </p>
+                                </div>
+                                <div className="relative mt-auto flex flex-wrap items-center gap-3">
                                     {lesson.checkedInAt ? (
                                         <Badge
                                             tone={
                                                 lesson.late ? 'late' : 'present'
                                             }
+                                            className="h-8 px-3 text-sm"
                                         >
+                                            <Icon
+                                                name={
+                                                    lesson.late
+                                                        ? 'alarm'
+                                                        : 'clock'
+                                                }
+                                                className="size-4"
+                                            />
                                             Checked in at {lesson.checkedInAt}
                                         </Badge>
                                     ) : lesson.canCheckIn ? (
                                         <Link
                                             href={checkIn(lesson.id)}
                                             as="button"
-                                            className="inline-flex h-12 items-center rounded-md bg-accent px-6 text-base font-medium text-accent-foreground shadow-card hover:bg-accent-hover"
+                                            className={buttonClasses(
+                                                'accent',
+                                                'lg',
+                                            )}
                                         >
-                                            Check in
+                                            Check in to start the class
                                         </Link>
                                     ) : (
-                                        <Badge tone="neutral">
+                                        <span className="text-sm text-primary-80">
                                             Check-in opens 30 min before
-                                        </Badge>
+                                        </span>
                                     )}
                                     <Link
                                         href={register(lesson.id)}
-                                        className="inline-flex h-10 items-center rounded-md border border-input bg-surface px-4 text-sm font-medium hover:bg-surface-muted"
+                                        className={buttonClasses(
+                                            'outline',
+                                            'md',
+                                            'border-primary-70 text-white hover:bg-primary-20 hover:text-white',
+                                        )}
                                     >
                                         Take register
                                         <span className="sr-only">
@@ -102,7 +128,11 @@ export default function TutorDashboard({
                                     {lesson.canReport && (
                                         <Link
                                             href={editReport(lesson.id)}
-                                            className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-surface px-4 text-sm font-medium text-primary hover:bg-surface-muted"
+                                            className={buttonClasses(
+                                                'outline',
+                                                'md',
+                                                'border-primary-70 text-white hover:bg-primary-20 hover:text-white',
+                                            )}
                                         >
                                             {lesson.reported
                                                 ? 'Edit your report'
@@ -113,31 +143,39 @@ export default function TutorDashboard({
                                             </span>
                                         </Link>
                                     )}
-                                </CardContent>
-                            </Card>
+                                </div>
+                                <p className="relative text-[13px] text-primary-80">
+                                    Your check-in time is recorded for
+                                    punctuality.
+                                </p>
+                            </article>
                         </li>
                     ))}
                 </ul>
             )}
             {upcoming.length > 0 && (
-                <section className="flex flex-col gap-2">
-                    <h2 className="text-lg font-semibold">Coming up</h2>
-                    <ul className="divide-y rounded-lg border bg-surface">
-                        {upcoming.map((lesson) => (
-                            <li
-                                key={lesson.id}
-                                className="flex justify-between px-4 py-3 text-sm"
-                            >
-                                <span className="font-medium">
-                                    {lesson.className}
-                                </span>
-                                <span className="text-muted-foreground">
-                                    {lesson.when}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Coming up</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-3">
+                        <ul className="divide-y">
+                            {upcoming.map((lesson) => (
+                                <li
+                                    key={lesson.id}
+                                    className="flex flex-wrap justify-between gap-2 py-3.5 text-sm"
+                                >
+                                    <span className="font-semibold">
+                                        {lesson.className}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                        {lesson.when}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </CardContent>
+                </Card>
             )}
         </AppLayout>
     );

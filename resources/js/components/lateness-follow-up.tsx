@@ -39,7 +39,7 @@ export default function LatenessFollowUp({
                     onClick={() => setOpen(!open)}
                     aria-expanded={open}
                     aria-controls={`${notesId}-form`}
-                    className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    className="text-sm font-medium text-link underline-offset-4 hover:underline"
                 >
                     {open ? 'Close' : 'Follow up'}
                     <span className="sr-only"> on {name}'s lateness</span>
@@ -71,7 +71,7 @@ export default function LatenessFollowUp({
                                 name="follow_up_notes"
                                 defaultValue={notes ?? ''}
                                 maxLength={2000}
-                                className="min-h-20 w-full rounded-md border border-input bg-surface px-3 py-2 text-sm"
+                                className="min-h-20 w-full rounded-sm border border-input bg-surface px-3.5 py-2.5 text-sm"
                                 aria-invalid={!!errors.follow_up_notes}
                                 aria-describedby={`${notesId}-error`}
                             />

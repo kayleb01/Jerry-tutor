@@ -21,7 +21,7 @@ export default function StrandCard({ strand, yearGroup }: StrandCardProps) {
         <Card className="flex flex-col">
             <div className="flex items-start justify-between gap-3 border-b px-6 py-5">
                 <div>
-                    <h3 className="flex flex-wrap items-center gap-2 text-xl font-semibold">
+                    <h3 className="flex flex-wrap items-center gap-2 text-lg font-bold">
                         <span
                             className={cn(
                                 'size-2.5 rounded-full',
@@ -48,7 +48,7 @@ export default function StrandCard({ strand, yearGroup }: StrandCardProps) {
                         </span>
                     </div>
                     <span
-                        className="flex size-10 items-center justify-center rounded-full bg-gold-100 text-gold-700 shadow-card dark:bg-gold-500/15 dark:text-gold-300"
+                        className="flex size-10 items-center justify-center rounded-full bg-secondary-95 text-secondary-40 dark:bg-secondary-20 dark:text-secondary-90"
                         aria-hidden="true"
                     >
                         <Icon name="trophy" />

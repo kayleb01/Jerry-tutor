@@ -73,9 +73,9 @@ export default function Lateness({
     ) as Record<string, string | number>;
 
     return (
-        <AppLayout title="Lateness">
+        <AppLayout title="Lateness reports" subtitle="Attendance">
             {repeat.length > 0 && (
-                <Card>
+                <Card className="border-secondary-90 bg-secondary-95 dark:border-secondary-20 dark:bg-secondary-20/40">
                     <CardHeader>
                         <CardTitle>Repeat lateness · last 30 days</CardTitle>
                         <CardDescription>
@@ -84,7 +84,7 @@ export default function Lateness({
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ul className="divide-y">
+                        <ul className="divide-y divide-secondary-90 dark:divide-secondary-20">
                             {repeat.map((person) => (
                                 <li
                                     key={`${person.userId}-${person.role}`}
@@ -101,7 +101,7 @@ export default function Lateness({
                                                 }),
                                             )
                                         }
-                                        className="flex items-center gap-2 font-medium text-primary underline-offset-4 hover:underline"
+                                        className="flex items-center gap-2 font-medium text-link underline-offset-4 hover:underline"
                                     >
                                         {person.name}
                                     </button>
@@ -192,7 +192,7 @@ export default function Lateness({
                 <a
                     href={exportCsv.url({ query })}
                     download
-                    className="inline-flex h-10 w-fit shrink-0 items-center rounded-md border border-input bg-surface px-4 text-sm font-medium whitespace-nowrap hover:bg-surface-muted"
+                    className="inline-flex h-10 w-fit shrink-0 items-center rounded-sm border border-input bg-transparent px-4 text-sm font-semibold whitespace-nowrap text-muted-foreground hover:bg-surface-muted hover:text-foreground"
                 >
                     Export CSV
                 </a>
@@ -201,35 +201,35 @@ export default function Lateness({
             <Card>
                 <CardContent className="overflow-x-auto p-0">
                     <table className="w-full text-left text-sm">
-                        <thead className="border-b bg-surface-muted text-muted-foreground">
+                        <thead className="border-b text-xs tracking-[0.04em] text-muted-foreground uppercase">
                             <tr>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Date
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Who
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Class
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Start → arrived
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Follow-up
                                 </th>
@@ -301,7 +301,7 @@ export default function Lateness({
                         <Link
                             href={reports.prev_page_url}
                             preserveState
-                            className="font-medium text-primary"
+                            className="font-medium text-link"
                         >
                             Previous
                         </Link>
@@ -310,7 +310,7 @@ export default function Lateness({
                         <Link
                             href={reports.next_page_url}
                             preserveState
-                            className="font-medium text-primary"
+                            className="font-medium text-link"
                         >
                             Next
                         </Link>

@@ -3,7 +3,17 @@ import AttendanceStatusBadge from '@/components/attendance-status-badge';
 import type { AttendanceStatus } from '@/components/attendance-status-badge';
 import FieldError from '@/components/field-error';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import type { Option } from '@/types';
+
+const checkedTone: Record<string, string> = {
+    present:
+        'has-checked:border-present-soft has-checked:bg-present-soft has-checked:text-present',
+    late: 'has-checked:border-late-soft has-checked:bg-late-soft has-checked:text-late',
+    absent: 'has-checked:border-danger has-checked:bg-danger has-checked:text-white dark:has-checked:text-neutral-10',
+    excused:
+        'has-checked:border-excused-soft has-checked:bg-excused-soft has-checked:text-excused',
+};
 
 export type RegisterPerson = {
     id: number;
@@ -37,7 +47,7 @@ export default function RegisterRow({
             <legend className="sr-only">{person.name}</legend>
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                    <p className="font-medium">{person.name}</p>
+                    <p className="font-semibold">{person.name}</p>
                     {person.yearGroup && (
                         <p className="text-xs text-muted-foreground">
                             {person.yearGroup}
@@ -59,7 +69,10 @@ export default function RegisterRow({
                 {statuses.map((option) => (
                     <label
                         key={option.value}
-                        className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-input px-3 text-sm has-checked:border-primary has-checked:bg-royal-50 dark:has-checked:bg-royal-900/40"
+                        className={cn(
+                            'inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-neutral-80 bg-surface px-3 text-[13px] font-semibold text-muted-foreground has-focus-visible:outline-2 has-focus-visible:outline-ring dark:border-neutral-30',
+                            checkedTone[String(option.value)],
+                        )}
                     >
                         <input
                             type="radio"
@@ -67,7 +80,7 @@ export default function RegisterRow({
                             value={option.value}
                             checked={status === option.value}
                             onChange={() => setStatus(String(option.value))}
-                            className="accent-primary"
+                            className="sr-only"
                         />
                         {option.label}
                     </label>

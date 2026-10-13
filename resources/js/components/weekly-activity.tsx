@@ -8,8 +8,9 @@ import { dashboard } from '@/routes';
 import type { DashboardDay } from '@/types';
 
 const segment =
-    'inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium';
-const active = 'bg-primary text-primary-foreground';
+    'inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold';
+const active =
+    'bg-surface text-foreground shadow-[0_1px_3px_rgb(27_27_34/0.15)]';
 const idle = 'text-muted-foreground hover:text-foreground';
 
 type WeeklyActivityProps = {
@@ -29,14 +30,11 @@ export default function WeeklyActivity({
             aria-labelledby="weekly-activity"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2
-                    id="weekly-activity"
-                    className="font-display text-2xl font-bold tracking-wide uppercase"
-                >
+                <h2 id="weekly-activity" className="text-2xl font-bold">
                     Weekly activity
                 </h2>
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="inline-flex rounded-lg border bg-surface p-1">
+                    <div className="inline-flex rounded-md bg-surface-muted p-1">
                         <Link
                             href={dashboard()}
                             preserveScroll
@@ -55,7 +53,7 @@ export default function WeeklyActivity({
                         </Link>
                     </div>
                     <div
-                        className="inline-flex rounded-lg border bg-surface p-1"
+                        className="inline-flex rounded-md bg-surface-muted p-1"
                         role="group"
                         aria-label="View"
                     >
@@ -96,7 +94,7 @@ export default function WeeklyActivity({
                             className="flex w-72 shrink-0 flex-col gap-3 p-4"
                         >
                             <div>
-                                <h3 className="text-lg font-semibold">
+                                <h3 className="text-lg font-bold">
                                     {day.name}{' '}
                                     <span className="text-sm font-normal text-muted-foreground">
                                         {day.date}
@@ -118,29 +116,29 @@ export default function WeeklyActivity({
             ) : (
                 <Card className="overflow-x-auto p-0">
                     <table className="w-full text-left text-sm">
-                        <thead className="border-b bg-surface-muted text-muted-foreground">
+                        <thead className="border-b text-xs tracking-[0.04em] text-muted-foreground uppercase">
                             <tr>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Day
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Class
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Time
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Minutes
                                 </th>
@@ -156,7 +154,7 @@ export default function WeeklyActivity({
                                         <td className="px-4 py-3">
                                             {day.name} {day.date}
                                         </td>
-                                        <td className="px-4 py-3 font-medium">
+                                        <td className="px-4 py-3 font-semibold">
                                             {lesson.className}
                                             {lesson.state === 'cancelled' && (
                                                 <span className="ml-2 text-xs text-absent">

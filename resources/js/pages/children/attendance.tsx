@@ -41,7 +41,7 @@ export default function ChildAttendance({
             <div>
                 <Link
                     href={childrenIndex()}
-                    className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    className="text-sm font-medium text-link underline-offset-4 hover:underline"
                 >
                     ← Back to your children
                 </Link>
@@ -86,29 +86,29 @@ export default function ChildAttendance({
                         <caption className="sr-only">
                             Recent classes for {child.name}
                         </caption>
-                        <thead className="border-b bg-surface-muted text-muted-foreground">
+                        <thead className="border-b text-xs tracking-[0.04em] text-muted-foreground uppercase">
                             <tr>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Date
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Class
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Time
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Attendance
                                 </th>

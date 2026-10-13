@@ -22,11 +22,11 @@ type Child = {
 
 export default function ChildrenIndex({ children }: { children: Child[] }) {
     return (
-        <AppLayout title="Your children">
+        <AppLayout title="Your children" subtitle="Family">
             <div>
                 <Link
                     href={create()}
-                    className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-card hover:bg-primary-hover"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-sm bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                 >
                     Add a child
                 </Link>
@@ -77,7 +77,7 @@ export default function ChildrenIndex({ children }: { children: Child[] }) {
                                     <div className="flex gap-4">
                                         <Link
                                             href={attendance(child.id)}
-                                            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                            className="text-sm font-medium text-link underline-offset-4 hover:underline"
                                         >
                                             View attendance
                                             <span className="sr-only">
@@ -87,7 +87,7 @@ export default function ChildrenIndex({ children }: { children: Child[] }) {
                                         </Link>
                                         <Link
                                             href={edit(child.id)}
-                                            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                                            className="text-sm font-medium text-link underline-offset-4 hover:underline"
                                         >
                                             Edit
                                             <span className="sr-only">

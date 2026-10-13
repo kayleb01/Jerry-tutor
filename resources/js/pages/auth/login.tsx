@@ -62,7 +62,7 @@ export default function Login({
                                 {canResetPassword && (
                                     <Link
                                         href={request()}
-                                        className="text-sm text-primary underline-offset-4 hover:underline"
+                                        className="text-sm text-link underline-offset-4 hover:underline"
                                     >
                                         Forgot password?
                                     </Link>
@@ -98,7 +98,7 @@ export default function Login({
                                 New parent or guardian?{' '}
                                 <Link
                                     href={register()}
-                                    className="font-medium text-primary underline-offset-4 hover:underline"
+                                    className="font-medium text-link underline-offset-4 hover:underline"
                                 >
                                     Create an account
                                 </Link>

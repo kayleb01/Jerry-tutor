@@ -16,11 +16,11 @@ type Row = {
 
 export default function ClassesIndex({ classes }: { classes: Row[] }) {
     return (
-        <AppLayout title="Classes">
+        <AppLayout title="Classes" subtitle="Scheduling">
             <div>
                 <Link
                     href={create()}
-                    className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-card hover:bg-primary-hover"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-sm bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                 >
                     Add class
                 </Link>
@@ -28,41 +28,41 @@ export default function ClassesIndex({ classes }: { classes: Row[] }) {
             <Card>
                 <CardContent className="overflow-x-auto p-0">
                     <table className="w-full text-left text-sm">
-                        <thead className="border-b bg-surface-muted text-muted-foreground">
+                        <thead className="border-b text-xs tracking-[0.04em] text-muted-foreground uppercase">
                             <tr>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Class
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Tutor
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Schedule
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Students
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Next lesson
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     <span className="sr-only">Actions</span>
                                 </th>
@@ -85,7 +85,7 @@ export default function ClassesIndex({ classes }: { classes: Row[] }) {
                                     key={row.id}
                                     className="border-b last:border-0"
                                 >
-                                    <td className="px-4 py-3 font-medium">
+                                    <td className="px-4 py-3 font-semibold">
                                         {row.name}
                                         {!row.isActive && (
                                             <Badge
@@ -115,7 +115,7 @@ export default function ClassesIndex({ classes }: { classes: Row[] }) {
                                     <td className="px-4 py-3 text-right">
                                         <Link
                                             href={edit(row.id)}
-                                            className="font-medium text-primary underline-offset-4 hover:underline"
+                                            className="font-medium text-link underline-offset-4 hover:underline"
                                         >
                                             Edit
                                             <span className="sr-only">

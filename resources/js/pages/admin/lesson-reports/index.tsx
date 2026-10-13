@@ -44,7 +44,7 @@ export default function LessonReports({
     classes,
 }: LessonReportsProps) {
     return (
-        <AppLayout title="Lesson reports">
+        <AppLayout title="End-of-class reports" subtitle="Attendance">
             <Form
                 {...index.form()}
                 options={{ preserveState: true }}
@@ -177,7 +177,7 @@ export default function LessonReports({
                         <Link
                             href={reports.prev_page_url}
                             preserveState
-                            className="font-medium text-primary"
+                            className="font-medium text-link"
                         >
                             Previous
                         </Link>
@@ -186,7 +186,7 @@ export default function LessonReports({
                         <Link
                             href={reports.next_page_url}
                             preserveState
-                            className="font-medium text-primary"
+                            className="font-medium text-link"
                         >
                             Next
                         </Link>

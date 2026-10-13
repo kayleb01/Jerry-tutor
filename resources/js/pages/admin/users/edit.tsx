@@ -166,7 +166,7 @@ export default function EditUser({ user, yearGroups }: EditUserProps) {
                             <Link
                                 href={restore(user.id)}
                                 as="button"
-                                className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+                                className="inline-flex h-10 items-center justify-center rounded-sm bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                             >
                                 Reactivate account
                             </Link>
@@ -179,7 +179,7 @@ export default function EditUser({ user, yearGroups }: EditUserProps) {
                                         `Deactivate ${user.name}? They won't be able to log in until reactivated.`,
                                     )
                                 }
-                                className="inline-flex h-10 items-center justify-center rounded-md bg-danger px-4 text-sm font-medium text-white"
+                                className="inline-flex h-10 items-center justify-center rounded-sm bg-danger px-4 text-sm font-semibold text-white hover:opacity-90 dark:text-neutral-10"
                             >
                                 Deactivate account
                             </Link>

@@ -47,7 +47,7 @@ export default function ForgotPassword({ status }: { status: string | null }) {
                         </Button>
                         <Link
                             href={login()}
-                            className="text-center text-sm text-primary underline-offset-4 hover:underline"
+                            className="text-center text-sm text-link underline-offset-4 hover:underline"
                         >
                             Back to log in
                         </Link>

@@ -4,7 +4,7 @@ import type { AttendanceStatus } from '@/components/attendance-status-badge';
 import FieldError from '@/components/field-error';
 import RegisterRow from '@/components/register-row';
 import type { RegisterPerson } from '@/components/register-row';
-import { Button } from '@/components/ui/button';
+import { Button, buttonClasses } from '@/components/ui/button';
 import {
     Card,
     CardContent,
@@ -44,21 +44,20 @@ export default function Register({
     const startTime = lesson.time.split('–')[0];
 
     return (
-        <AppLayout title={`Register · ${lesson.className}`}>
-            <p className="text-muted-foreground">
-                {lesson.date}, {lesson.time}
-                {lesson.location ? ` · ${lesson.location}` : ''}
-            </p>
-            {canReport && (
-                <div>
+        <AppLayout
+            title={lesson.className}
+            subtitle={`Register · ${lesson.date}, ${lesson.time}${lesson.location ? ` · ${lesson.location}` : ''}`}
+            actions={
+                canReport && (
                     <Link
                         href={editReport(lesson.id)}
-                        className="inline-flex h-10 items-center rounded-md border border-input bg-surface px-4 text-sm font-medium text-primary hover:bg-surface-muted"
+                        className={buttonClasses('outline')}
                     >
                         Write end-of-class report
                     </Link>
-                </div>
-            )}
+                )
+            }
+        >
             <Form {...update.form(lesson.id)} className="flex flex-col gap-6">
                 {({ errors, processing }) => (
                     <>
@@ -84,7 +83,7 @@ export default function Register({
                                     />
                                 ) : (
                                     <div className="flex items-center justify-between">
-                                        <span className="font-medium">
+                                        <span className="font-semibold">
                                             {tutor.name}
                                         </span>
                                         {tutor.status ? (
@@ -132,7 +131,7 @@ export default function Register({
                                 )}
                             </CardContent>
                         </Card>
-                        <div>
+                        <div className="flex justify-end">
                             <Button
                                 type="submit"
                                 size="lg"

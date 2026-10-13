@@ -98,13 +98,10 @@ export default function StudentDashboard({
                 aria-labelledby="today-activity"
             >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2
-                        id="today-activity"
-                        className="font-display text-2xl font-bold tracking-wide uppercase"
-                    >
+                    <h2 id="today-activity" className="text-2xl font-bold">
                         Today’s activity
                     </h2>
-                    <span className="inline-flex h-9 items-center gap-2 rounded-full border bg-surface px-4 text-sm">
+                    <span className="inline-flex h-9 items-center gap-2 rounded-full bg-surface-muted px-4 text-sm font-medium text-muted-foreground">
                         <Icon name="clock" className="size-4" /> Total time:{' '}
                         {todayMinutes} min
                     </span>

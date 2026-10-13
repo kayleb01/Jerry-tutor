@@ -26,7 +26,7 @@ type ReportProps = {
 };
 
 const textarea =
-    'min-h-24 w-full rounded-md border border-input bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground aria-invalid:border-danger';
+    'min-h-28 w-full rounded-sm border border-input bg-surface px-3.5 py-3 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground aria-invalid:border-danger';
 
 const prompts = {
     tutor: {
@@ -58,7 +58,7 @@ export default function LessonReport({
             title="End-of-class report"
             subtitle={`${lesson.className} · ${lesson.date}, ${lesson.time}`}
         >
-            <Card className="max-w-2xl">
+            <Card className="max-w-3xl">
                 <CardHeader>
                     <CardTitle>
                         {report ? 'Edit your report' : 'How did it go?'}
@@ -87,7 +87,7 @@ export default function LessonReport({
                                         {[1, 2, 3, 4, 5].map((value) => (
                                             <label
                                                 key={value}
-                                                className="inline-flex size-11 cursor-pointer items-center justify-center rounded-md border border-input text-sm font-semibold has-checked:border-primary has-checked:bg-royal-50 has-focus-visible:outline-2 has-focus-visible:outline-ring dark:has-checked:bg-royal-900/40"
+                                                className="inline-flex size-12 cursor-pointer items-center justify-center rounded-md border border-neutral-80 bg-surface text-base font-bold text-muted-foreground has-checked:border-secondary-key has-checked:bg-secondary-95 has-checked:text-secondary-40 has-focus-visible:outline-2 has-focus-visible:outline-ring dark:border-neutral-30 dark:has-checked:bg-secondary-20 dark:has-checked:text-secondary-90"
                                             >
                                                 <input
                                                     type="radio"
@@ -136,7 +136,7 @@ export default function LessonReport({
                                         />
                                     </div>
                                 ))}
-                                <div>
+                                <div className="flex justify-end">
                                     <Button
                                         type="submit"
                                         size="lg"

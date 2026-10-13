@@ -34,7 +34,7 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
         roles.find((role) => role.value === value)?.label ?? value;
 
     return (
-        <AppLayout title="Users">
+        <AppLayout title="Users" subtitle="Accounts">
             <div className="flex flex-wrap items-end justify-between gap-4">
                 <Form
                     {...index.form()}
@@ -85,7 +85,7 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
                 </Form>
                 <Link
                     href={create()}
-                    className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-card hover:bg-primary-hover"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-sm bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                 >
                     Add user
                 </Link>
@@ -93,29 +93,29 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
             <Card>
                 <CardContent className="overflow-x-auto p-0">
                     <table className="w-full text-left text-sm">
-                        <thead className="border-b bg-surface-muted text-muted-foreground">
+                        <thead className="border-b text-xs tracking-[0.04em] text-muted-foreground uppercase">
                             <tr>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Name
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Login
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     Role
                                 </th>
                                 <th
                                     scope="col"
-                                    className="px-4 py-3 font-medium"
+                                    className="px-4 py-3 font-semibold"
                                 >
                                     <span className="sr-only">Actions</span>
                                 </th>
@@ -137,7 +137,7 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
                                     key={user.id}
                                     className="border-b last:border-0"
                                 >
-                                    <td className="px-4 py-3 font-medium">
+                                    <td className="px-4 py-3 font-semibold">
                                         {user.name}
                                         {user.deactivated && (
                                             <Badge
@@ -164,7 +164,7 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
                                     <td className="px-4 py-3 text-right">
                                         <Link
                                             href={edit(user.id)}
-                                            className="font-medium text-primary underline-offset-4 hover:underline"
+                                            className="font-medium text-link underline-offset-4 hover:underline"
                                         >
                                             Edit
                                         </Link>
@@ -188,7 +188,7 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
                         <Link
                             href={users.prev_page_url}
                             preserveState
-                            className="font-medium text-primary"
+                            className="font-medium text-link"
                         >
                             Previous
                         </Link>
@@ -197,7 +197,7 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
                         <Link
                             href={users.next_page_url}
                             preserveState
-                            className="font-medium text-primary"
+                            className="font-medium text-link"
                         >
                             Next
                         </Link>

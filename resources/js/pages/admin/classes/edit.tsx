@@ -225,7 +225,7 @@ export default function EditClass({
                                         </span>
                                         <Link
                                             href={register(lesson.id)}
-                                            className="font-medium text-primary underline-offset-4 hover:underline"
+                                            className="font-medium text-link underline-offset-4 hover:underline"
                                         >
                                             Register
                                             <span className="sr-only">
