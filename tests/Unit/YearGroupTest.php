@@ -27,3 +27,9 @@ it('labels year groups for display', function () {
 it('rejects years outside 3 to 11', function (int $year) {
     YearGroup::from($year);
 })->with([2, 12])->throws(ValueError::class);
+
+it('lists year groups as select options', function () {
+    expect(YearGroup::options())
+        ->toHaveCount(9)
+        ->and(YearGroup::options()[0])->toBe(['value' => 3, 'label' => 'Year 3']);
+});

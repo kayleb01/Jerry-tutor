@@ -40,4 +40,15 @@ enum YearGroup: int
     {
         return "Year {$this->value}";
     }
+
+    /**
+     * @return array<int, array{value: int, label: string}>
+     */
+    public static function options(): array
+    {
+        return array_map(
+            fn (self $yearGroup): array => ['value' => $yearGroup->value, 'label' => $yearGroup->label()],
+            self::cases(),
+        );
+    }
 }
