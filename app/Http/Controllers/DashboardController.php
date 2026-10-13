@@ -7,6 +7,7 @@ use App\Enums\LessonStatus;
 use App\Enums\Role;
 use App\Models\Lesson;
 use App\Models\User;
+use App\Services\StudentDashboard;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -25,6 +26,7 @@ class DashboardController extends Controller
 
         return Inertia::render('dashboard/'.$user->role->value, match ($user->role) {
             Role::Tutor => $this->tutorToday($user),
+            Role::Student => app(StudentDashboard::class)->for($user, $request->query('week') === 'next'),
             default => [],
         });
     }
