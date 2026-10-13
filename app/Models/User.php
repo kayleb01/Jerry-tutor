@@ -18,7 +18,9 @@ use InvalidArgumentException;
 /**
  * @property int $id
  * @property string $name
- * @property string $email
+ * @property string|null $username
+ * @property string|null $email
+ * @property string|null $phone
  * @property Role $role
  * @property Carbon|null $email_verified_at
  * @property string $password

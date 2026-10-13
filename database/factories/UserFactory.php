@@ -64,7 +64,10 @@ class UserFactory extends Factory
 
     public function student(YearGroup $yearGroup = YearGroup::Year5): static
     {
-        return $this->state(fn (array $attributes) => ['role' => Role::Student])
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::Student,
+            'username' => Str::lower(fake()->unique()->userName()),
+        ])
             ->afterCreating(fn (User $user) => StudentProfile::factory()
                 ->for($user)
                 ->create(['year_group' => $yearGroup]));
