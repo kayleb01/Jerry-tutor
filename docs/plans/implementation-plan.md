@@ -41,7 +41,9 @@ Split into **2a**, auth and app shell ([detailed plan](../superpowers/plans/2026
 - Admin user management (CRUD for tutors and students).
 - **Tests:** each role lands on its own dashboard, cross-role access returns 403, and guardians only see their own children.
 
-## Phase 3: Attendance & punctuality (needs D4, D5)
+## Phase 3: Attendance & punctuality (D4 ✅, D5 ✅)
+
+Split into **3a**, classes, enrolments and lesson scheduling ([detailed plan](../superpowers/plans/2026-10-13-phase-3a-classes-scheduling.md)), and **3b**, check-in, registers, lateness reports, admin override and no-shows. Schedules are written and shown in `ACADEMY_TIMEZONE` (default `Africa/Lagos`) and stored in UTC.
 
 - `ClassGroup` and enrolment CRUD (admin), and a `GenerateLessons` command that creates the next 4 weeks from each weekday/start time (scheduled daily).
 - Tutor **Today** screen: a check-in button (creates the tutor's own `AttendanceRecord` with `arrived_at = now()`), then the register (On time / Late + time / Absent).
