@@ -10,3 +10,36 @@ export type Paginated<T> = {
 };
 
 export type Toast = { type: 'success' | 'error'; message: string };
+
+export type LessonState = 'upcoming' | 'in_progress' | 'finished' | 'cancelled';
+
+export type DashboardLesson = {
+    id: number;
+    className: string;
+    time: string;
+    location: string | null;
+    minutes: number;
+    state: LessonState;
+    attendance: 'present' | 'late' | 'absent' | 'excused' | null;
+};
+
+export type DashboardDay = {
+    key: string;
+    name: string;
+    date: string;
+    minutes: number;
+    lessons: DashboardLesson[];
+};
+
+export type Strand = {
+    key: 'number' | 'algebra' | 'statistics' | 'geometry';
+    name: string;
+    summary: string;
+};
+
+export type StudentStats = {
+    attendance: number | null;
+    onTime: number | null;
+    classTime: string;
+    lessonsThisWeek: number;
+};

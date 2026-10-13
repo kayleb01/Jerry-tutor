@@ -122,3 +122,10 @@ it('leaves out classes the student has left and never shows classmates\' records
             ->where('today.0.attendance', null)
             ->where('stats.attendance', null));
 });
+
+it('shows whole hours without a trailing 0m', function () {
+    ($this->lessonAt)('2025-10-16 09:00:00', 60);
+
+    $this->actingAs($this->ava)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->where('stats.classTime', '1h'));
+});
