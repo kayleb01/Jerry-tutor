@@ -49,7 +49,7 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
         currentPath === url || currentPath.startsWith(`${url}/`);
 
     return (
-        <div className="flex h-full flex-col gap-6 bg-royal-950 px-3 py-5 text-royal-100">
+        <div className="flex h-full flex-col gap-6 bg-royal-950 px-3 py-5 text-royal-100 [&_*:focus-visible]:outline-gold-400">
             <Link
                 href={dashboard()}
                 onClick={onNavigate}

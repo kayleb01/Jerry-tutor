@@ -99,6 +99,8 @@ it('lists the week Monday to Sunday and totals class time, skipping cancelled le
         ->assertInertia(fn (Assert $page) => $page
             ->where('nextWeek', true)
             ->where('header.weekLabel', 'Week of 20 – 26 October')
+            ->where('stats.lessonsThisWeek', 3)
+            ->where('stats.classTime', '2h 39m')
             ->has('week', 1)
             ->where('week.0.name', 'Monday')
             ->where('week.0.lessons.0.time', '00:30–01:30'));

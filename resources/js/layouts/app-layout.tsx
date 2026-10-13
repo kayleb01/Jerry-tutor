@@ -1,5 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import AppSidebar from '@/components/app-sidebar';
 import Icon from '@/components/icon';
@@ -41,17 +41,54 @@ export default function AppLayout({
     children,
 }: AppLayoutProps) {
     const { auth } = usePage().props;
-    const [collapsed, setCollapsed] = useState(readCollapsed);
+    // Starts expanded on the server and the first client render (SSR), then applies the saved preference.
+    const [collapsed, setCollapsed] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const menuButton = useRef<HTMLButtonElement>(null);
+    const drawerPanel = useRef<HTMLDivElement>(null);
+    const wasOpen = useRef(false);
+
+    useEffect(() => {
+        if (readCollapsed()) {
+            setCollapsed(true);
+        }
+    }, []);
 
     useEffect(() => {
         if (!drawerOpen) {
+            if (wasOpen.current) {
+                menuButton.current?.focus();
+            }
+            wasOpen.current = false;
+
             return;
         }
+
+        wasOpen.current = true;
 
         const onKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 setDrawerOpen(false);
+
+                return;
+            }
+
+            if (event.key !== 'Tab' || !drawerPanel.current) {
+                return;
+            }
+
+            const focusable = drawerPanel.current.querySelectorAll<HTMLElement>(
+                'a[href], button:not([disabled])',
+            );
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last?.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first?.focus();
             }
         };
         window.addEventListener('keydown', onKey);
@@ -82,11 +119,12 @@ export default function AppLayout({
                 <AppSidebar collapsed={collapsed} />
             </aside>
 
-            <div className="flex items-center justify-between gap-3 bg-royal-950 px-4 py-3 lg:hidden">
+            <div className="flex items-center justify-between gap-3 bg-royal-950 px-4 py-3 lg:hidden [&_*:focus-visible]:outline-gold-400">
                 <span className="font-display text-lg font-bold tracking-wide text-white uppercase">
                     Jerry Great Academy
                 </span>
                 <button
+                    ref={menuButton}
                     type="button"
                     onClick={() => setDrawerOpen(true)}
                     aria-label="Open menu"
@@ -110,7 +148,10 @@ export default function AppLayout({
                         className="absolute inset-0 bg-royal-950/60"
                         onClick={() => setDrawerOpen(false)}
                     />
-                    <div className="relative h-full w-72 max-w-[85vw]">
+                    <div
+                        ref={drawerPanel}
+                        className="relative h-full w-72 max-w-[85vw] [&_*:focus-visible]:outline-gold-400"
+                    >
                         <AppSidebar
                             collapsed={false}
                             onNavigate={() => setDrawerOpen(false)}
