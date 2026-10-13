@@ -12,3 +12,7 @@ Schedule::command('lessons:generate')
     ->dailyAt('01:00')
     ->timezone(config('academy.timezone'))
     ->withoutOverlapping();
+
+Schedule::command('attendance:mark-no-shows')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
