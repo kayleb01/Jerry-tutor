@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import {
     Card,
     CardContent,
@@ -6,19 +7,27 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import { index as adminUsersIndex } from '@/routes/admin/users';
 
 export default function AdminDashboard() {
     return (
         <AppLayout title="Admin dashboard">
             <Card>
                 <CardHeader>
-                    <CardTitle>Nothing to manage yet</CardTitle>
+                    <CardTitle>Users</CardTitle>
                     <CardDescription>
-                        Users, classes, lateness reports and the question bank
-                        will appear here.
+                        Create tutor, student and parent accounts, and
+                        deactivate ones that are no longer needed.
                     </CardDescription>
                 </CardHeader>
-                <CardContent />
+                <CardContent>
+                    <Link
+                        href={adminUsersIndex()}
+                        className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-card hover:bg-primary-hover"
+                    >
+                        Manage users
+                    </Link>
+                </CardContent>
             </Card>
         </AppLayout>
     );
