@@ -6,12 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReviewLatenessReportRequest;
 use App\Models\ClassGroup;
 use App\Models\LatenessReport;
-use App\Models\User;
 use App\Services\LatenessReportQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -37,7 +35,7 @@ class LatenessReportController extends Controller
             'classes' => ClassGroup::query()->orderBy('name')->get(['id', 'name'])
                 ->map(fn (ClassGroup $group): array => ['value' => $group->id, 'label' => $group->name])
                 ->all(),
-            'repeat' => $this->repeatLateness(),
+            'repeat' => $query->repeatOffenders(),
         ]);
     }
 
@@ -104,35 +102,6 @@ class LatenessReportController extends Controller
             'reviewedBy' => $report->reviewedBy?->name,
             'reviewedAt' => $report->reviewed_at?->setTimezone($timezone)->format('j M, H:i'),
         ];
-    }
-
-    /**
-     * People late 3 or more times in the last 30 days (academy dates), most frequent first.
-     *
-     * @return array<int, array{userId: int, name: string, role: string, count: int, lastDate: string}>
-     */
-    private function repeatLateness(): array
-    {
-        $since = CarbonImmutable::now(config('academy.timezone'))->subDays(30)->toDateString();
-
-        $rows = LatenessReport::query()
-            ->select('user_id', 'attendee_role', DB::raw('COUNT(*) as late_count'), DB::raw('MAX(lesson_date) as last_date'))
-            ->where('lesson_date', '>=', $since)
-            ->groupBy('user_id', 'attendee_role')
-            ->havingRaw('COUNT(*) >= 3')
-            ->orderByDesc('late_count')
-            ->orderByDesc('last_date')
-            ->get();
-
-        $names = User::withTrashed()->whereKey($rows->pluck('user_id'))->pluck('name', 'id');
-
-        return $rows->map(fn (LatenessReport $row): array => [
-            'userId' => (int) $row->user_id,
-            'name' => $names[$row->user_id] ?? 'Unknown',
-            'role' => $row->attendee_role->value,
-            'count' => (int) $row->getAttribute('late_count'),
-            'lastDate' => CarbonImmutable::parse((string) $row->getAttribute('last_date'))->format('D j M'),
-        ])->values()->all();
     }
 
     /**

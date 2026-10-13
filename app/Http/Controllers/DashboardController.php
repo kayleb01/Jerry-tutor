@@ -7,6 +7,7 @@ use App\Enums\LessonStatus;
 use App\Enums\Role;
 use App\Models\Lesson;
 use App\Models\User;
+use App\Services\AdminDashboard;
 use App\Services\ReportsDue;
 use App\Services\StudentDashboard;
 use Carbon\CarbonImmutable;
@@ -26,6 +27,7 @@ class DashboardController extends Controller
         $user = $request->user();
 
         $props = match ($user->role) {
+            Role::Admin => app(AdminDashboard::class)->for($user),
             Role::Tutor => $this->tutorToday($user),
             Role::Student => app(StudentDashboard::class)->for($user, $request->query('week') === 'next'),
             default => [],

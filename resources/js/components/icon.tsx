@@ -29,7 +29,8 @@ export type IconName =
     | 'report'
     | 'flag'
     | 'shield'
-    | 'sparkle';
+    | 'sparkle'
+    | 'plus';
 
 const paths: Record<IconName, ReactNode> = {
     dashboard: (
@@ -163,6 +164,7 @@ const paths: Record<IconName, ReactNode> = {
             <path d="M8.5 12l2.5 2.5 4.5-5" />
         </>
     ),
+    plus: <path d="M12 5v14M5 12h14" />,
     sparkle: (
         <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18" />
     ),

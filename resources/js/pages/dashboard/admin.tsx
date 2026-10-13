@@ -1,103 +1,652 @@
-import { Link } from '@inertiajs/react';
+import { Form, Link } from '@inertiajs/react';
+import type { ReactNode } from 'react';
+import AttendanceStatusBadge from '@/components/attendance-status-badge';
+import type { AttendanceStatus } from '@/components/attendance-status-badge';
 import Icon from '@/components/icon';
 import type { IconName } from '@/components/icon';
+import { Badge } from '@/components/ui/badge';
+import { buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { index as adminClassesIndex } from '@/routes/admin/classes';
-import { index as adminLatenessIndex } from '@/routes/admin/lateness';
-import { index as adminLessonReportsIndex } from '@/routes/admin/lesson-reports';
-import { index as adminUsersIndex } from '@/routes/admin/users';
+import { cn } from '@/lib/utils';
+import { create as createClass } from '@/routes/admin/classes';
+import { index as latenessIndex } from '@/routes/admin/lateness';
+import { index as lessonReportsIndex } from '@/routes/admin/lesson-reports';
+import { index as usersIndex } from '@/routes/admin/users';
+import { show as register } from '@/routes/lessons/register';
+import type { LessonState } from '@/types';
 
-type Area = {
-    title: string;
-    description: string;
-    cta: string;
-    icon: IconName;
-    href: () => { url: string; method: 'get' };
-    tone: string;
+type Role = 'student' | 'tutor';
+
+type TodayLesson = {
+    id: number;
+    time: string;
+    className: string;
+    tutor: string | null;
+    state: LessonState;
+    tutorStatus: AttendanceStatus | null;
+    tutorMinutesLate: number | null;
+    present: number;
+    marked: boolean;
+    expected: number;
+    tutorReported: boolean;
+    studentReports: number;
 };
 
-const areas: Area[] = [
-    {
-        title: 'Users',
-        description:
-            'Create tutor, student and parent accounts, and deactivate ones that are no longer needed.',
-        cta: 'Manage users',
-        icon: 'users',
-        href: adminUsersIndex,
-        tone: 'bg-primary-95 text-primary-30 dark:bg-primary-20 dark:text-primary-90',
-    },
-    {
-        title: 'Classes',
-        description:
-            'Set up recurring classes, assign tutors and enrol students. Lessons are scheduled four weeks ahead.',
-        cta: 'Manage classes',
-        icon: 'classes',
-        href: adminClassesIndex,
-        tone: 'bg-primary-95 text-primary-30 dark:bg-primary-20 dark:text-primary-90',
-    },
-    {
-        title: 'Lateness reports',
-        description:
-            'Created automatically whenever a student or tutor is late. Follow up on repeat lateness.',
-        cta: 'Review lateness',
-        icon: 'alarm',
-        href: adminLatenessIndex,
-        tone: 'bg-secondary-95 text-secondary-40 dark:bg-secondary-20 dark:text-secondary-90',
-    },
-    {
-        title: 'End-of-class reports',
-        description:
-            'Feedback and recommendations from both tutors and students after every lesson.',
-        cta: 'Read reports',
-        icon: 'report',
-        href: adminLessonReportsIndex,
-        tone: 'bg-secondary-95 text-secondary-40 dark:bg-secondary-20 dark:text-secondary-90',
-    },
-];
+type AdminDashboardProps = {
+    header: { date: string; greeting: string };
+    stats: {
+        classesToday: number;
+        runningNow: number;
+        toStart: number;
+        attendance: number | null;
+        attendanceChange: number | null;
+        lateToday: number;
+        lateStudents: number;
+        lateTutors: number;
+        activeStudents: number;
+        activeTutors: number;
+    };
+    today: TodayLesson[];
+    lateness: {
+        id: number;
+        name: string;
+        role: Role;
+        className: string;
+        arrived: string;
+        minutesLate: number;
+    }[];
+    repeatLateness: {
+        userId: number;
+        name: string;
+        role: Role;
+        count: number;
+        lastDate: string;
+    }[];
+    onTimeWeeks: {
+        label: string;
+        students: number | null;
+        tutors: number | null;
+    }[];
+    latestReports: {
+        id: number;
+        author: string;
+        role: Role;
+        className: string;
+        submittedAt: string;
+        wentWell: string | null;
+        recommendations: string | null;
+    }[];
+    studentsByStage: { label: string; count: number }[];
+};
 
-export default function AdminDashboard() {
+const roleLabel = (role: Role) => (role === 'tutor' ? 'Tutor' : 'Student');
+
+function initials(name: string): string {
+    return name
+        .replace(/^(Mr|Mrs|Ms|Miss|Dr)\.?\s+/i, '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase();
+}
+
+function Avatar({ name, role }: { name: string; role: Role }) {
     return (
-        <AppLayout title="Admin dashboard" subtitle="Jerry Great Academy">
-            <section className="relative overflow-hidden rounded-lg bg-brand p-7 text-brand-foreground">
+        <span
+            aria-hidden="true"
+            className={cn(
+                'flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold',
+                role === 'tutor'
+                    ? 'bg-brand text-brand-foreground'
+                    : 'bg-secondary-90 text-secondary-10 dark:bg-secondary-20 dark:text-secondary-90',
+            )}
+        >
+            {initials(name)}
+        </span>
+    );
+}
+
+function Kpi({
+    label,
+    value,
+    note,
+    icon,
+    gold = false,
+}: {
+    label: string;
+    value: ReactNode;
+    note: string;
+    icon: IconName;
+    gold?: boolean;
+}) {
+    return (
+        <Card className="flex flex-col gap-1.5 p-6">
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    {label}
+                </p>
                 <span
-                    aria-hidden="true"
-                    className="absolute -top-10 -right-10 size-40 rounded-bl-full bg-secondary-key"
+                    className={cn(
+                        'flex size-10 items-center justify-center rounded-md',
+                        gold
+                            ? 'bg-secondary-95 text-secondary-40 dark:bg-secondary-20 dark:text-secondary-90'
+                            : 'bg-primary-95 text-primary-30 dark:bg-primary-20 dark:text-primary-90',
+                    )}
+                >
+                    <Icon name={icon} />
+                </span>
+            </div>
+            <p className="text-[32px] leading-10 font-bold tracking-[-0.01em] tabular-nums">
+                {value}
+            </p>
+            <p className="text-[13px] text-muted-foreground">{note}</p>
+        </Card>
+    );
+}
+
+function SectionHead({
+    title,
+    hint,
+    action,
+}: {
+    title: string;
+    hint?: string;
+    action?: ReactNode;
+}) {
+    return (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 className="text-lg font-bold">{title}</h2>
+                {hint && (
+                    <p className="text-[13px] text-muted-foreground">{hint}</p>
+                )}
+            </div>
+            {action}
+        </div>
+    );
+}
+
+function TutorPunctuality({ lesson }: { lesson: TodayLesson }) {
+    if (lesson.tutorStatus) {
+        return (
+            <AttendanceStatusBadge
+                status={lesson.tutorStatus}
+                minutesLate={lesson.tutorMinutesLate}
+            />
+        );
+    }
+
+    if (lesson.state === 'cancelled') {
+        return <Badge tone="absent">Cancelled</Badge>;
+    }
+
+    return (
+        <span className="text-[13px] text-muted-foreground">
+            {lesson.state === 'upcoming' ? 'Not started' : 'Not checked in'}
+        </span>
+    );
+}
+
+function ReportState({ lesson }: { lesson: TodayLesson }) {
+    if (lesson.state === 'upcoming' || lesson.state === 'cancelled') {
+        return <span className="text-[13px] text-muted-foreground">—</span>;
+    }
+
+    if (lesson.state === 'in_progress') {
+        return (
+            <span className="text-[13px] text-muted-foreground">
+                In progress
+            </span>
+        );
+    }
+
+    if (lesson.tutorReported) {
+        return (
+            <span className="text-[13px] font-semibold text-primary-30 dark:text-primary-80">
+                {lesson.studentReports > 0
+                    ? 'Both submitted'
+                    : 'Tutor submitted'}
+            </span>
+        );
+    }
+
+    return (
+        <span className="text-[13px] text-muted-foreground">Tutor pending</span>
+    );
+}
+
+function percentChange(change: number | null): string {
+    if (change === null) {
+        return 'This week · no data for last week yet';
+    }
+
+    if (change === 0) {
+        return 'This week · same as last week';
+    }
+
+    return `This week · ${change > 0 ? 'up' : 'down'} ${Math.abs(change)} ${Math.abs(change) === 1 ? 'point' : 'points'} on last week`;
+}
+
+const BAR_HEIGHT = 150;
+
+function OnTimeChart({ weeks }: { weeks: AdminDashboardProps['onTimeWeeks'] }) {
+    const describe = (value: number | null) =>
+        value === null ? 'no data' : `${value}%`;
+    const summary = weeks
+        .map(
+            (week) =>
+                `${week.label}: students ${describe(week.students)}, tutors ${describe(week.tutors)}`,
+        )
+        .join('; ');
+
+    const bar = (value: number | null, tone: string) => (
+        <div className="flex h-full flex-col items-center justify-end gap-1">
+            <span className="text-[11px] text-muted-foreground tabular-nums">
+                {value === null ? '—' : value}
+            </span>
+            {value !== null && (
+                <span
+                    className={cn('block w-[18px] rounded-t', tone)}
+                    style={{
+                        height: `${Math.max(2, (value / 100) * BAR_HEIGHT)}px`,
+                    }}
                 />
-                <p className="relative text-xs font-semibold tracking-[0.08em] text-secondary-80 uppercase">
-                    Attendance and maths quizzes
-                </p>
-                <h2 className="relative mt-2 max-w-xl text-2xl leading-8 font-bold">
-                    Everything the academy runs on, in one place
-                </h2>
-                <p className="relative mt-2 max-w-xl text-[15px] text-primary-90">
-                    Registers, lateness and class reports apply to students and
-                    tutors alike.
-                </p>
+            )}
+        </div>
+    );
+
+    return (
+        <>
+            <div
+                role="img"
+                aria-label={`On-time arrivals by week. ${summary}.`}
+                className="grid h-[200px] grid-cols-6 items-end gap-3 border-b border-neutral-80 pt-2 dark:border-neutral-30"
+            >
+                {weeks.map((week) => (
+                    <div
+                        key={week.label}
+                        className="flex h-full items-end justify-center gap-1"
+                    >
+                        {bar(week.students, 'bg-brand dark:bg-primary-70')}
+                        {bar(week.tutors, 'bg-secondary-key')}
+                    </div>
+                ))}
+            </div>
+            <div className="mt-2 grid grid-cols-6 gap-3 text-center text-[13px] text-muted-foreground">
+                {weeks.map((week) => (
+                    <span key={week.label}>{week.label}</span>
+                ))}
+            </div>
+        </>
+    );
+}
+
+export default function AdminDashboard({
+    header,
+    stats,
+    today,
+    lateness,
+    repeatLateness,
+    onTimeWeeks,
+    latestReports,
+    studentsByStage,
+}: AdminDashboardProps) {
+    const repeat = repeatLateness[0];
+    const largestStage = Math.max(
+        1,
+        ...studentsByStage.map((stage) => stage.count),
+    );
+
+    return (
+        <AppLayout
+            title={header.greeting}
+            subtitle={header.date}
+            actions={
+                <>
+                    <Form
+                        {...usersIndex.form()}
+                        className="w-[280px] max-w-full"
+                    >
+                        <label className="flex h-10 items-center gap-2 rounded-sm border border-neutral-80 bg-surface-muted px-3 text-muted-foreground dark:border-neutral-30">
+                            <Icon name="search" />
+                            <input
+                                type="search"
+                                name="search"
+                                placeholder="Search students, tutors, parents"
+                                aria-label="Search users"
+                                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                            />
+                        </label>
+                    </Form>
+                    <Link href={createClass()} className={buttonClasses()}>
+                        <Icon name="plus" className="size-4" />
+                        Schedule class
+                    </Link>
+                </>
+            }
+        >
+            <section
+                aria-label="Today at a glance"
+                className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            >
+                <Kpi
+                    label="Classes today"
+                    value={stats.classesToday}
+                    note={`${stats.runningNow} running now · ${stats.toStart} still to start`}
+                    icon="classes"
+                />
+                <Kpi
+                    label="Student attendance"
+                    value={
+                        stats.attendance === null ? '—' : `${stats.attendance}%`
+                    }
+                    note={percentChange(stats.attendanceChange)}
+                    icon="check"
+                />
+                <Kpi
+                    label="Late today"
+                    value={stats.lateToday}
+                    note={
+                        stats.lateToday === 0
+                            ? 'No late arrivals so far today'
+                            : `${stats.lateStudents} ${stats.lateStudents === 1 ? 'student' : 'students'} · ${stats.lateTutors} ${stats.lateTutors === 1 ? 'tutor' : 'tutors'} · reports created`
+                    }
+                    icon="alarm"
+                    gold
+                />
+                <Kpi
+                    label="Active students"
+                    value={stats.activeStudents}
+                    note={`${stats.activeTutors} ${stats.activeTutors === 1 ? 'tutor' : 'tutors'} on the team`}
+                    icon="users"
+                />
             </section>
-            <div className="grid gap-4 md:grid-cols-2">
-                {areas.map((area) => (
-                    <Card key={area.title} className="flex flex-col gap-4 p-6">
-                        <span
-                            className={`flex size-12 items-center justify-center rounded-md ${area.tone}`}
-                        >
-                            <Icon name={area.icon} className="size-6" />
-                        </span>
-                        <div className="flex flex-col gap-1">
-                            <h2 className="text-lg font-bold">{area.title}</h2>
+
+            <div className="flex flex-wrap items-start gap-4">
+                <Card className="flex-[999_1_560px] p-6">
+                    <SectionHead
+                        title="Today’s classes"
+                        hint="Select a class to open its register."
+                    />
+                    {today.length === 0 ? (
+                        <p className="py-6 text-center text-sm text-muted-foreground">
+                            No classes are scheduled today.
+                        </p>
+                    ) : (
+                        <div className="-mx-6 overflow-x-auto px-6">
+                            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                                <thead>
+                                    <tr className="border-b text-xs tracking-[0.04em] text-muted-foreground uppercase">
+                                        {[
+                                            'Time',
+                                            'Class',
+                                            'Tutor',
+                                            'Tutor punctuality',
+                                            'Present',
+                                            'Reports',
+                                        ].map((heading) => (
+                                            <th
+                                                key={heading}
+                                                scope="col"
+                                                className="px-3 py-2.5 font-semibold whitespace-nowrap"
+                                            >
+                                                {heading}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {today.map((lesson) => (
+                                        <tr
+                                            key={lesson.id}
+                                            className="border-b last:border-0"
+                                        >
+                                            <td className="px-3 py-3.5 tabular-nums">
+                                                {lesson.time}
+                                            </td>
+                                            <td className="px-3 py-3.5">
+                                                <Link
+                                                    href={register(lesson.id)}
+                                                    className="font-semibold hover:underline"
+                                                >
+                                                    {lesson.className}
+                                                </Link>
+                                            </td>
+                                            <td className="px-3 py-3.5">
+                                                {lesson.tutor ?? '—'}
+                                            </td>
+                                            <td className="px-3 py-3.5">
+                                                <TutorPunctuality
+                                                    lesson={lesson}
+                                                />
+                                            </td>
+                                            <td className="px-3 py-3.5 tabular-nums">
+                                                {lesson.marked
+                                                    ? lesson.present
+                                                    : '—'}{' '}
+                                                / {lesson.expected}
+                                            </td>
+                                            <td className="px-3 py-3.5">
+                                                <ReportState lesson={lesson} />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </Card>
+
+                <Card className="flex-[1_1_340px] p-6">
+                    <SectionHead
+                        title="Lateness reports today"
+                        action={
+                            <Link
+                                href={latenessIndex()}
+                                className="text-sm font-semibold text-link hover:underline"
+                            >
+                                View all
+                            </Link>
+                        }
+                    />
+                    {lateness.length === 0 ? (
+                        <p className="py-4 text-sm text-muted-foreground">
+                            No one has been late today.
+                        </p>
+                    ) : (
+                        <ul className="flex flex-col">
+                            {lateness.map((report) => (
+                                <li
+                                    key={report.id}
+                                    className="flex items-center justify-between gap-3 border-b py-3 last:border-0"
+                                >
+                                    <div className="flex min-w-0 items-center gap-3">
+                                        <Avatar
+                                            name={report.name}
+                                            role={report.role}
+                                        />
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-semibold">
+                                                {report.name}{' '}
+                                                <span className="font-normal text-muted-foreground">
+                                                    · {roleLabel(report.role)}
+                                                </span>
+                                            </p>
+                                            <p className="truncate text-[13px] text-muted-foreground">
+                                                {report.className} · arrived{' '}
+                                                {report.arrived}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Badge tone="late">
+                                        {report.minutesLate} min
+                                    </Badge>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    {repeat && (
+                        <div className="mt-3 flex gap-3 rounded-md bg-secondary-95 px-4 py-3.5 text-sm text-secondary-10 dark:bg-secondary-20 dark:text-secondary-90">
+                            <Icon name="flag" className="mt-0.5 size-4.5" />
+                            <p>
+                                {repeat.name} has been late {repeat.count} times
+                                in the last 30 days.{' '}
+                                <Link
+                                    href={latenessIndex({
+                                        query: { search: repeat.name },
+                                    })}
+                                    className="font-semibold underline-offset-4 hover:underline"
+                                >
+                                    Follow up
+                                </Link>
+                            </p>
+                        </div>
+                    )}
+                </Card>
+            </div>
+
+            <div className="flex flex-wrap items-start gap-4">
+                <Card className="flex-[1_1_360px] p-6">
+                    <SectionHead
+                        title="On-time arrivals, last 6 weeks"
+                        hint="Share of class arrivals that were on time"
+                        action={
+                            <div className="flex gap-3.5 text-[13px] text-muted-foreground">
+                                <span className="flex items-center gap-1.5">
+                                    <span className="size-2.5 rounded-[2px] bg-brand dark:bg-primary-70" />
+                                    Students
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="size-2.5 rounded-[2px] bg-secondary-key" />
+                                    Tutors
+                                </span>
+                            </div>
+                        }
+                    />
+                    {onTimeWeeks.every(
+                        (week) =>
+                            week.students === null && week.tutors === null,
+                    ) ? (
+                        <p className="py-10 text-center text-sm text-muted-foreground">
+                            This fills in once registers have been taken.
+                        </p>
+                    ) : (
+                        <OnTimeChart weeks={onTimeWeeks} />
+                    )}
+                </Card>
+
+                <Card className="flex-[1_1_360px] p-6">
+                    <SectionHead
+                        title="Latest end-of-class reports"
+                        action={
+                            <Link
+                                href={lessonReportsIndex()}
+                                className="text-sm font-semibold text-link hover:underline"
+                            >
+                                View all
+                            </Link>
+                        }
+                    />
+                    {latestReports.length === 0 ? (
+                        <p className="py-4 text-sm text-muted-foreground">
+                            No reports yet. Tutors and students can write one
+                            after each class.
+                        </p>
+                    ) : (
+                        <div className="flex flex-col gap-3">
+                            {latestReports.map((report) => (
+                                <article
+                                    key={report.id}
+                                    className={cn(
+                                        'flex flex-col gap-1.5 rounded-md p-3.5',
+                                        report.role === 'tutor'
+                                            ? 'bg-primary-95 dark:bg-primary-20/50'
+                                            : 'bg-secondary-95 dark:bg-secondary-20/50',
+                                    )}
+                                >
+                                    <div className="flex flex-wrap justify-between gap-2">
+                                        <p className="text-sm font-semibold">
+                                            {report.author} ·{' '}
+                                            {roleLabel(report.role)}
+                                        </p>
+                                        <span className="text-[13px] text-muted-foreground">
+                                            {report.className} ·{' '}
+                                            {report.submittedAt}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm leading-relaxed">
+                                        {report.wentWell
+                                            ? `“${report.wentWell}”`
+                                            : 'No comments on what went well.'}
+                                    </p>
+                                    {report.recommendations && (
+                                        <p
+                                            className={cn(
+                                                'text-[13px] font-semibold',
+                                                report.role === 'tutor'
+                                                    ? 'text-primary-30 dark:text-primary-80'
+                                                    : 'text-secondary-30 dark:text-secondary-80',
+                                            )}
+                                        >
+                                            Recommends: {report.recommendations}
+                                        </p>
+                                    )}
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                </Card>
+
+                <Card className="flex-[1_1_280px] p-6">
+                    <SectionHead title="Students by stage" />
+                    {studentsByStage.length === 0 ? (
+                        <p className="py-2 text-sm text-muted-foreground">
+                            No students yet.
+                        </p>
+                    ) : (
+                        <ul className="flex flex-col gap-3.5">
+                            {studentsByStage.map((stage) => (
+                                <li
+                                    key={stage.label}
+                                    className="grid grid-cols-[64px_1fr_40px] items-center gap-3 text-sm"
+                                >
+                                    <span>{stage.label}</span>
+                                    <span className="h-1.5 overflow-hidden rounded-full bg-surface-muted">
+                                        <span
+                                            className="block h-full rounded-full bg-primary"
+                                            style={{
+                                                width: `${(stage.count / largestStage) * 100}%`,
+                                            }}
+                                        />
+                                    </span>
+                                    <span className="text-right text-[13px] tabular-nums">
+                                        {stage.count}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    <hr className="my-4 border-0 border-t" />
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                                Quizzes
+                            </p>
                             <p className="text-sm text-muted-foreground">
-                                {area.description}
+                                Question bank coming soon
                             </p>
                         </div>
                         <Link
-                            href={area.href()}
-                            className="mt-auto inline-flex items-center gap-1.5 self-start text-sm font-semibold text-link hover:underline"
+                            href={usersIndex()}
+                            className={buttonClasses('outline', 'sm')}
                         >
-                            {area.cta}
-                            <Icon name="arrow-right" className="size-4" />
+                            Manage users
                         </Link>
-                    </Card>
-                ))}
+                    </div>
+                </Card>
             </div>
         </AppLayout>
     );

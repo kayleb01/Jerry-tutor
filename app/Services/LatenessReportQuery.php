@@ -4,13 +4,15 @@ namespace App\Services;
 
 use App\Enums\AttendeeRole;
 use App\Models\LatenessReport;
+use App\Models\User;
 use App\Support\AcademyDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * Filters for the lateness list and its CSV export. Unknown or malformed filters are ignored.
+ * Filters for the lateness list and its CSV export, plus the repeat-lateness summary. Unknown or malformed filters are ignored.
  */
 class LatenessReportQuery
 {
@@ -48,5 +50,34 @@ class LatenessReportQuery
             ->orderByDesc('lesson_date')
             ->orderByDesc('scheduled_start_at')
             ->orderByDesc('id');
+    }
+
+    /**
+     * People late 3 or more times in the last 30 days (academy dates), most frequent first.
+     *
+     * @return array<int, array{userId: int, name: string, role: string, count: int, lastDate: string}>
+     */
+    public function repeatOffenders(): array
+    {
+        $since = CarbonImmutable::now(config('academy.timezone'))->subDays(30)->toDateString();
+
+        $rows = LatenessReport::query()
+            ->select('user_id', 'attendee_role', DB::raw('COUNT(*) as late_count'), DB::raw('MAX(lesson_date) as last_date'))
+            ->where('lesson_date', '>=', $since)
+            ->groupBy('user_id', 'attendee_role')
+            ->havingRaw('COUNT(*) >= 3')
+            ->orderByDesc('late_count')
+            ->orderByDesc('last_date')
+            ->get();
+
+        $names = User::withTrashed()->whereKey($rows->pluck('user_id'))->pluck('name', 'id');
+
+        return $rows->map(fn (LatenessReport $row): array => [
+            'userId' => (int) $row->user_id,
+            'name' => $names[$row->user_id] ?? 'Unknown',
+            'role' => $row->attendee_role->value,
+            'count' => (int) $row->getAttribute('late_count'),
+            'lastDate' => CarbonImmutable::parse((string) $row->getAttribute('last_date'))->format('D j M'),
+        ])->values()->all();
     }
 }
