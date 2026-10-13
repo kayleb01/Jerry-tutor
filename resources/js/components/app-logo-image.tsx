@@ -18,7 +18,7 @@ export default function AppLogoImage({ className }: AppLogoImageProps) {
             )}
         >
             <img
-                src="/images/brand/logo.jpg"
+                src="/images/brand/logo.png"
                 alt="Jerry Great Academy"
                 width={740}
                 height={340}
