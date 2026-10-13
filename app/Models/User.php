@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\Role;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,7 +30,7 @@ use InvalidArgumentException;
  */
 #[Fillable(['name', 'email', 'phone', 'password'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -47,6 +47,24 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => Role::class,
         ];
+    }
+
+    /**
+     * Students created without an email have nothing to verify.
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        return $this->email === null || $this->email_verified_at !== null;
+    }
+
+    /**
+     * Never try to email an account that has no address.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        if ($this->email !== null) {
+            parent::sendEmailVerificationNotification();
+        }
     }
 
     public function hasRole(Role ...$roles): bool
