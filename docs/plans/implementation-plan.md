@@ -32,7 +32,7 @@ Enums, roles on users, student profiles, guardian links, the year → difficulty
 
 ## Phase 2: Accounts & app shell (D1 ✅ Fortify; students log in with a username)
 
-Split into **2a**, auth and app shell ([detailed plan](../superpowers/plans/2026-10-13-phase-2a-auth-shell.md)), and **2b**, guardians adding children, admin user management, and `softDeletes` on users (deferred from Phase 1).
+Split into **2a**, auth and app shell ([detailed plan](../superpowers/plans/2026-10-13-phase-2a-auth-shell.md)), and **2b**, guardians adding children, admin user management, and `softDeletes` on users (deferred from Phase 1) ([detailed plan](../superpowers/plans/2026-10-13-phase-2b-accounts.md)).
 
 - Fortify: login, logout, password reset, email verification. Registration is **guardian self-signup only**; admins create tutors and students.
 - Guardians can add their children (each child becomes a student user, with optional login credentials).
