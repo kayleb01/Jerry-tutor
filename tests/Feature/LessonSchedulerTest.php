@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\AttendeeRole;
 use App\Enums\LessonStatus;
 use App\Enums\Weekday;
+use App\Models\AttendanceRecord;
 use App\Models\ClassGroup;
 use App\Models\Lesson;
 use App\Services\LessonScheduler;
@@ -120,4 +122,16 @@ it('schedules from the stored class, not a stale copy', function () {
     app(LessonScheduler::class)->generateFor($group);
 
     expect($group->lessons()->orderBy('starts_at')->first()->starts_at->toDateTimeString())->toBe('2025-10-05 13:00:00');
+});
+
+it('never deletes a future lesson that already has attendance', function () {
+    $group = ClassGroup::factory()->create(['weekday' => Weekday::Saturday, 'start_time' => '10:00']);
+    app(LessonScheduler::class)->generateFor($group);
+    $lesson = $group->lessons()->orderBy('starts_at')->first();
+    AttendanceRecord::factory()->create(['lesson_id' => $lesson->id, 'user_id' => $group->tutor_id, 'attendee_role' => AttendeeRole::Tutor]);
+
+    $group->update(['weekday' => Weekday::Sunday]);
+    app(LessonScheduler::class)->rescheduleFuture($group);
+
+    expect($lesson->fresh())->not->toBeNull();
 });

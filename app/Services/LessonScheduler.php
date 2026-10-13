@@ -84,7 +84,7 @@ class LessonScheduler
     }
 
     /**
-     * Replace the class's not-yet-started scheduled lessons after its schedule, tutor or status changed.
+     * Replace the class's not-yet-started scheduled lessons that have no attendance yet, after its schedule, tutor or status changed.
      */
     public function rescheduleFuture(ClassGroup $group): void
     {
@@ -94,6 +94,7 @@ class LessonScheduler
             $group->lessons()
                 ->where('status', LessonStatus::Scheduled)
                 ->where('starts_at', '>', CarbonImmutable::now())
+                ->whereDoesntHave('attendanceRecords')
                 ->delete();
 
             $this->generateFor($group);
