@@ -12,7 +12,8 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed demo accounts for each role. All use the password "password".
+     * Seed demo accounts for each role. All use the password "password";
+     * students log in with their username (ava.year5 has no email).
      */
     public function run(): void
     {
@@ -26,11 +27,11 @@ class DatabaseSeeder extends Seeder
         $parent = User::factory()->guardian()->create(['name' => 'Demo Parent', 'email' => 'parent@academy.test']);
 
         $parent->linkChild(
-            User::factory()->student(YearGroup::Year5)->create(['name' => 'Ava (Year 5)', 'email' => 'ks2.student@academy.test']),
+            User::factory()->student(YearGroup::Year5)->create(['name' => 'Ava (Year 5)', 'username' => 'ava.year5', 'email' => null]),
             'Parent',
         );
         $parent->linkChild(
-            User::factory()->student(YearGroup::Year8)->create(['name' => 'Leo (Year 8)', 'email' => 'ks3.student@academy.test']),
+            User::factory()->student(YearGroup::Year8)->create(['name' => 'Leo (Year 8)', 'username' => 'leo.year8', 'email' => 'ks3.student@academy.test']),
             'Parent',
         );
     }

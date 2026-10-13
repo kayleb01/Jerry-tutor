@@ -22,3 +22,13 @@ it('can run twice without failing', function () {
 
     expect(User::where('email', 'parent@academy.test')->count())->toBe(1);
 });
+
+it('seeds students who can log in with a known username', function () {
+    $this->seed();
+
+    $this->post(route('login.store'), ['login' => 'ava.year5', 'password' => 'password'])
+        ->assertRedirect('/dashboard');
+
+    expect(User::firstWhere('username', 'ava.year5')->email)->toBeNull()
+        ->and(User::firstWhere('username', 'leo.year8'))->not->toBeNull();
+});
