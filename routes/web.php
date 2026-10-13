@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserPasswordController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ChildPasswordController;
 use App\Http\Controllers\DashboardController;
@@ -21,7 +23,9 @@ Route::middleware(['auth', 'verified', 'role:guardian'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('users', UserController::class)->except(['show', 'destroy'])->withTrashed(['edit']);
+    Route::resource('users', UserController::class)->except(['show'])->withTrashed(['edit']);
+    Route::post('users/{user}/restore', RestoreUserController::class)->withTrashed()->name('users.restore');
+    Route::put('users/{user}/password', UserPasswordController::class)->name('users.password.update');
 });
 
 if (app()->isLocal()) {

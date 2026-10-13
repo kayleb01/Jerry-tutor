@@ -118,6 +118,21 @@ class UserController extends Controller
         return to_route('admin.users.index');
     }
 
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($user->is($request->user())) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => "You can't deactivate your own account."]);
+
+            return back();
+        }
+
+        $user->delete();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "{$user->name} has been deactivated."]);
+
+        return to_route('admin.users.index');
+    }
+
     /**
      * @return array<int, array{value: string, label: string}>
      */
