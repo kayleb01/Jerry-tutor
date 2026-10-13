@@ -51,7 +51,7 @@ Split into **3a**, classes, enrolments and lesson scheduling ([detailed plan](..
 - Admin override on any record; a cron job marks no-shows absent 15 minutes after a lesson ends.
 - **Tests:** a tutor late by 1 minute gets a report, students and tutors are treated the same, correcting a record to on time removes its report, there's at most one record per person per lesson, and a tutor can't mark another tutor's lesson.
 
-## Phase 4: Reports
+## Phase 4: Reports ([detailed plan](../superpowers/plans/2026-10-13-phase-4-reports.md))
 
 - **End-of-class reports:** the tutor and every enrolled, present student can each submit one per lesson (same form, same fields), and can edit it within 48 hours.
 - **Lateness reports:** an admin list with filters (role, person, class, date range), a "repeat lateness" view (≥3 in 30 days), review/follow-up notes, and CSV export.
