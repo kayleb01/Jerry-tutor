@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, Link } from '@inertiajs/react';
 import AttendanceStatusBadge from '@/components/attendance-status-badge';
 import type { AttendanceStatus } from '@/components/attendance-status-badge';
 import FieldError from '@/components/field-error';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { update } from '@/routes/lessons/register';
+import { edit as editReport } from '@/routes/lessons/report';
 import type { Option } from '@/types';
 
 type RegisterProps = {
@@ -28,6 +29,7 @@ type RegisterProps = {
     tutor: RegisterPerson;
     students: RegisterPerson[];
     canEditTutor: boolean;
+    canReport: boolean;
     statuses: Option[];
 };
 
@@ -36,6 +38,7 @@ export default function Register({
     tutor,
     students,
     canEditTutor,
+    canReport,
     statuses,
 }: RegisterProps) {
     const startTime = lesson.time.split('–')[0];
@@ -46,6 +49,16 @@ export default function Register({
                 {lesson.date}, {lesson.time}
                 {lesson.location ? ` · ${lesson.location}` : ''}
             </p>
+            {canReport && (
+                <div>
+                    <Link
+                        href={editReport(lesson.id)}
+                        className="inline-flex h-10 items-center rounded-md border border-input bg-surface px-4 text-sm font-medium text-primary hover:bg-surface-muted"
+                    >
+                        Write end-of-class report
+                    </Link>
+                </div>
+            )}
             <Form {...update.form(lesson.id)} className="flex flex-col gap-6">
                 {({ errors, processing }) => (
                     <>

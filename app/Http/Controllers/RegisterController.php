@@ -49,6 +49,7 @@ class RegisterController extends Controller
             'tutor' => $this->row($lesson->tutor, $records->get($lesson->tutor_id)),
             'students' => $students,
             'canEditTutor' => $request->user()->can('recordTutorAttendance', $lesson),
+            'canReport' => $request->user()->can('submitReport', $lesson),
             'statuses' => [
                 ['value' => 'present', 'label' => 'On time'],
                 ['value' => 'late', 'label' => 'Late'],

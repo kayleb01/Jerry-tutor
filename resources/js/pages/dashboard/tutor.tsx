@@ -10,6 +10,7 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { checkIn } from '@/routes/lessons';
 import { show as register } from '@/routes/lessons/register';
+import { edit as editReport } from '@/routes/lessons/report';
 
 type TodayLesson = {
     id: number;
@@ -21,6 +22,8 @@ type TodayLesson = {
     late: boolean;
     students: number;
     canCheckIn: boolean;
+    canReport: boolean;
+    reported: boolean;
 };
 
 type TutorDashboardProps = {
@@ -91,6 +94,20 @@ export default function TutorDashboard({
                                             for {lesson.className}
                                         </span>
                                     </Link>
+                                    {lesson.canReport && (
+                                        <Link
+                                            href={editReport(lesson.id)}
+                                            className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-surface px-4 text-sm font-medium text-primary hover:bg-surface-muted"
+                                        >
+                                            {lesson.reported
+                                                ? 'Edit your report'
+                                                : 'Write a report'}
+                                            <span className="sr-only">
+                                                {' '}
+                                                for {lesson.className}
+                                            </span>
+                                        </Link>
+                                    )}
                                 </CardContent>
                             </Card>
                         </li>

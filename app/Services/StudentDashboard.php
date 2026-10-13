@@ -43,11 +43,15 @@ class StudentDashboard
         $lessonsBetween = fn (CarbonImmutable $from, CarbonImmutable $to): Collection => Lesson::query()
             ->whereIn('class_group_id', $classIds)
             ->whereBetween('starts_at', [$from->utc(), $to->utc()])
-            ->with(['classGroup', 'attendanceRecords' => fn (HasMany $query) => $query->where('user_id', $student->id)])
+            ->with([
+                'classGroup',
+                'attendanceRecords' => fn (HasMany $query) => $query->where('user_id', $student->id),
+                'lessonReports' => fn (HasMany $query) => $query->where('author_id', $student->id),
+            ])
             ->orderBy('starts_at')
             ->get();
 
-        $today = $lessonsBetween($todayStart, $todayStart->endOfDay())->map(fn (Lesson $lesson): array => $this->lessonCard($lesson, $now));
+        $today = $lessonsBetween($todayStart, $todayStart->endOfDay())->map(fn (Lesson $lesson): array => $this->lessonCard($lesson, $student, $now));
         $weekLessons = $lessonsBetween($weekStart, $weekEnd);
         $thisWeekLessons = $nextWeek ? $lessonsBetween($currentWeekStart, $currentWeekStart->endOfWeek(CarbonImmutable::SUNDAY)) : $weekLessons;
         $countable = $thisWeekLessons->reject(fn (Lesson $lesson): bool => $lesson->isCancelled());
@@ -67,9 +71,9 @@ class StudentDashboard
             'todayMinutes' => $today->reject(fn (array $card): bool => $card['state'] === 'cancelled')->sum('minutes'),
             'week' => $weekLessons
                 ->groupBy(fn (Lesson $lesson): string => $lesson->localStart()->toDateString())
-                ->map(function (Collection $lessons) use ($now): array {
+                ->map(function (Collection $lessons) use ($student, $now): array {
                     $day = $lessons->first()->localStart();
-                    $cards = $lessons->map(fn (Lesson $lesson): array => $this->lessonCard($lesson, $now));
+                    $cards = $lessons->map(fn (Lesson $lesson): array => $this->lessonCard($lesson, $student, $now));
 
                     return [
                         'key' => $day->toDateString(),
@@ -86,9 +90,9 @@ class StudentDashboard
     }
 
     /**
-     * @return array{id: int, className: string, time: string, location: string|null, minutes: int, state: string, attendance: string|null}
+     * @return array{id: int, className: string, time: string, location: string|null, minutes: int, state: string, attendance: string|null, canReport: bool, reported: bool}
      */
-    private function lessonCard(Lesson $lesson, CarbonImmutable $now): array
+    private function lessonCard(Lesson $lesson, User $student, CarbonImmutable $now): array
     {
         $state = match (true) {
             $lesson->isCancelled() => 'cancelled',
@@ -105,6 +109,8 @@ class StudentDashboard
             'minutes' => $this->minutes($lesson),
             'state' => $state,
             'attendance' => $lesson->attendanceRecords->first()?->status->value,
+            'canReport' => $student->can('submitReport', $lesson),
+            'reported' => $lesson->lessonReports->isNotEmpty(),
         ];
     }
 

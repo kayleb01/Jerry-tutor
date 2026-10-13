@@ -46,6 +46,7 @@ class DashboardController extends Controller
             ->with([
                 'classGroup' => fn (BelongsTo $query) => $query->withCount('activeStudents'),
                 'attendanceRecords' => fn (HasMany $query) => $query->where('user_id', $tutor->id),
+                'lessonReports' => fn (HasMany $query) => $query->where('author_id', $tutor->id),
             ])
             ->whereBetween('starts_at', [$startOfDay->utc(), $endOfDay->utc()])
             ->orderBy('starts_at')
@@ -63,6 +64,8 @@ class DashboardController extends Controller
                     'late' => $own?->status === AttendanceStatus::Late,
                     'students' => $lesson->classGroup->active_students_count,
                     'canCheckIn' => $own === null && $tutor->can('checkIn', $lesson),
+                    'canReport' => $tutor->can('submitReport', $lesson),
+                    'reported' => $lesson->lessonReports->isNotEmpty(),
                 ];
             })
             ->all();

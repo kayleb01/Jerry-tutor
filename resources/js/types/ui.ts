@@ -21,6 +21,8 @@ export type DashboardLesson = {
     minutes: number;
     state: LessonState;
     attendance: 'present' | 'late' | 'absent' | 'excused' | null;
+    canReport: boolean;
+    reported: boolean;
 };
 
 export type DashboardDay = {

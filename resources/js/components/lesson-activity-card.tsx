@@ -1,7 +1,9 @@
+import { Link } from '@inertiajs/react';
 import AttendanceStatusBadge from '@/components/attendance-status-badge';
 import Icon from '@/components/icon';
 import { Badge } from '@/components/ui/badge';
 import type { BadgeTone } from '@/components/ui/badge';
+import { edit as editReport } from '@/routes/lessons/report';
 import type { DashboardLesson, LessonState } from '@/types';
 
 const states: Record<LessonState, { label: string; tone: BadgeTone }> = {
@@ -52,6 +54,15 @@ export default function LessonActivityCard({
                     </span>
                 )}
             </div>
+            {lesson.canReport && (
+                <Link
+                    href={editReport(lesson.id)}
+                    className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-surface px-4 text-sm font-medium text-primary hover:bg-surface-muted"
+                >
+                    {lesson.reported ? 'Edit your report' : 'Write a report'}
+                    <span className="sr-only"> for {lesson.className}</span>
+                </Link>
+            )}
         </article>
     );
 }

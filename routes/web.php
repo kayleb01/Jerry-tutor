@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UserPasswordController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ChildPasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LessonReportController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\TutorCheckInController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/lessons/{lesson}/check-in', TutorCheckInController::class)->name('lessons.check-in');
     Route::get('/lessons/{lesson}/register', [RegisterController::class, 'show'])->name('lessons.register.show');
     Route::put('/lessons/{lesson}/register', [RegisterController::class, 'update'])->name('lessons.register.update');
+    Route::get('/lessons/{lesson}/report', [LessonReportController::class, 'edit'])->name('lessons.report.edit');
+    Route::put('/lessons/{lesson}/report', [LessonReportController::class, 'update'])->name('lessons.report.update');
 });
 
 Route::middleware(['auth', 'verified', 'role:guardian'])->group(function () {
