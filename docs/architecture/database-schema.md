@@ -108,18 +108,18 @@ erDiagram
 
 ### `class_groups`
 
-| Column           | Type                 | Notes                                 |
-| ---------------- | -------------------- | ------------------------------------- |
-| id               | PK                   |                                       |
-| name             | string               | "Year 5 Maths – Saturday"             |
-| tutor_id         | FK users null        | default tutor                         |
-| year_group       | tinyint null         |                                       |
-| location         | string null          | room or meeting link                  |
-| weekday          | tinyint null         | 0–6, for generating recurring lessons |
-| start_time       | time null            |                                       |
-| duration_minutes | smallint default 60  |                                       |
-| is_active        | boolean default true |                                       |
-| timestamps       |                      |                                       |
+| Column           | Type                 | Notes                     |
+| ---------------- | -------------------- | ------------------------- |
+| id               | PK                   |                           |
+| name             | string               | "Year 5 Maths – Saturday" |
+| tutor_id         | FK users null        | default tutor             |
+| year_group       | tinyint null         |                           |
+| location         | string null          | room or meeting link      |
+| weekday          | tinyint null         | ISO 1–7 (Monday = 1)      |
+| start_time       | time null            |                           |
+| duration_minutes | smallint default 60  |                           |
+| is_active        | boolean default true |                           |
+| timestamps       |                      |                           |
 
 ### `class_group_student` (enrolments)
 

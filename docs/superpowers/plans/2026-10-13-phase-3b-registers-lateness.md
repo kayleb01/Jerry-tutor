@@ -3,12 +3,14 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:**
+
 - Tutors check in to their lessons and take the register.
 - Lateness is worked out from real times, and every late arrival, student or tutor, gets a lateness report automatically.
 - Admins can correct any record.
 - Anyone still unmarked shortly after a lesson ends is recorded as absent.
 
 **Architecture:**
+
 - **One record per person per lesson:** there is one `attendance_records` row for each person at each lesson, and the tutor gets one too.
 - **Writes go through one action:** every write goes through the `RecordAttendance` action. Callers say whether the person attended (`Present` plus an arrival time), was `Absent` or was `Excused`. The action calculates `Late` from the lesson start and `config('academy.lateness_grace_minutes')`. In the same transaction it creates, updates or deletes the matching `lateness_reports` row (snapshot fields).
 - **Permissions:** a `LessonPolicy` decides who can check in, take a register, and record a tutor's attendance.
@@ -16,11 +18,13 @@
 
 **Tech Stack:** Laravel 13, Inertia v3, React 19, Wayfinder, Tailwind v4, Pest 5.
 
+**Builds on:** 3a, including its review fixes (`LessonScheduler` re-reads and locks, ignores deactivated tutors; deactivating a tutor nulls their classes' `tutor_id`).
+
 **Spec:** [docs/architecture/database-schema.md](../../architecture/database-schema.md) §4 (`attendance_records`, `lateness_reports`) · [docs/design/design-brief.md](../../design/design-brief.md) §4–5 · project PDF §2.1–2.2 · [docs/plans/implementation-plan.md](../../plans/implementation-plan.md) Phase 3 · builds on [Phase 3a](2026-10-13-phase-3a-classes-scheduling.md)
 
 ## Global Constraints
 
-- **D4:** tutors mark their students, tutors check *themselves* in, and admins can override anything, including a tutor's own record. **D5:** grace period `config('academy.lateness_grace_minutes')`, default 0. Someone is late when **whole minutes after the start > grace**, so with grace 0, arriving 1:00 after the start is late and arriving 0:59 after isn't.
+- **D4:** tutors mark their students, tutors check _themselves_ in, and admins can override anything, including a tutor's own record. **D5:** grace period `config('academy.lateness_grace_minutes')`, default 0. Someone is late when **whole minutes after the start > grace**, so with grace 0, arriving 1:00 after the start is late and arriving 0:59 after isn't.
 - **Students and tutors follow identical rules,** and both produce lateness reports (brief principle 1, "fair and transparent").
 - **A lateness report** snapshots who was late, their role, the class name, the lesson date (academy timezone), the scheduled start, the arrival time and the minutes late. When a record stops being late, its report is deleted. When the arrival time changes, the report is updated.
 - `RecordAttendance` is the **only** code that writes `attendance_records` or `lateness_reports`.
@@ -44,48 +48,51 @@
 
 ## File Structure
 
-| File | Responsibility |
-|---|---|
-| `app/Enums/AttendeeRole.php`, `app/Enums/AttendanceStatus.php` | enums |
-| `database/migrations/*_create_attendance_tables.php` | `attendance_records` + `lateness_reports` |
-| `app/Models/AttendanceRecord.php`, `app/Models/LatenessReport.php` | models |
-| `app/Models/Lesson.php` | `attendanceRecords()`, `latenessReports()`, `localStart()`, `localEnd()`, `localTimeToUtc()` |
-| `database/factories/AttendanceRecordFactory.php` | factory |
-| `app/Actions/RecordAttendance.php` | the only writer of attendance and lateness |
-| `app/Policies/LessonPolicy.php` | `checkIn`, `takeRegister`, `recordTutorAttendance` |
-| `app/Http/Controllers/DashboardController.php` | tutor "Today" data |
-| `app/Http/Controllers/TutorCheckInController.php` | `POST /lessons/{lesson}/check-in` |
-| `app/Http/Controllers/RegisterController.php` | `GET`/`PUT /lessons/{lesson}/register` |
-| `app/Http/Requests/UpdateRegisterRequest.php` | register validation |
-| `app/Console/Commands/MarkNoShows.php` | `attendance:mark-no-shows` |
-| `app/Services/LessonScheduler.php` | the no-delete-with-attendance guard |
-| `resources/js/pages/dashboard/tutor.tsx`, `resources/js/pages/lessons/register.tsx`, `resources/js/components/register-row.tsx` | UI |
-| `resources/js/pages/admin/classes/edit.tsx` | lessons list with register links |
+| File                                                                                                                            | Responsibility                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `app/Enums/AttendeeRole.php`, `app/Enums/AttendanceStatus.php`                                                                  | enums                                                                                        |
+| `database/migrations/*_create_attendance_tables.php`                                                                            | `attendance_records` + `lateness_reports`                                                    |
+| `app/Models/AttendanceRecord.php`, `app/Models/LatenessReport.php`                                                              | models                                                                                       |
+| `app/Models/Lesson.php`                                                                                                         | `attendanceRecords()`, `latenessReports()`, `localStart()`, `localEnd()`, `localTimeToUtc()` |
+| `database/factories/AttendanceRecordFactory.php`                                                                                | factory                                                                                      |
+| `app/Actions/RecordAttendance.php`                                                                                              | the only writer of attendance and lateness                                                   |
+| `app/Policies/LessonPolicy.php`                                                                                                 | `checkIn`, `takeRegister`, `recordTutorAttendance`                                           |
+| `app/Http/Controllers/DashboardController.php`                                                                                  | tutor "Today" data                                                                           |
+| `app/Http/Controllers/TutorCheckInController.php`                                                                               | `POST /lessons/{lesson}/check-in`                                                            |
+| `app/Http/Controllers/RegisterController.php`                                                                                   | `GET`/`PUT /lessons/{lesson}/register`                                                       |
+| `app/Http/Requests/UpdateRegisterRequest.php`                                                                                   | register validation                                                                          |
+| `app/Console/Commands/MarkNoShows.php`                                                                                          | `attendance:mark-no-shows`                                                                   |
+| `app/Services/LessonScheduler.php`                                                                                              | the no-delete-with-attendance guard                                                          |
+| `resources/js/pages/dashboard/tutor.tsx`, `resources/js/pages/lessons/register.tsx`, `resources/js/components/register-row.tsx` | UI                                                                                           |
+| `resources/js/pages/admin/classes/edit.tsx`                                                                                     | lessons list with register links                                                             |
 
 ---
 
 ### Task 1: Attendance schema and models
 
 **Files:**
+
 - Create: `app/Enums/AttendeeRole.php`, `app/Enums/AttendanceStatus.php`, `database/migrations/<ts>_create_attendance_tables.php`, `app/Models/AttendanceRecord.php`, `app/Models/LatenessReport.php`, `database/factories/AttendanceRecordFactory.php`
 - Modify: `app/Models/Lesson.php`
 - Test: `tests/Feature/AttendanceModelTest.php`
 
 **Interfaces:**
+
 - Consumes: `Lesson`, `ClassGroup`, `User` (3a).
 - Produces:
-  - **Enums:** `AttendeeRole::{Student,Tutor}` (`'student'|'tutor'`); `AttendanceStatus::{Present,Late,Absent,Excused}` (`'present'|'late'|'absent'|'excused'`), with `label()` returning "On time", "Late", "Absent" or "Excused".
-  - **`AttendanceRecord`:** `lesson_id`, `user_id`, `attendee_role`, `status`, `arrived_at` (immutable, UTC, nullable), `minutes_late` (int, nullable), `recorded_by_id` (nullable, where null means the system recorded it), `notes`; relations `lesson()`, `user()`, `recordedBy()`, `latenessReport()`.
-  - **`LatenessReport`:** the snapshot columns; relations `attendanceRecord()`, `user()`, `lesson()`, `reviewedBy()`.
-  - **`Lesson`:**
-    - `attendanceRecords(): HasMany`, `latenessReports(): HasMany`;
-    - `localStart(): CarbonImmutable`, `localEnd(): CarbonImmutable`;
-    - `localTimeToUtc(string $time): CarbonImmutable`, which reads `"HH:MM"` on the lesson's local date;
-    - `isCancelled(): bool`.
+    - **Enums:** `AttendeeRole::{Student,Tutor}` (`'student'|'tutor'`); `AttendanceStatus::{Present,Late,Absent,Excused}` (`'present'|'late'|'absent'|'excused'`), with `label()` returning "On time", "Late", "Absent" or "Excused".
+    - **`AttendanceRecord`:** `lesson_id`, `user_id`, `attendee_role`, `status`, `arrived_at` (immutable, UTC, nullable), `minutes_late` (int, nullable), `recorded_by_id` (nullable, where null means the system recorded it), `notes`; relations `lesson()`, `user()`, `recordedBy()`, `latenessReport()`.
+    - **`LatenessReport`:** the snapshot columns; relations `attendanceRecord()`, `user()`, `lesson()`, `reviewedBy()`.
+    - **`Lesson`:**
+        - `attendanceRecords(): HasMany`, `latenessReports(): HasMany`;
+        - `localStart(): CarbonImmutable`, `localEnd(): CarbonImmutable`;
+        - `localTimeToUtc(string $time): CarbonImmutable`, which reads `"HH:MM"` on the lesson's local date;
+        - `isCancelled(): bool`.
 
 - [ ] **Step 1: Write the failing test**
 
 `php artisan make:test --pest AttendanceModelTest --no-interaction`:
+
 ```php
 <?php
 
@@ -158,6 +165,7 @@ Expected: FAIL with `Class "App\Enums\AttendanceStatus" not found`.
 - [ ] **Step 3: Enums** (write them directly into `app/Enums`)
 
 `app/Enums/AttendeeRole.php`:
+
 ```php
 <?php
 
@@ -171,6 +179,7 @@ enum AttendeeRole: string
 ```
 
 `app/Enums/AttendanceStatus.php`:
+
 ```php
 <?php
 
@@ -198,6 +207,7 @@ enum AttendanceStatus: string
 - [ ] **Step 4: Migration**
 
 `php artisan make:migration create_attendance_tables --no-interaction`:
+
 ```php
 public function up(): void
 {
@@ -248,6 +258,7 @@ public function down(): void
 `php artisan make:model AttendanceRecord --factory --no-interaction` and `php artisan make:model LatenessReport --no-interaction`.
 
 `app/Models/AttendanceRecord.php`:
+
 ```php
 <?php
 
@@ -333,6 +344,7 @@ class AttendanceRecord extends Model
 ```
 
 `app/Models/LatenessReport.php`:
+
 ```php
 <?php
 
@@ -418,6 +430,7 @@ class LatenessReport extends Model
 ```
 
 `database/factories/AttendanceRecordFactory.php` `definition()`:
+
 ```php
 return [
     'lesson_id' => Lesson::factory(),
@@ -430,9 +443,11 @@ return [
     'notes' => null,
 ];
 ```
+
 (imports `App\Enums\AttendanceStatus`, `App\Enums\AttendeeRole`, `App\Models\Lesson`, `App\Models\User`)
 
-In `app/Models/Lesson.php`, add `use Illuminate\Database\Eloquent\Relations\HasMany;`, `use App\Enums\LessonStatus;` (already imported) and:
+In `app/Models/Lesson.php`, change `tutor()` to `return $this->belongsTo(User::class, 'tutor_id')->withTrashed();`. A past lesson's tutor may since have been deactivated (3a review fix: deactivation removes them from classes), and registers and the no-show job must still see them. Then add `use Illuminate\Database\Eloquent\Relations\HasMany;` and:
+
 ```php
 /**
  * @return HasMany<AttendanceRecord, $this>
@@ -480,6 +495,7 @@ public function isCancelled(): bool
 php artisan migrate --no-interaction
 php artisan test --compact tests/Feature/AttendanceModelTest.php
 ```
+
 Expected: PASS (4 tests).
 
 - [ ] **Step 7: Format and commit**
@@ -494,20 +510,23 @@ git add -A && git commit -m "feat: attendance records and lateness reports schem
 ### Task 2: The `RecordAttendance` action
 
 **Files:**
+
 - Create: `app/Actions/RecordAttendance.php`
 - Modify: `app/Services/LessonScheduler.php`
 - Test: `tests/Feature/RecordAttendanceTest.php`, `tests/Feature/LessonSchedulerTest.php`
 
 **Interfaces:**
+
 - Consumes: Task 1 models and `config('academy.lateness_grace_minutes')`.
 - Produces:
-  - `RecordAttendance::handle(Lesson $lesson, User $attendee, AttendanceStatus $status, ?User $recordedBy, ?CarbonImmutable $arrivedAt = null, ?string $notes = null): AttendanceRecord`, where `$status` is `Present`, `Absent` or `Excused`. Passing `Late` throws `InvalidArgumentException`, and so does an attendee who isn't the lesson's tutor or an (ever-)enrolled student.
-  - **Present without an arrival time** means they arrived at the start.
-  - **Lateness** is calculated from the arrival time and the grace period, and the matching report is synced.
+    - `RecordAttendance::handle(Lesson $lesson, User $attendee, AttendanceStatus $status, ?User $recordedBy, ?CarbonImmutable $arrivedAt = null, ?string $notes = null): AttendanceRecord`, where `$status` is `Present`, `Absent` or `Excused`. Passing `Late` throws `InvalidArgumentException`, and so does an attendee who isn't the lesson's tutor or an (ever-)enrolled student.
+    - **Present without an arrival time** means they arrived at the start.
+    - **Lateness** is calculated from the arrival time and the grace period, and the matching report is synced.
 
 - [ ] **Step 1: Write the failing tests**
 
 `php artisan make:test --pest RecordAttendanceTest --no-interaction`:
+
 ```php
 <?php
 
@@ -625,6 +644,7 @@ it('refuses Late as an input, because lateness is worked out', function () {
 ```
 
 Append to `tests/Feature/LessonSchedulerTest.php`:
+
 ```php
 it('never deletes a future lesson that already has attendance', function () {
     $group = ClassGroup::factory()->create(['weekday' => Weekday::Saturday, 'start_time' => '10:00']);
@@ -638,6 +658,7 @@ it('never deletes a future lesson that already has attendance', function () {
     expect($lesson->fresh())->not->toBeNull();
 });
 ```
+
 Import `App\Models\AttendanceRecord` and `App\Enums\AttendeeRole` at the top of the file instead of using FQCNs.
 
 - [ ] **Step 2: Run the tests to verify they fail**
@@ -648,6 +669,7 @@ Expected: FAIL. `App\Actions\RecordAttendance` isn't found, and the scheduler te
 - [ ] **Step 3: The action**
 
 `app/Actions/RecordAttendance.php`:
+
 ```php
 <?php
 
@@ -751,6 +773,7 @@ class RecordAttendance
     }
 }
 ```
+
 `diffInSeconds($other, false)` is signed in Carbon 3, and negative means early. Early arrivals count as 0, so on time.
 
 - [ ] **Step 4: The scheduler guard**
@@ -774,22 +797,25 @@ git add -A && git commit -m "feat: record attendance and lateness with one actio
 ### Task 3: Lesson policy, tutor "Today" dashboard and check-in
 
 **Files:**
+
 - Create: `app/Policies/LessonPolicy.php`, `app/Http/Controllers/TutorCheckInController.php`
 - Modify: `app/Http/Controllers/DashboardController.php`, `routes/web.php`, `resources/js/pages/dashboard/tutor.tsx`
 - Test: `tests/Feature/LessonPolicyTest.php`, `tests/Feature/TutorCheckInTest.php`
 
 **Interfaces:**
+
 - Consumes: `RecordAttendance`, `Lesson` helpers, `Role`.
 - Produces:
-  - **`LessonPolicy`:** `checkIn(User, Lesson)`, `takeRegister(User, Lesson)`, `recordTutorAttendance(User, Lesson)`.
-  - **Route** `lessons.check-in` (`POST /lessons/{lesson}/check-in`, `auth` + `verified`).
-  - **Tutor dashboard props:**
-    - `today`: `{ id, className, time, location, status, checkedInAt: string|null, late: bool, students: int, canCheckIn: bool }[]`;
-    - `upcoming`: `{ id, className, when }[]`, for the next 5 lessons after today.
+    - **`LessonPolicy`:** `checkIn(User, Lesson)`, `takeRegister(User, Lesson)`, `recordTutorAttendance(User, Lesson)`.
+    - **Route** `lessons.check-in` (`POST /lessons/{lesson}/check-in`, `auth` + `verified`).
+    - **Tutor dashboard props:**
+        - `today`: `{ id, className, time, location, status, checkedInAt: string|null, late: bool, students: int, canCheckIn: bool }[]`;
+        - `upcoming`: `{ id, className, when }[]`, for the next 5 lessons after today.
 
 - [ ] **Step 1: Write the failing tests**
 
 `php artisan make:test --pest LessonPolicyTest --no-interaction`:
+
 ```php
 <?php
 
@@ -849,6 +875,7 @@ it('blocks everyone from a cancelled lesson', function () {
 ```
 
 `php artisan make:test --pest TutorCheckInTest --no-interaction`:
+
 ```php
 <?php
 
@@ -951,6 +978,7 @@ Expected: FAIL. With no policy, `can()` is always false, so the "allowed" cases 
 - [ ] **Step 3: Policy**
 
 `php artisan make:policy LessonPolicy --model=Lesson --no-interaction`, then replace the class body:
+
 ```php
 <?php
 
@@ -1006,11 +1034,13 @@ class LessonPolicy
     }
 }
 ```
+
 Laravel auto-discovers `App\Policies\LessonPolicy` for `App\Models\Lesson`, so no registration is needed.
 
 - [ ] **Step 4: Check-in controller and route**
 
 `php artisan make:controller TutorCheckInController --invokable --no-interaction`:
+
 ```php
 <?php
 
@@ -1059,18 +1089,23 @@ class TutorCheckInController extends Controller
 ```
 
 In `routes/web.php`, inside the existing `Route::middleware(['auth', 'verified'])` group (add `use App\Http\Controllers\TutorCheckInController;`):
+
 ```php
 Route::post('/lessons/{lesson}/check-in', TutorCheckInController::class)->name('lessons.check-in');
 ```
+
 The tests redirect to `lessons.register.show`. Task 4 defines that route, so add a temporary placeholder now so Task 3's tests can pass:
+
 ```php
 Route::get('/lessons/{lesson}/register', fn () => abort(404))->name('lessons.register.show');
 ```
+
 Task 4 replaces it with the real route. Ledger it.
 
 - [ ] **Step 5: Tutor dashboard data**
 
 Replace `DashboardController::__invoke` (add `use App\Enums\Role;`, `use App\Enums\AttendanceStatus;`, `use App\Models\Lesson;`, `use App\Models\User;` and `use Carbon\CarbonImmutable;`):
+
 ```php
 public function __invoke(Request $request): Response
 {
@@ -1132,15 +1167,23 @@ private function tutorToday(User $tutor): array
     return ['today' => $today, 'upcoming' => $upcoming];
 }
 ```
+
 Import `App\Enums\LessonStatus` instead of using the FQCN. `CarbonImmutable::now($timezone)->startOfDay()` gives local midnight, and `->utc()` converts it for the query.
 
 - [ ] **Step 6: Tutor dashboard page**
 
 Replace `resources/js/pages/dashboard/tutor.tsx`:
+
 ```tsx
 import { Link } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { checkIn } from '@/routes/lessons';
 import { show as register } from '@/routes/lessons/register';
@@ -1162,14 +1205,19 @@ type TutorDashboardProps = {
     upcoming: { id: number; className: string; when: string }[];
 };
 
-export default function TutorDashboard({ today, upcoming }: TutorDashboardProps) {
+export default function TutorDashboard({
+    today,
+    upcoming,
+}: TutorDashboardProps) {
     return (
         <AppLayout title="Today">
             {today.length === 0 ? (
                 <Card>
                     <CardHeader>
                         <CardTitle>No lessons today</CardTitle>
-                        <CardDescription>Your next lessons are listed below.</CardDescription>
+                        <CardDescription>
+                            Your next lessons are listed below.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent />
                 </Card>
@@ -1182,21 +1230,43 @@ export default function TutorDashboard({ today, upcoming }: TutorDashboardProps)
                                     <CardTitle>{lesson.className}</CardTitle>
                                     <CardDescription>
                                         {lesson.time}
-                                        {lesson.location ? ` · ${lesson.location}` : ''} · {lesson.students} students
+                                        {lesson.location
+                                            ? ` · ${lesson.location}`
+                                            : ''}{' '}
+                                        · {lesson.students} students
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex flex-wrap items-center gap-3">
                                     {lesson.checkedInAt ? (
-                                        <Badge tone={lesson.late ? 'late' : 'present'}>Checked in at {lesson.checkedInAt}</Badge>
+                                        <Badge
+                                            tone={
+                                                lesson.late ? 'late' : 'present'
+                                            }
+                                        >
+                                            Checked in at {lesson.checkedInAt}
+                                        </Badge>
                                     ) : lesson.canCheckIn ? (
-                                        <Link href={checkIn(lesson.id)} as="button" className="inline-flex h-12 items-center rounded-md bg-accent px-6 text-base font-medium text-accent-foreground shadow-card hover:bg-accent-hover">
+                                        <Link
+                                            href={checkIn(lesson.id)}
+                                            as="button"
+                                            className="inline-flex h-12 items-center rounded-md bg-accent px-6 text-base font-medium text-accent-foreground shadow-card hover:bg-accent-hover"
+                                        >
                                             Check in
                                         </Link>
                                     ) : (
-                                        <Badge tone="neutral">Check-in opens 30 min before</Badge>
+                                        <Badge tone="neutral">
+                                            Check-in opens 30 min before
+                                        </Badge>
                                     )}
-                                    <Link href={register(lesson.id)} className="inline-flex h-10 items-center rounded-md border border-input bg-surface px-4 text-sm font-medium hover:bg-surface-muted">
-                                        Take register<span className="sr-only"> for {lesson.className}</span>
+                                    <Link
+                                        href={register(lesson.id)}
+                                        className="inline-flex h-10 items-center rounded-md border border-input bg-surface px-4 text-sm font-medium hover:bg-surface-muted"
+                                    >
+                                        Take register
+                                        <span className="sr-only">
+                                            {' '}
+                                            for {lesson.className}
+                                        </span>
                                     </Link>
                                 </CardContent>
                             </Card>
@@ -1209,9 +1279,16 @@ export default function TutorDashboard({ today, upcoming }: TutorDashboardProps)
                     <h2 className="text-lg font-semibold">Coming up</h2>
                     <ul className="divide-y rounded-lg border bg-surface">
                         {upcoming.map((lesson) => (
-                            <li key={lesson.id} className="flex justify-between px-4 py-3 text-sm">
-                                <span className="font-medium">{lesson.className}</span>
-                                <span className="text-muted-foreground">{lesson.when}</span>
+                            <li
+                                key={lesson.id}
+                                className="flex justify-between px-4 py-3 text-sm"
+                            >
+                                <span className="font-medium">
+                                    {lesson.className}
+                                </span>
+                                <span className="text-muted-foreground">
+                                    {lesson.when}
+                                </span>
                             </li>
                         ))}
                     </ul>
@@ -1221,6 +1298,7 @@ export default function TutorDashboard({ today, upcoming }: TutorDashboardProps)
     );
 }
 ```
+
 If Wayfinder names the check-in export differently (e.g. `checkIn` from `@/routes/lessons` as generated from `lessons.check-in`), adjust the import after running `wayfinder:generate` and ledger it.
 
 - [ ] **Step 7: Run the tests to verify they pass**
@@ -1229,6 +1307,7 @@ If Wayfinder names the check-in export differently (e.g. `checkIn` from `@/route
 php artisan wayfinder:generate --with-form
 php artisan test --compact tests/Feature/LessonPolicyTest.php tests/Feature/TutorCheckInTest.php tests/Feature/DashboardTest.php
 ```
+
 Expected: PASS (6 + 3 + 1 + 1 = 11 policy, 5 check-in, plus the existing DashboardTest).
 
 - [ ] **Step 8: Check, format, commit**
@@ -1244,28 +1323,32 @@ git add -A && git commit -m "feat: tutor today screen and check-in"
 ### Task 4: The register (tutor) and admin override
 
 **Files:**
+
 - Create: `app/Http/Controllers/RegisterController.php`, `app/Http/Requests/UpdateRegisterRequest.php`, `resources/js/pages/lessons/register.tsx`, `resources/js/components/register-row.tsx`
 - Modify: `routes/web.php` (replace the placeholder), `app/Http/Controllers/Admin/ClassGroupController.php` (`edit` adds `lessons`), `resources/js/pages/admin/classes/edit.tsx`
 - Test: `tests/Feature/RegisterTest.php`
 
 **Interfaces:**
+
 - Consumes: `LessonPolicy`, `RecordAttendance`, the `Lesson` helpers, `AttendanceStatusBadge`.
 - Produces:
-  - **Routes:** `lessons.register.show` (`GET`) and `lessons.register.update` (`PUT /lessons/{lesson}/register`).
-  - **The PUT body:** `attendance[{userId}][status]`, which is one of `present|late|absent|excused`. Here `late` means "attended, enter a time"; the stored status is always calculated. Each entry also takes `attendance[{userId}][arrived_at]` (`HH:MM`, required when `late`) and `attendance[{userId}][notes]`.
-  - **Register props:**
-    - `lesson`: `{ id, className, date, time, location, status }`;
-    - `tutor`: `Row`;
-    - `students`: `Row[]`;
-    - `canEditTutor`: bool;
-    - `statuses`: `Option[]`.
+    - **Routes:** `lessons.register.show` (`GET`) and `lessons.register.update` (`PUT /lessons/{lesson}/register`).
+    - **The PUT body:** `attendance[{userId}][status]`, which is one of `present|late|absent|excused`. Here `late` means "attended, enter a time"; the stored status is always calculated. Each entry also takes `attendance[{userId}][arrived_at]` (`HH:MM`, required when `late`) and `attendance[{userId}][notes]`.
+    - **Register props:**
+        - `lesson`: `{ id, className, date, time, location, status }`;
+        - `tutor`: `Row`;
+        - `students`: `Row[]`;
+        - `canEditTutor`: bool;
+        - `statuses`: `Option[]`.
 
-    A `Row` is `{ id, name, yearGroup, status: string|null, arrivedAt: string|null, minutesLate: number|null, notes: string|null }`.
-  - **Admin class edit props** gain `lessons: { id, when, status, recorded: number }[]` (the last 4 and the next 4).
+        A `Row` is `{ id, name, yearGroup, status: string|null, arrivedAt: string|null, minutesLate: number|null, notes: string|null }`.
+
+    - **Admin class edit props** gain `lessons: { id, when, status, recorded: number }[]` (the last 4 and the next 4).
 
 - [ ] **Step 1: Write the failing test**
 
 `php artisan make:test --pest RegisterTest --no-interaction`:
+
 ```php
 <?php
 
@@ -1419,6 +1502,7 @@ Expected: FAIL. The placeholder route returns 404, and `lessons.register.update`
 - [ ] **Step 3: Routes**
 
 Replace the Task 3 placeholder in `routes/web.php` (add `use App\Http\Controllers\RegisterController;`):
+
 ```php
 Route::get('/lessons/{lesson}/register', [RegisterController::class, 'show'])->name('lessons.register.show');
 Route::put('/lessons/{lesson}/register', [RegisterController::class, 'update'])->name('lessons.register.update');
@@ -1427,6 +1511,7 @@ Route::put('/lessons/{lesson}/register', [RegisterController::class, 'update'])-
 - [ ] **Step 4: Form request**
 
 `php artisan make:request UpdateRegisterRequest --no-interaction`:
+
 ```php
 <?php
 
@@ -1499,6 +1584,7 @@ class UpdateRegisterRequest extends FormRequest
 - [ ] **Step 5: Controller**
 
 `php artisan make:controller RegisterController --no-interaction`:
+
 ```php
 <?php
 
@@ -1601,6 +1687,7 @@ class RegisterController extends Controller
     }
 }
 ```
+
 **Re-saving a row as "present":** an on-time student's `arrived_at` resets to the start, which is correct. A previously late student re-saved as "present" is deliberately corrected to on time.
 
 **Row order:** names are ordered, so "Ava" is `students.0` in the tests.
@@ -1610,6 +1697,7 @@ class RegisterController extends Controller
 - [ ] **Step 6: Register UI**
 
 `resources/js/components/register-row.tsx`:
+
 ```tsx
 import { useState } from 'react';
 import AttendanceStatusBadge from '@/components/attendance-status-badge';
@@ -1635,7 +1723,12 @@ type RegisterRowProps = {
     defaultTime: string;
 };
 
-export default function RegisterRow({ person, statuses, errors, defaultTime }: RegisterRowProps) {
+export default function RegisterRow({
+    person,
+    statuses,
+    errors,
+    defaultTime,
+}: RegisterRowProps) {
     const [status, setStatus] = useState(person.status ?? '');
     const field = (name: string) => `attendance[${person.id}][${name}]`;
     const errorKey = (name: string) => `attendance.${person.id}.${name}`;
@@ -1646,15 +1739,29 @@ export default function RegisterRow({ person, statuses, errors, defaultTime }: R
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                     <p className="font-medium">{person.name}</p>
-                    {person.yearGroup && <p className="text-xs text-muted-foreground">{person.yearGroup}</p>}
+                    {person.yearGroup && (
+                        <p className="text-xs text-muted-foreground">
+                            {person.yearGroup}
+                        </p>
+                    )}
                 </div>
                 {person.status && (
-                    <AttendanceStatusBadge status={person.status as AttendanceStatus} minutesLate={person.minutesLate} />
+                    <AttendanceStatusBadge
+                        status={person.status as AttendanceStatus}
+                        minutesLate={person.minutesLate}
+                    />
                 )}
             </div>
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={`Attendance for ${person.name}`}>
+            <div
+                className="flex flex-wrap gap-2"
+                role="radiogroup"
+                aria-label={`Attendance for ${person.name}`}
+            >
                 {statuses.map((option) => (
-                    <label key={option.value} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-input px-3 text-sm has-checked:border-primary has-checked:bg-royal-50 dark:has-checked:bg-royal-900/40">
+                    <label
+                        key={option.value}
+                        className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-input px-3 text-sm has-checked:border-primary has-checked:bg-royal-50 dark:has-checked:bg-royal-900/40"
+                    >
                         <input
                             type="radio"
                             name={field('status')}
@@ -1667,10 +1774,18 @@ export default function RegisterRow({ person, statuses, errors, defaultTime }: R
                     </label>
                 ))}
             </div>
-            <FieldError id={`${person.id}-status-error`} message={errors[errorKey('status')]} />
+            <FieldError
+                id={`${person.id}-status-error`}
+                message={errors[errorKey('status')]}
+            />
             {status === 'late' && (
                 <div className="flex max-w-48 flex-col gap-1.5">
-                    <label htmlFor={`${person.id}-arrived`} className="text-sm font-medium">Arrived at</label>
+                    <label
+                        htmlFor={`${person.id}-arrived`}
+                        className="text-sm font-medium"
+                    >
+                        Arrived at
+                    </label>
                     <Input
                         id={`${person.id}-arrived`}
                         name={field('arrived_at')}
@@ -1680,28 +1795,52 @@ export default function RegisterRow({ person, statuses, errors, defaultTime }: R
                         aria-invalid={!!errors[errorKey('arrived_at')]}
                         aria-describedby={`${person.id}-arrived-error`}
                     />
-                    <FieldError id={`${person.id}-arrived-error`} message={errors[errorKey('arrived_at')]} />
+                    <FieldError
+                        id={`${person.id}-arrived-error`}
+                        message={errors[errorKey('arrived_at')]}
+                    />
                 </div>
             )}
             <div className="flex flex-col gap-1.5">
-                <label htmlFor={`${person.id}-notes`} className="text-sm font-medium text-muted-foreground">Notes (optional)</label>
-                <Input id={`${person.id}-notes`} name={field('notes')} defaultValue={person.notes ?? ''} aria-describedby={`${person.id}-notes-error`} />
-                <FieldError id={`${person.id}-notes-error`} message={errors[errorKey('notes')]} />
+                <label
+                    htmlFor={`${person.id}-notes`}
+                    className="text-sm font-medium text-muted-foreground"
+                >
+                    Notes (optional)
+                </label>
+                <Input
+                    id={`${person.id}-notes`}
+                    name={field('notes')}
+                    defaultValue={person.notes ?? ''}
+                    aria-describedby={`${person.id}-notes-error`}
+                />
+                <FieldError
+                    id={`${person.id}-notes-error`}
+                    message={errors[errorKey('notes')]}
+                />
             </div>
         </fieldset>
     );
 }
 ```
+
 `has-checked:` is a Tailwind v4 variant. If `has-checked` isn't supported, use `has-[:checked]:` and ledger it. A row with no status chosen sends no `status`. The server then fails `required` for that id only if the id is present, and an id with no status field is absent entirely, so unmarked rows are skipped. Confirm this with the tests; that's why only marked people are posted.
 
 `resources/js/pages/lessons/register.tsx`:
+
 ```tsx
 import { Form } from '@inertiajs/react';
 import FieldError from '@/components/field-error';
 import RegisterRow from '@/components/register-row';
 import type { RegisterPerson } from '@/components/register-row';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import AttendanceStatusBadge from '@/components/attendance-status-badge';
 import type { AttendanceStatus } from '@/components/attendance-status-badge';
 import AppLayout from '@/layouts/app-layout';
@@ -1709,14 +1848,27 @@ import { update } from '@/routes/lessons/register';
 import type { Option } from '@/types';
 
 type RegisterProps = {
-    lesson: { id: number; className: string; date: string; time: string; location: string | null; status: string };
+    lesson: {
+        id: number;
+        className: string;
+        date: string;
+        time: string;
+        location: string | null;
+        status: string;
+    };
     tutor: RegisterPerson;
     students: RegisterPerson[];
     canEditTutor: boolean;
     statuses: Option[];
 };
 
-export default function Register({ lesson, tutor, students, canEditTutor, statuses }: RegisterProps) {
+export default function Register({
+    lesson,
+    tutor,
+    students,
+    canEditTutor,
+    statuses,
+}: RegisterProps) {
     const startTime = lesson.time.split('–')[0];
 
     return (
@@ -1728,22 +1880,42 @@ export default function Register({ lesson, tutor, students, canEditTutor, status
             <Form {...update.form(lesson.id)} className="flex flex-col gap-6">
                 {({ errors, processing }) => (
                     <>
-                        <FieldError id="attendance-error" message={errors.attendance} />
+                        <FieldError
+                            id="attendance-error"
+                            message={errors.attendance}
+                        />
                         <Card>
                             <CardHeader>
                                 <CardTitle>Tutor</CardTitle>
-                                <CardDescription>Tutors check in from their Today screen. Admins can correct the tutor's record here.</CardDescription>
+                                <CardDescription>
+                                    Tutors check in from their Today screen.
+                                    Admins can correct the tutor's record here.
+                                </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {canEditTutor ? (
-                                    <RegisterRow person={tutor} statuses={statuses} errors={errors} defaultTime={startTime} />
+                                    <RegisterRow
+                                        person={tutor}
+                                        statuses={statuses}
+                                        errors={errors}
+                                        defaultTime={startTime}
+                                    />
                                 ) : (
                                     <div className="flex items-center justify-between">
-                                        <span className="font-medium">{tutor.name}</span>
+                                        <span className="font-medium">
+                                            {tutor.name}
+                                        </span>
                                         {tutor.status ? (
-                                            <AttendanceStatusBadge status={tutor.status as AttendanceStatus} minutesLate={tutor.minutesLate} />
+                                            <AttendanceStatusBadge
+                                                status={
+                                                    tutor.status as AttendanceStatus
+                                                }
+                                                minutesLate={tutor.minutesLate}
+                                            />
                                         ) : (
-                                            <span className="text-sm text-muted-foreground">Not checked in</span>
+                                            <span className="text-sm text-muted-foreground">
+                                                Not checked in
+                                            </span>
                                         )}
                                     </div>
                                 )}
@@ -1751,21 +1923,39 @@ export default function Register({ lesson, tutor, students, canEditTutor, status
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle>Students ({students.length})</CardTitle>
-                                <CardDescription>Mark each student. For a late arrival, enter the time they arrived; lateness is worked out automatically.</CardDescription>
+                                <CardTitle>
+                                    Students ({students.length})
+                                </CardTitle>
+                                <CardDescription>
+                                    Mark each student. For a late arrival, enter
+                                    the time they arrived; lateness is worked
+                                    out automatically.
+                                </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {students.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground">No students are enrolled in this class.</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        No students are enrolled in this class.
+                                    </p>
                                 ) : (
                                     students.map((student) => (
-                                        <RegisterRow key={student.id} person={student} statuses={statuses} errors={errors} defaultTime={startTime} />
+                                        <RegisterRow
+                                            key={student.id}
+                                            person={student}
+                                            statuses={statuses}
+                                            errors={errors}
+                                            defaultTime={startTime}
+                                        />
                                     ))
                                 )}
                             </CardContent>
                         </Card>
                         <div>
-                            <Button type="submit" size="lg" disabled={processing}>
+                            <Button
+                                type="submit"
+                                size="lg"
+                                disabled={processing}
+                            >
                                 {processing ? 'Saving…' : 'Save register'}
                             </Button>
                         </div>
@@ -1776,11 +1966,13 @@ export default function Register({ lesson, tutor, students, canEditTutor, status
     );
 }
 ```
+
 Export `AttendanceStatus` from `resources/js/components/attendance-status-badge.tsx` (it already exports the type).
 
 - [ ] **Step 7: Admin lessons list on the class edit page**
 
 In `ClassGroupController::edit()`, add:
+
 ```php
 'lessons' => $classGroup->lessons()
     ->withCount('attendanceRecords')
@@ -1798,26 +1990,43 @@ In `ClassGroupController::edit()`, add:
     ])
     ->values(),
 ```
+
 (add `use App\Models\Lesson;`)
 
 In `admin/classes/edit.tsx`, add a third card, "Lessons", with `lessons: { id: number; when: string; status: string; recorded: number }[]` in the props and `show as register` from `@/routes/lessons/register`:
+
 ```tsx
 <Card className="lg:col-span-2">
     <CardHeader>
         <CardTitle>Lessons</CardTitle>
-        <CardDescription>Recent and upcoming lessons. Open a register to view or correct attendance.</CardDescription>
+        <CardDescription>
+            Recent and upcoming lessons. Open a register to view or correct
+            attendance.
+        </CardDescription>
     </CardHeader>
     <CardContent>
         {lessons.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No lessons scheduled. Give the class a day, time and tutor to schedule lessons.</p>
+            <p className="text-sm text-muted-foreground">
+                No lessons scheduled. Give the class a day, time and tutor to
+                schedule lessons.
+            </p>
         ) : (
             <ul className="divide-y">
                 {lessons.map((lesson) => (
-                    <li key={lesson.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <li
+                        key={lesson.id}
+                        className="flex items-center justify-between gap-3 py-2 text-sm"
+                    >
                         <span className="font-medium">{lesson.when}</span>
-                        <span className="text-muted-foreground">{lesson.recorded} recorded</span>
-                        <Link href={register(lesson.id)} className="font-medium text-primary underline-offset-4 hover:underline">
-                            Register<span className="sr-only"> for {lesson.when}</span>
+                        <span className="text-muted-foreground">
+                            {lesson.recorded} recorded
+                        </span>
+                        <Link
+                            href={register(lesson.id)}
+                            className="font-medium text-primary underline-offset-4 hover:underline"
+                        >
+                            Register
+                            <span className="sr-only"> for {lesson.when}</span>
                         </Link>
                     </li>
                 ))}
@@ -1833,6 +2042,7 @@ In `admin/classes/edit.tsx`, add a third card, "Lessons", with `lessons: { id: n
 php artisan wayfinder:generate --with-form
 php artisan test --compact tests/Feature/RegisterTest.php tests/Feature/TutorCheckInTest.php tests/Feature/Admin
 ```
+
 Expected: PASS (RegisterTest: 1 + 1 + 1 + 1 + 2 + 1 + 1 + 3 + 1 = 12, plus the existing tests).
 
 - [ ] **Step 9: Check, format, commit**
@@ -1849,17 +2059,20 @@ git add -A && git commit -m "feat: lesson register with admin override"
 ### Task 5: Mark no-shows after lessons end
 
 **Files:**
+
 - Create: `app/Console/Commands/MarkNoShows.php`
 - Modify: `routes/console.php`
 - Test: `tests/Feature/MarkNoShowsTest.php`
 
 **Interfaces:**
+
 - Consumes: `RecordAttendance` (with `$recordedBy = null`), `Lesson`, `LessonStatus`.
 - Produces: the command `attendance:mark-no-shows`, scheduled every five minutes. For each `Scheduled`/`InProgress` lesson that ended at least 15 minutes ago, it records `Absent` for the tutor and every active student who has no record, then sets the lesson to `Completed`.
 
 - [ ] **Step 1: Write the failing test**
 
 `php artisan make:test --pest MarkNoShowsTest --no-interaction`:
+
 ```php
 <?php
 
@@ -1941,6 +2154,7 @@ Expected: FAIL. The command `attendance:mark-no-shows` isn't defined.
 - [ ] **Step 3: The command**
 
 `php artisan make:command MarkNoShows --no-interaction`, then (matching the Laravel 13 attribute style used by `GenerateLessons`):
+
 ```php
 <?php
 
@@ -1996,6 +2210,7 @@ class MarkNoShows extends Command
 ```
 
 `routes/console.php`, add:
+
 ```php
 Schedule::command('attendance:mark-no-shows')
     ->everyFiveMinutes()
@@ -2018,6 +2233,7 @@ git add -A && git commit -m "feat: mark no-shows after lessons end"
 ```
 
 Then smoke-test over Herd with time travel. Open `php artisan tinker` and move the seeded lesson's `starts_at`/`ends_at` to now: set `starts_at` 5 minutes ago and `ends_at` 55 minutes ahead.
+
 - As `tutor@academy.test`, Today shows the lesson. Check in, which gives "Late" by 5 minutes and a lateness report. Mark Ava late at a given time and save.
 - As the admin, open the class, then the lessons list, then the register. Correct the tutor to on time; the report is removed.
 
