@@ -1,0 +1,216 @@
+@import 'tailwindcss';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Jerry Great Academy design tokens.
+ * Raw brand scales live in @theme; semantic tokens are CSS variables that
+ * swap for dark mode and are exposed to Tailwind via @theme inline.
+ * See docs/design/design-system.md.
+ */
+@theme {
+    --font-sans:
+        'Lexend', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Saira Condensed', 'Lexend', ui-sans-serif, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    /* Royal indigo — sampled from the logo (#1B0063 = 800) */
+    --color-royal-50: #f3f0fb;
+    --color-royal-100: #e6e0f7;
+    --color-royal-200: #cbbfee;
+    --color-royal-300: #a895e0;
+    --color-royal-400: #7f64cc;
+    --color-royal-500: #5a39b3;
+    --color-royal-600: #3f1d96;
+    --color-royal-700: #2c0c7c;
+    --color-royal-800: #1b0063;
+    --color-royal-900: #13004a;
+    --color-royal-950: #0b002e;
+
+    /* Crown gold — sampled from the logo (#E49C24 = 500) */
+    --color-gold-50: #fdf7ec;
+    --color-gold-100: #fbebcf;
+    --color-gold-200: #f6d59c;
+    --color-gold-300: #f0bc64;
+    --color-gold-400: #eaa93f;
+    --color-gold-500: #e49c24;
+    --color-gold-600: #c67f14;
+    --color-gold-700: #a06210;
+    --color-gold-800: #7d4c12;
+    --color-gold-900: #663f13;
+    --color-gold-950: #3a2107;
+
+    --radius-sm: 0.375rem;
+    --radius-md: 0.625rem;
+    --radius-lg: 0.875rem;
+    --radius-xl: 1.25rem;
+
+    --shadow-card:
+        0 1px 2px 0 rgb(27 0 99 / 0.06), 0 1px 3px 0 rgb(27 0 99 / 0.08);
+    --shadow-raised:
+        0 4px 12px -2px rgb(27 0 99 / 0.12), 0 2px 4px -2px rgb(27 0 99 / 0.08);
+}
+
+:root {
+    --background: #f7f6fb;
+    --surface: #ffffff;
+    --surface-muted: #f1eff8;
+    --foreground: #170d3a;
+    --muted-foreground: #5d5878;
+    --border: #e3e0ee;
+    --input: #d6d2e6;
+    --ring: var(--color-royal-500);
+
+    --primary: var(--color-royal-800);
+    --primary-hover: var(--color-royal-700);
+    --primary-foreground: #ffffff;
+    --accent: var(--color-gold-500);
+    --accent-hover: var(--color-gold-400);
+    --accent-foreground: var(--color-royal-950);
+
+    /* Attendance statuses */
+    --present: #047857;
+    --present-soft: #d1fae5;
+    --late: #c2410c;
+    --late-soft: #ffedd5;
+    --absent: #b91c1c;
+    --absent-soft: #fee2e2;
+    --excused: #475569;
+    --excused-soft: #e2e8f0;
+
+    /* Quiz difficulty */
+    --easy: #047857;
+    --easy-soft: #d1fae5;
+    --intermediate: #0369a1;
+    --intermediate-soft: #e0f2fe;
+    --hard: #be123c;
+    --hard-soft: #ffe4e6;
+    --challenging: var(--color-royal-800);
+    --challenging-soft: var(--color-gold-100);
+
+    /* Maths strands */
+    --strand-number: #4338ca;
+    --strand-algebra: #7e22ce;
+    --strand-statistics: #0f766e;
+    --strand-geometry: #c2410c;
+
+    /* Feedback */
+    --success: #047857;
+    --warning: #b45309;
+    --danger: #b91c1c;
+    --info: #0369a1;
+}
+
+.dark {
+    --background: #0d0820;
+    --surface: #160f30;
+    --surface-muted: #1f173f;
+    --foreground: #f1eefb;
+    --muted-foreground: #a9a3c4;
+    --border: #2d2452;
+    --input: #3a3063;
+    --ring: var(--color-gold-400);
+
+    --primary: var(--color-royal-300);
+    --primary-hover: var(--color-royal-200);
+    --primary-foreground: var(--color-royal-950);
+    --accent: var(--color-gold-400);
+    --accent-hover: var(--color-gold-300);
+    --accent-foreground: var(--color-royal-950);
+
+    --present: #34d399;
+    --present-soft: rgb(16 185 129 / 0.16);
+    --late: #fb923c;
+    --late-soft: rgb(249 115 22 / 0.16);
+    --absent: #f87171;
+    --absent-soft: rgb(239 68 68 / 0.16);
+    --excused: #94a3b8;
+    --excused-soft: rgb(148 163 184 / 0.16);
+
+    --easy: #34d399;
+    --easy-soft: rgb(16 185 129 / 0.16);
+    --intermediate: #38bdf8;
+    --intermediate-soft: rgb(14 165 233 / 0.16);
+    --hard: #fb7185;
+    --hard-soft: rgb(244 63 94 / 0.16);
+    --challenging: var(--color-gold-300);
+    --challenging-soft: rgb(228 156 36 / 0.16);
+
+    --strand-number: #818cf8;
+    --strand-algebra: #c084fc;
+    --strand-statistics: #2dd4bf;
+    --strand-geometry: #fb923c;
+
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #38bdf8;
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-surface: var(--surface);
+    --color-surface-muted: var(--surface-muted);
+    --color-foreground: var(--foreground);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-primary: var(--primary);
+    --color-primary-hover: var(--primary-hover);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-accent: var(--accent);
+    --color-accent-hover: var(--accent-hover);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-present: var(--present);
+    --color-present-soft: var(--present-soft);
+    --color-late: var(--late);
+    --color-late-soft: var(--late-soft);
+    --color-absent: var(--absent);
+    --color-absent-soft: var(--absent-soft);
+    --color-excused: var(--excused);
+    --color-excused-soft: var(--excused-soft);
+
+    --color-easy: var(--easy);
+    --color-easy-soft: var(--easy-soft);
+    --color-intermediate: var(--intermediate);
+    --color-intermediate-soft: var(--intermediate-soft);
+    --color-hard: var(--hard);
+    --color-hard-soft: var(--hard-soft);
+    --color-challenging: var(--challenging);
+    --color-challenging-soft: var(--challenging-soft);
+
+    --color-strand-number: var(--strand-number);
+    --color-strand-algebra: var(--strand-algebra);
+    --color-strand-statistics: var(--strand-statistics);
+    --color-strand-geometry: var(--strand-geometry);
+
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-danger: var(--danger);
+    --color-info: var(--info);
+}
+
+@layer base {
+    *,
+    ::after,
+    ::before {
+        border-color: var(--border);
+    }
+
+    body {
+        background-color: var(--background);
+        color: var(--foreground);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+    }
+}
