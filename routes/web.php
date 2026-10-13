@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ClassEnrolmentController;
 use App\Http\Controllers\Admin\ClassGroupController;
+use App\Http\Controllers\Admin\LessonReportController as AdminLessonReportController;
 use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
@@ -43,6 +44,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
         ->parameters(['classes' => 'classGroup']);
     Route::post('classes/{classGroup}/students', [ClassEnrolmentController::class, 'store'])->name('classes.students.store');
     Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
+
+    Route::get('lesson-reports', [AdminLessonReportController::class, 'index'])->name('lesson-reports.index');
 });
 
 if (app()->isLocal()) {

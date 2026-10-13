@@ -5,6 +5,7 @@ import type { IconName } from '@/components/icon';
 import { cn } from '@/lib/utils';
 import { dashboard, logout } from '@/routes';
 import { index as adminClassesIndex } from '@/routes/admin/classes';
+import { index as adminLessonReportsIndex } from '@/routes/admin/lesson-reports';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as childrenIndex } from '@/routes/children';
 import type { Role } from '@/types';
@@ -20,6 +21,7 @@ const navItems: Record<Role, NavItem[]> = {
         { label: 'Dashboard', icon: 'dashboard', href: dashboard },
         { label: 'Users', icon: 'users', href: adminUsersIndex },
         { label: 'Classes', icon: 'classes', href: adminClassesIndex },
+        { label: 'Reports', icon: 'book', href: adminLessonReportsIndex },
     ],
     tutor: [{ label: 'Today', icon: 'today', href: dashboard }],
     student: [{ label: 'Dashboard', icon: 'dashboard', href: dashboard }],
