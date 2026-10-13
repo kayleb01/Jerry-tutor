@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UserPasswordController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ChildPasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TutorCheckInController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -17,6 +18,9 @@ Route::inertia('/', 'welcome', [
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    Route::post('/lessons/{lesson}/check-in', TutorCheckInController::class)->name('lessons.check-in');
+    Route::get('/lessons/{lesson}/register', fn () => abort(404))->name('lessons.register.show');
 });
 
 Route::middleware(['auth', 'verified', 'role:guardian'])->group(function () {
