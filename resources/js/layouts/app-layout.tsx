@@ -1,19 +1,12 @@
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import AppLogoImage from '@/components/app-logo-image';
 import AppSidebar from '@/components/app-sidebar';
 import Icon from '@/components/icon';
 import Toast from '@/components/toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { Role } from '@/types';
-
-const roleLabels: Record<Role, string> = {
-    admin: 'Admin',
-    tutor: 'Tutor',
-    student: 'Student',
-    guardian: 'Parent',
-};
 
 const COLLAPSE_KEY = 'jga.sidebar.collapsed';
 
@@ -119,17 +112,15 @@ export default function AppLayout({
                 <AppSidebar collapsed={collapsed} />
             </aside>
 
-            <div className="flex items-center justify-between gap-3 bg-royal-950 px-4 py-3 lg:hidden [&_*:focus-visible]:outline-gold-400">
-                <span className="font-display text-lg font-bold tracking-wide text-white uppercase">
-                    Jerry Great Academy
-                </span>
+            <div className="flex items-center justify-between gap-3 border-b bg-surface px-4 py-3 lg:hidden">
+                <AppLogoImage className="w-28" />
                 <button
                     ref={menuButton}
                     type="button"
                     onClick={() => setDrawerOpen(true)}
                     aria-label="Open menu"
                     aria-expanded={drawerOpen}
-                    className="rounded-md p-2 text-royal-100 hover:bg-royal-900"
+                    className="rounded-md p-2 text-muted-foreground hover:bg-surface-muted"
                 >
                     <Icon name="menu" />
                 </button>
@@ -145,12 +136,12 @@ export default function AppLayout({
                         type="button"
                         aria-label="Close menu"
                         tabIndex={-1}
-                        className="absolute inset-0 bg-royal-950/60"
+                        className="absolute inset-0 bg-primary-10/60"
                         onClick={() => setDrawerOpen(false)}
                     />
                     <div
                         ref={drawerPanel}
-                        className="relative h-full w-72 max-w-[85vw] [&_*:focus-visible]:outline-gold-400"
+                        className="relative h-full w-72 max-w-[85vw]"
                     >
                         <AppSidebar
                             collapsed={false}
@@ -161,7 +152,7 @@ export default function AppLayout({
                             onClick={() => setDrawerOpen(false)}
                             aria-label="Close menu"
                             autoFocus
-                            className="absolute top-4 right-3 rounded-md p-2 text-royal-100 hover:bg-royal-900"
+                            className="absolute top-4 right-3 rounded-md p-2 text-muted-foreground hover:bg-surface-muted"
                         >
                             <Icon name="close" />
                         </button>
@@ -170,8 +161,8 @@ export default function AppLayout({
             )}
 
             <div className="min-w-0 flex-1">
-                <header className="mx-auto flex max-w-7xl flex-wrap items-start justify-between gap-4 px-4 pt-6 sm:px-6 lg:px-8 lg:pt-8">
-                    <div className="flex items-center gap-3">
+                <header className="mx-auto flex max-w-7xl flex-wrap items-end justify-between gap-4 px-4 pt-6 sm:px-6 lg:px-8 lg:pt-7">
+                    <div className="flex min-w-0 items-start gap-3">
                         <button
                             type="button"
                             onClick={toggleCollapsed}
@@ -181,35 +172,32 @@ export default function AppLayout({
                                     : 'Collapse sidebar'
                             }
                             aria-pressed={collapsed}
-                            className="hidden rounded-md p-2 text-muted-foreground hover:bg-surface-muted lg:inline-flex"
+                            className="mt-1 hidden rounded-md p-2 text-muted-foreground hover:bg-surface-muted lg:inline-flex"
                         >
                             <Icon name="panel" />
                         </button>
-                        <h1 className="font-display text-3xl font-bold tracking-wide uppercase sm:text-4xl">
-                            {title}
-                        </h1>
-                    </div>
-                    {auth.user && (
-                        <div className="sm:text-right">
-                            <p className="flex items-center gap-2 font-semibold sm:justify-end">
-                                {auth.user.name}
-                                <Badge tone="brand">
-                                    {badge ?? roleLabels[auth.user.role]}
-                                </Badge>
-                            </p>
+                        <div className="min-w-0">
                             {subtitle && (
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
                                     {subtitle}
                                 </p>
                             )}
+                            <h1 className="mt-1 flex flex-wrap items-center gap-3 text-[28px] leading-9 font-bold tracking-[-0.01em] sm:text-[30px] sm:leading-[38px]">
+                                {title}
+                                {auth.user && badge && (
+                                    <Badge tone="brand">{badge}</Badge>
+                                )}
+                            </h1>
+                        </div>
+                    </div>
+                    {actions && (
+                        <div className="flex flex-wrap items-center gap-3">
+                            {actions}
                         </div>
                     )}
                 </header>
-                <main className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-8">
+                <main className="mx-auto flex max-w-7xl flex-col gap-6 px-4 pt-6 pb-12 sm:px-6 lg:px-8">
                     <Toast />
-                    {actions && (
-                        <div className="flex flex-wrap gap-3">{actions}</div>
-                    )}
                     {children}
                 </main>
             </div>

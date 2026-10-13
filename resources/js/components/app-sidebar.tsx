@@ -22,8 +22,12 @@ const navItems: Record<Role, NavItem[]> = {
         { label: 'Dashboard', icon: 'dashboard', href: dashboard },
         { label: 'Users', icon: 'users', href: adminUsersIndex },
         { label: 'Classes', icon: 'classes', href: adminClassesIndex },
-        { label: 'Lateness', icon: 'clock', href: adminLatenessIndex },
-        { label: 'Reports', icon: 'book', href: adminLessonReportsIndex },
+        { label: 'Lateness', icon: 'alarm', href: adminLatenessIndex },
+        {
+            label: 'Class reports',
+            icon: 'report',
+            href: adminLessonReportsIndex,
+        },
     ],
     tutor: [{ label: 'Today', icon: 'today', href: dashboard }],
     student: [{ label: 'Dashboard', icon: 'dashboard', href: dashboard }],
@@ -38,8 +42,25 @@ type AppSidebarProps = {
     onNavigate?: () => void;
 };
 
+const roleLabels: Record<Role, string> = {
+    admin: 'Admin',
+    tutor: 'Tutor',
+    student: 'Student',
+    guardian: 'Parent',
+};
+
 const itemClass =
-    'flex h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors';
+    'flex h-11 items-center gap-3 rounded-md px-3 text-sm transition-colors';
+
+function initials(name: string): string {
+    return name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase();
+}
 
 export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
     const { auth } = usePage().props;
@@ -53,19 +74,23 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
         currentPath === url || currentPath.startsWith(`${url}/`);
 
     return (
-        <div className="flex h-full flex-col gap-6 bg-royal-950 px-3 py-5 text-royal-100 [&_*:focus-visible]:outline-gold-400">
+        <div className="flex h-full flex-col gap-5 border-r bg-surface px-4 py-5 text-foreground">
             <Link
                 href={dashboard()}
                 onClick={onNavigate}
                 aria-label="Jerry Great Academy dashboard"
-                className={cn('px-1', collapsed && 'mx-auto px-0')}
+                className={cn('px-2', collapsed && 'mx-auto px-0')}
             >
                 <AppLogoImage
-                    onDark
                     crest={collapsed}
-                    className={collapsed ? 'w-12 px-2 py-1.5' : 'w-48'}
+                    className={collapsed ? 'w-9' : 'w-40'}
                 />
             </Link>
+            {!collapsed && (
+                <p className="px-3 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    {roleLabels[auth.user.role]}
+                </p>
+            )}
             <nav aria-label="Main" className="flex flex-1 flex-col gap-1">
                 {navItems[auth.user.role].map((item) => {
                     const active = isActive(item.href().url);
@@ -80,8 +105,8 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
                             className={cn(
                                 itemClass,
                                 active
-                                    ? 'bg-royal-700 text-white shadow-raised'
-                                    : 'text-royal-200 hover:bg-royal-900 hover:text-white',
+                                    ? 'bg-primary font-semibold text-primary-foreground'
+                                    : 'font-medium text-muted-foreground hover:bg-surface-muted hover:text-foreground',
                                 collapsed && 'justify-center px-0',
                             )}
                         >
@@ -93,19 +118,43 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
                     );
                 })}
             </nav>
-            <Link
-                href={logout()}
-                as="button"
-                title={collapsed ? 'Log out' : undefined}
-                className={cn(
-                    itemClass,
-                    'text-royal-200 hover:bg-royal-900 hover:text-white',
-                    collapsed && 'justify-center px-0',
-                )}
-            >
-                <Icon name="logout" />
-                <span className={cn(collapsed && 'sr-only')}>Log out</span>
-            </Link>
+            <div className="flex flex-col gap-2 border-t pt-4">
+                <div
+                    className={cn(
+                        'flex items-center gap-3 px-2',
+                        collapsed && 'justify-center px-0',
+                    )}
+                    title={collapsed ? auth.user.name : undefined}
+                >
+                    <span
+                        aria-hidden="true"
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-90 text-[13px] font-semibold text-primary-10 dark:bg-primary-20 dark:text-primary-90"
+                    >
+                        {initials(auth.user.name)}
+                    </span>
+                    <div className={cn('min-w-0', collapsed && 'sr-only')}>
+                        <p className="truncate text-sm font-semibold">
+                            {auth.user.name}
+                        </p>
+                        <p className="truncate text-[13px] text-muted-foreground">
+                            {roleLabels[auth.user.role]}
+                        </p>
+                    </div>
+                </div>
+                <Link
+                    href={logout()}
+                    as="button"
+                    title={collapsed ? 'Log out' : undefined}
+                    className={cn(
+                        itemClass,
+                        'font-medium text-muted-foreground hover:bg-surface-muted hover:text-foreground',
+                        collapsed && 'justify-center px-0',
+                    )}
+                >
+                    <Icon name="logout" />
+                    <span className={cn(collapsed && 'sr-only')}>Log out</span>
+                </Link>
+            </div>
         </div>
     );
 }
