@@ -63,17 +63,30 @@ class RegisterController extends Controller
         /** @var array<int|string, array{status: string, arrived_at?: string|null, notes?: string|null}> $attendance */
         $attendance = $request->validated('attendance');
         $people = User::withTrashed()->whereKey(array_keys($attendance))->get()->keyBy('id');
+        $existing = $lesson->attendanceRecords()->get()->keyBy('user_id');
 
-        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $people): void {
+        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $people, $existing): void {
             foreach ($attendance as $userId => $entry) {
+                $record = $existing->get((int) $userId);
+
+                if ($this->isUnchanged($lesson, $record, $entry)) {
+                    continue;
+                }
+
                 $attended = in_array($entry['status'], ['present', 'late'], true);
+                $arrivedAt = match (true) {
+                    $entry['status'] === 'late' => $lesson->localTimeToUtc((string) $entry['arrived_at']),
+                    // Keep a real on-time arrival (e.g. the tutor's 08:58 check-in) instead of resetting it to the start.
+                    $entry['status'] === 'present' && $record?->status === AttendanceStatus::Present => $record->arrived_at,
+                    default => null,
+                };
 
                 $recordAttendance->handle(
                     $lesson,
                     $people[(int) $userId],
                     $attended ? AttendanceStatus::Present : AttendanceStatus::from($entry['status']),
                     $request->user(),
-                    $entry['status'] === 'late' ? $lesson->localTimeToUtc((string) $entry['arrived_at']) : null,
+                    $arrivedAt,
                     $entry['notes'] ?? null,
                 );
             }
@@ -82,6 +95,25 @@ class RegisterController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Register saved.']);
 
         return to_route('lessons.register.show', $lesson);
+    }
+
+    /**
+     * A row the form re-submitted exactly as stored is left alone, so its arrival time and recorder are kept.
+     *
+     * @param  array{status: string, arrived_at?: string|null, notes?: string|null}  $entry
+     */
+    private function isUnchanged(Lesson $lesson, ?AttendanceRecord $record, array $entry): bool
+    {
+        if ($record === null || ($record->notes ?? '') !== ($entry['notes'] ?? '')) {
+            return false;
+        }
+
+        return match ($entry['status']) {
+            'present' => $record->status === AttendanceStatus::Present,
+            'late' => $record->status === AttendanceStatus::Late
+                && $record->arrived_at?->setTimezone(config('academy.timezone'))->format('H:i') === ($entry['arrived_at'] ?? null),
+            default => $record->status->value === $entry['status'],
+        };
     }
 
     /**

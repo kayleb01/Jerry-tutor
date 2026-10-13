@@ -111,3 +111,12 @@ it('still accepts a student who has since left the class, for corrections', func
 it('refuses Late as an input, because lateness is worked out', function () {
     ($this->record)($this->student, AttendanceStatus::Late, '2025-10-04 09:10:00');
 })->throws(InvalidArgumentException::class);
+
+it('can record only when nothing is recorded yet, leaving an existing record untouched', function () {
+    ($this->record)($this->student, AttendanceStatus::Present, '2025-10-04 09:10:00');
+
+    $result = app(RecordAttendance::class)->handle($this->lesson, $this->student, AttendanceStatus::Absent, null, onlyIfUnrecorded: true);
+
+    expect($result->status)->toBe(AttendanceStatus::Late)
+        ->and(LatenessReport::count())->toBe(1);
+});

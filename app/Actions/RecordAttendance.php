@@ -21,6 +21,8 @@ use InvalidArgumentException;
 class RecordAttendance
 {
     /**
+     * With $onlyIfUnrecorded, an existing record is returned untouched (used by check-in and the no-show job).
+     *
      * @throws InvalidArgumentException
      */
     public function handle(
@@ -30,6 +32,7 @@ class RecordAttendance
         ?User $recordedBy,
         ?CarbonImmutable $arrivedAt = null,
         ?string $notes = null,
+        bool $onlyIfUnrecorded = false,
     ): AttendanceRecord {
         if ($status === AttendanceStatus::Late) {
             throw new InvalidArgumentException('Record Present with an arrival time; lateness is worked out from it.');
@@ -41,7 +44,18 @@ class RecordAttendance
         $minutesLate = $arrivedAt === null ? 0 : max(0, (int) floor($lesson->starts_at->diffInSeconds($arrivedAt, false) / 60));
         $isLate = $arrivedAt !== null && $minutesLate > (int) config('academy.lateness_grace_minutes');
 
-        return DB::transaction(function () use ($lesson, $attendee, $attendeeRole, $status, $recordedBy, $arrivedAt, $minutesLate, $isLate, $notes): AttendanceRecord {
+        return DB::transaction(function () use ($lesson, $attendee, $attendeeRole, $status, $recordedBy, $arrivedAt, $minutesLate, $isLate, $notes, $onlyIfUnrecorded): AttendanceRecord {
+            // Serialise writers for this lesson so check-ins, saves and the no-show job can't interleave.
+            Lesson::query()->whereKey($lesson->id)->lockForUpdate()->first();
+
+            if ($onlyIfUnrecorded) {
+                $existing = AttendanceRecord::query()->where('lesson_id', $lesson->id)->where('user_id', $attendee->id)->first();
+
+                if ($existing !== null) {
+                    return $existing->load('latenessReport');
+                }
+            }
+
             $record = AttendanceRecord::query()->updateOrCreate(
                 ['lesson_id' => $lesson->id, 'user_id' => $attendee->id],
                 [
@@ -69,7 +83,7 @@ class RecordAttendance
             return AttendeeRole::Tutor;
         }
 
-        if ($lesson->classGroup->students()->whereKey($attendee->id)->exists()) {
+        if ($lesson->classGroup->students()->withTrashed()->whereKey($attendee->id)->exists()) {
             return AttendeeRole::Student;
         }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\RecordAttendance;
 use App\Enums\AttendanceStatus;
 use App\Enums\LessonStatus;
 use App\Models\ClassGroup;
@@ -89,3 +90,18 @@ it('refuses check-in for someone else\'s lesson or too early', function () {
 
     expect($this->lesson->attendanceRecords()->count())->toBe(0);
 });
+
+it('will not let check-in overwrite a record an admin or the no-show job already made', function (AttendanceStatus $existing) {
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:05:00', 'UTC'));
+    app(RecordAttendance::class)->handle($this->lesson, $this->tutor, $existing, null);
+
+    $this->actingAs($this->tutor)->post(route('lessons.check-in', $this->lesson))
+        ->assertInertiaFlash('toast.type', 'error');
+
+    $record = $this->lesson->attendanceRecords()->where('user_id', $this->tutor->id)->first();
+    expect($record->status)->toBe($existing)
+        ->and($record->latenessReport)->toBeNull();
+
+    $this->actingAs($this->tutor)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->where('today.0.canCheckIn', false));
+})->with([AttendanceStatus::Absent, AttendanceStatus::Excused]);

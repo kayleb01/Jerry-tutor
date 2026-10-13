@@ -15,6 +15,21 @@ class UpdateRegisterRequest extends FormRequest
     }
 
     /**
+     * People left unmarked on the form are not part of the save; they stay unrecorded.
+     */
+    protected function prepareForValidation(): void
+    {
+        $attendance = (array) $this->input('attendance', []);
+
+        $this->merge([
+            'attendance' => array_filter(
+                $attendance,
+                fn (mixed $entry): bool => is_array($entry) && filled($entry['status'] ?? null),
+            ),
+        ]);
+    }
+
+    /**
      * @return array<string, array<int, mixed>>
      */
     public function rules(): array
@@ -41,7 +56,7 @@ class UpdateRegisterRequest extends FormRequest
                 $ids = array_map('intval', array_keys((array) $this->input('attendance', [])));
                 $canEditTutor = $this->user()->can('recordTutorAttendance', $lesson);
 
-                $allowed = $lesson->classGroup->students()->pluck('users.id')->all();
+                $allowed = $lesson->classGroup->students()->withTrashed()->pluck('users.id')->all();
                 if ($canEditTutor) {
                     $allowed[] = $lesson->tutor_id;
                 }
@@ -61,6 +76,7 @@ class UpdateRegisterRequest extends FormRequest
         return [
             'attendance.*.arrived_at.required_if' => 'Enter the time they arrived.',
             'attendance.*.arrived_at.date_format' => 'Use a time like 10:05.',
+            'attendance.required' => 'Mark at least one person before saving.',
             'attendance.*.status.in' => 'Choose on time, late, absent or excused.',
         ];
     }

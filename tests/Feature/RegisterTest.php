@@ -140,3 +140,75 @@ it('lists a class\'s recent and upcoming lessons for admins', function () {
             ->where('lessons.0.when', 'Sat 4 Oct, 10:00')
             ->where('lessons.0.recorded', 0));
 });
+
+it('still saves a register after a recorded student is deactivated', function () {
+    $this->actingAs($this->tutor)->put(route('lessons.register.update', $this->lesson), [
+        'attendance' => [$this->ava->id => ['status' => 'late', 'arrived_at' => '10:05']],
+    ]);
+    $this->ava->delete();
+
+    $this->actingAs($this->tutor)->put(route('lessons.register.update', $this->lesson), [
+        'attendance' => [
+            $this->ava->id => ['status' => 'present'],
+            $this->bola->id => ['status' => 'absent'],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    expect($this->lesson->attendanceRecords()->where('user_id', $this->ava->id)->first()->status)->toBe(AttendanceStatus::Present);
+});
+
+it('saves the rows that are marked and leaves unmarked people alone', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->put(route('lessons.register.update', $this->lesson), [
+        'attendance' => [
+            $this->tutor->id => ['notes' => ''],
+            $this->ava->id => ['status' => 'present', 'notes' => ''],
+            $this->bola->id => ['notes' => ''],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    expect($this->lesson->attendanceRecords()->pluck('user_id')->all())->toBe([$this->ava->id]);
+});
+
+it('keeps the tutor\'s real check-in time and who recorded untouched rows when an admin saves', function () {
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 08:58:00', 'UTC'));
+    $this->actingAs($this->tutor)->post(route('lessons.check-in', $this->lesson));
+    $this->actingAs($this->tutor)->put(route('lessons.register.update', $this->lesson), [
+        'attendance' => [$this->ava->id => ['status' => 'present']],
+    ]);
+
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin)->put(route('lessons.register.update', $this->lesson), [
+        'attendance' => [
+            $this->tutor->id => ['status' => 'present', 'notes' => ''],
+            $this->ava->id => ['status' => 'present', 'notes' => ''],
+            $this->bola->id => ['status' => 'absent'],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    $records = $this->lesson->attendanceRecords()->get()->keyBy('user_id');
+    expect($records[$this->tutor->id]->arrived_at->toDateTimeString())->toBe('2025-10-04 08:58:00')
+        ->and($records[$this->tutor->id]->recorded_by_id)->toBe($this->tutor->id)
+        ->and($records[$this->ava->id]->recorded_by_id)->toBe($this->tutor->id)
+        ->and($records[$this->bola->id]->recorded_by_id)->toBe($admin->id);
+});
+
+it('refuses register saves outside the tutor\'s window or by anyone else', function (string $who, ?string $now) {
+    if ($now) {
+        $this->travelTo(CarbonImmutable::parse($now, 'UTC'));
+    }
+    $actor = $who === 'own tutor' ? $this->tutor : User::factory()->{$who}()->create();
+
+    $this->actingAs($actor)->put(route('lessons.register.update', $this->lesson), [
+        'attendance' => [$this->ava->id => ['status' => 'present']],
+    ])->assertForbidden();
+
+    expect($this->lesson->attendanceRecords()->count())->toBe(0);
+})->with([
+    'own tutor, a week early' => ['own tutor', '2025-09-27 09:00:00'],
+    'own tutor, two days later' => ['own tutor', '2025-10-06 12:00:00'],
+    'another tutor' => ['tutor', null],
+    'guardian' => ['guardian', null],
+    'student' => ['student', null],
+]);

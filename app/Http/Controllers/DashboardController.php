@@ -60,7 +60,7 @@ class DashboardController extends Controller
                     'checkedInAt' => $own?->arrived_at?->setTimezone($timezone)->format('H:i'),
                     'late' => $own?->status === AttendanceStatus::Late,
                     'students' => $lesson->classGroup->active_students_count,
-                    'canCheckIn' => $own?->arrived_at === null && $tutor->can('checkIn', $lesson),
+                    'canCheckIn' => $own === null && $tutor->can('checkIn', $lesson),
                 ];
             })
             ->all();

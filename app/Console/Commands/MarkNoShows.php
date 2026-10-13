@@ -37,8 +37,8 @@ class MarkNoShows extends Command
             $people
                 ->reject(fn (User $person): bool => in_array($person->id, $recorded, true))
                 ->each(function (User $person) use ($lesson, $recordAttendance, &$marked): void {
-                    $recordAttendance->handle($lesson, $person, AttendanceStatus::Absent, null);
-                    $marked++;
+                    $record = $recordAttendance->handle($lesson, $person, AttendanceStatus::Absent, null, onlyIfUnrecorded: true);
+                    $marked += $record->wasRecentlyCreated ? 1 : 0;
                 });
 
             $lesson->update(['status' => LessonStatus::Completed]);
