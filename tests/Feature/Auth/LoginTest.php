@@ -48,3 +48,16 @@ it('rejects an unknown username', function () {
 
     $this->assertGuest();
 });
+
+it('shows a friendly error on the form after too many failed attempts', function () {
+    User::factory()->create(['email' => 'parent@example.com']);
+
+    foreach (range(1, 5) as $attempt) {
+        $this->post(route('login.store'), ['login' => 'parent@example.com', 'password' => 'wrong-password']);
+    }
+
+    $this->from(route('login'))
+        ->post(route('login.store'), ['login' => 'parent@example.com', 'password' => 'wrong-password'])
+        ->assertRedirect(route('login'))
+        ->assertSessionHasErrors('login');
+});
