@@ -104,3 +104,20 @@ it('runs from the console', function () {
         ->expectsOutputToContain('Created 2 lessons')
         ->assertSuccessful();
 });
+
+it('skips classes whose tutor has been deactivated', function () {
+    $group = ClassGroup::factory()->create(['weekday' => Weekday::Saturday]);
+    $group->tutor->delete();
+
+    expect(app(LessonScheduler::class)->generate())->toBe(0)
+        ->and(app(LessonScheduler::class)->generateFor($group->fresh()))->toBe(0);
+});
+
+it('schedules from the stored class, not a stale copy', function () {
+    $group = ClassGroup::factory()->create(['weekday' => Weekday::Saturday, 'start_time' => '10:00']);
+    ClassGroup::whereKey($group->id)->update(['weekday' => Weekday::Sunday->value, 'start_time' => '14:00:00']);
+
+    app(LessonScheduler::class)->generateFor($group);
+
+    expect($group->lessons()->orderBy('starts_at')->first()->starts_at->toDateTimeString())->toBe('2025-10-05 13:00:00');
+});

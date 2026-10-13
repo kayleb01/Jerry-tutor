@@ -6,6 +6,7 @@ use App\Enums\LessonStatus;
 use App\Models\ClassGroup;
 use App\Models\Lesson;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Turns each class's weekly schedule into dated lessons. The schedule is read in
@@ -22,19 +23,30 @@ class LessonScheduler
             ->where('is_active', true)
             ->whereNotNull('weekday')
             ->whereNotNull('start_time')
-            ->whereNotNull('tutor_id')
-            ->get()
+            ->whereHas('tutor')
+            ->lazyById()
             ->sum(fn (ClassGroup $group): int => $this->generateFor($group, $days));
     }
 
     /**
      * Generate the class's upcoming lessons that don't exist yet. Returns how many were created.
+     * The class is re-read and locked first, so a stale copy can never recreate lessons at an old time.
      */
     public function generateFor(ClassGroup $group, ?int $days = null): int
     {
-        if (! $group->is_active || ! $group->hasSchedule() || $group->tutor_id === null) {
-            return 0;
-        }
+        return DB::transaction(function () use ($group, $days): int {
+            $group = ClassGroup::query()->lockForUpdate()->find($group->id);
+
+            if ($group === null || ! $group->is_active || ! $group->hasSchedule() || $group->tutor === null) {
+                return 0;
+            }
+
+            return $this->createUpcomingLessons($group, $days);
+        });
+    }
+
+    private function createUpcomingLessons(ClassGroup $group, ?int $days): int
+    {
 
         $timezone = config('academy.timezone');
         $now = CarbonImmutable::now();
@@ -76,11 +88,15 @@ class LessonScheduler
      */
     public function rescheduleFuture(ClassGroup $group): void
     {
-        $group->lessons()
-            ->where('status', LessonStatus::Scheduled)
-            ->where('starts_at', '>', CarbonImmutable::now())
-            ->delete();
+        DB::transaction(function () use ($group): void {
+            ClassGroup::query()->lockForUpdate()->find($group->id);
 
-        $this->generateFor($group);
+            $group->lessons()
+                ->where('status', LessonStatus::Scheduled)
+                ->where('starts_at', '>', CarbonImmutable::now())
+                ->delete();
+
+            $this->generateFor($group);
+        });
     }
 }

@@ -8,10 +8,13 @@ use App\Enums\YearGroup;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
+use App\Models\ClassGroup;
 use App\Models\User;
+use App\Services\LessonScheduler;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -122,7 +125,7 @@ class UserController extends Controller
         return to_route('admin.users.index');
     }
 
-    public function destroy(Request $request, User $user): RedirectResponse
+    public function destroy(Request $request, User $user, LessonScheduler $scheduler): RedirectResponse
     {
         if ($user->is($request->user())) {
             Inertia::flash('toast', ['type' => 'error', 'message' => "You can't deactivate your own account."]);
@@ -130,7 +133,14 @@ class UserController extends Controller
             return back();
         }
 
-        $user->delete();
+        DB::transaction(function () use ($user, $scheduler): void {
+            $user->delete();
+
+            $user->classGroupsTaught()->each(function (ClassGroup $group) use ($scheduler): void {
+                $group->update(['tutor_id' => null]);
+                $scheduler->rescheduleFuture($group);
+            });
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$user->name} has been deactivated."]);
 

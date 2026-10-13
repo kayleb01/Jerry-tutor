@@ -1,6 +1,10 @@
 <?php
 
+use App\Enums\Weekday;
+use App\Models\ClassGroup;
 use App\Models\User;
+use App\Services\LessonScheduler;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Hash;
 
 beforeEach(function () {
@@ -70,3 +74,14 @@ it('keeps lifecycle actions admin-only', function (string $method, string $route
     'restore' => ['post', 'admin.users.restore'],
     'password' => ['put', 'admin.users.password.update'],
 ]);
+
+it('takes a deactivated tutor off their classes and clears their upcoming lessons', function () {
+    $this->travelTo(CarbonImmutable::parse('2025-10-01 11:00:00', 'UTC'));
+    $group = ClassGroup::factory()->create(['weekday' => Weekday::Saturday]);
+    app(LessonScheduler::class)->generateFor($group);
+
+    $this->actingAs($this->admin)->delete(route('admin.users.destroy', $group->tutor));
+
+    expect($group->fresh()->tutor_id)->toBeNull()
+        ->and($group->lessons()->count())->toBe(0);
+});
