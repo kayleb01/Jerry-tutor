@@ -298,7 +298,7 @@ e.g. KS2 Number has _Place value, Addition & subtraction, Multiplication & divis
 
 Both gateways are supported through one `PaymentGateway` contract. The active one for **new** checkouts is chosen by `config('payments.default')` (`paystack` or `flutterwave`). Every subscription records which gateway it belongs to, so renewals, cancellations and webhooks always go back to the gateway that created it, even after the default is switched.
 
-**Currency: Nigerian naira (NGN) only.** Amounts are stored as integer **kobo** (₦1 = 100 kobo) everywhere in our database. Each driver converts at its edge: Paystack takes kobo as-is, while **Flutterwave v3 takes naira**, so the driver sends `amount / 100` and converts the webhook and verify amounts back to kobo.
+**Currency: Nigerian naira (NGN) only, for every subscription. No free trial for now:** a subscription only becomes `Active` after a verified first payment. Amounts are stored as integer **kobo** (₦1 = 100 kobo) everywhere in our database. Each driver converts at its edge: Paystack takes kobo as-is, while **Flutterwave v3 takes naira**, so the driver sends `amount / 100` and converts the webhook and verify amounts back to kobo.
 
 **API versions are pinned:** the Paystack REST API (`https://api.paystack.co`, which has a single stable version) and **Flutterwave v3** (`https://api.flutterwave.com/v3`), the stable, generally available version. Newer Flutterwave API versions are out of scope until they're stable and we choose to migrate.
 
