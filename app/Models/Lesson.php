@@ -78,6 +78,14 @@ class Lesson extends Model
         return $this->hasMany(LatenessReport::class);
     }
 
+    /**
+     * @return HasMany<LessonReport, $this>
+     */
+    public function lessonReports(): HasMany
+    {
+        return $this->hasMany(LessonReport::class);
+    }
+
     public function localStart(): CarbonImmutable
     {
         return $this->starts_at->setTimezone(config('academy.timezone'));

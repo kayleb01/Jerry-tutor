@@ -2,12 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\AttendanceStatus;
-use App\Models\AttendanceRecord;
 use App\Models\Lesson;
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
@@ -17,6 +14,8 @@ use Illuminate\Support\Collection;
  */
 class StudentDashboard
 {
+    public function __construct(private AttendanceStats $attendanceStats) {}
+
     /**
      * Maths strands shown on the dashboard. Quiz progress for each arrives in Phase 5.
      */
@@ -59,7 +58,7 @@ class StudentDashboard
                 'weekLabel' => $this->weekLabel($weekStart, $weekEnd),
             ],
             'stats' => [
-                ...$this->attendanceStats($student, $now),
+                ...collect($this->attendanceStats->forUser($student, $now))->only(['attendance', 'onTime'])->all(),
                 'classTime' => $this->duration($countable->sum(fn (Lesson $lesson): int => $this->minutes($lesson))),
                 'lessonsThisWeek' => $countable->count(),
             ],
@@ -83,29 +82,6 @@ class StudentDashboard
                 ->values()
                 ->all(),
             'nextWeek' => $nextWeek,
-        ];
-    }
-
-    /**
-     * Attendance = attended / (attended + absent); on time = present / attended. Excused is left out. Last 30 days.
-     *
-     * @return array{attendance: int|null, onTime: int|null}
-     */
-    private function attendanceStats(User $student, CarbonImmutable $now): array
-    {
-        $statuses = AttendanceRecord::query()
-            ->where('user_id', $student->id)
-            ->whereHas('lesson', fn (Builder $query) => $query->whereBetween('starts_at', [$now->subDays(30), $now]))
-            ->pluck('status');
-
-        $present = $statuses->filter(fn (AttendanceStatus $status): bool => $status === AttendanceStatus::Present)->count();
-        $late = $statuses->filter(fn (AttendanceStatus $status): bool => $status === AttendanceStatus::Late)->count();
-        $absent = $statuses->filter(fn (AttendanceStatus $status): bool => $status === AttendanceStatus::Absent)->count();
-        $attended = $present + $late;
-
-        return [
-            'attendance' => $attended + $absent === 0 ? null : (int) round($attended / ($attended + $absent) * 100),
-            'onTime' => $attended === 0 ? null : (int) round($present / $attended * 100),
         ];
     }
 

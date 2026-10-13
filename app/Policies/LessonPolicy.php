@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\AttendanceStatus;
 use App\Enums\Role;
 use App\Models\Lesson;
 use App\Models\User;
@@ -41,6 +42,28 @@ class LessonPolicy
     public function recordTutorAttendance(User $user, Lesson $lesson): bool
     {
         return ! $lesson->isCancelled() && $user->hasRole(Role::Admin);
+    }
+
+    /**
+     * The tutor, or a student who attended (on time or late), from the start until 48 hours after the end.
+     * Admins read reports but never write them.
+     */
+    public function submitReport(User $user, Lesson $lesson): bool
+    {
+        $now = CarbonImmutable::now();
+
+        if ($lesson->isCancelled() || $now->lessThan($lesson->starts_at) || $now->greaterThan($lesson->ends_at->addHours(48))) {
+            return false;
+        }
+
+        if ($lesson->tutor_id === $user->id) {
+            return true;
+        }
+
+        return $user->hasRole(Role::Student) && $lesson->attendanceRecords()
+            ->where('user_id', $user->id)
+            ->whereIn('status', [AttendanceStatus::Present, AttendanceStatus::Late])
+            ->exists();
     }
 
     private function withinTutorWindow(Lesson $lesson): bool
