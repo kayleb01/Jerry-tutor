@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\YearGroup;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -11,15 +12,26 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed demo accounts for each role. All use the password "password".
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        if (User::where('email', 'admin@academy.test')->exists()) {
+            return;
+        }
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::factory()->admin()->create(['name' => 'Academy Admin', 'email' => 'admin@academy.test']);
+        User::factory()->tutor()->create(['name' => 'Demo Tutor', 'email' => 'tutor@academy.test']);
+
+        $parent = User::factory()->guardian()->create(['name' => 'Demo Parent', 'email' => 'parent@academy.test']);
+
+        $parent->linkChild(
+            User::factory()->student(YearGroup::Year5)->create(['name' => 'Ava (Year 5)', 'email' => 'ks2.student@academy.test']),
+            'Parent',
+        );
+        $parent->linkChild(
+            User::factory()->student(YearGroup::Year8)->create(['name' => 'Leo (Year 8)', 'email' => 'ks3.student@academy.test']),
+            'Parent',
+        );
     }
 }
