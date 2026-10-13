@@ -15,7 +15,10 @@ export default function ForgotPassword({ status }: { status: string | null }) {
         >
             <Head title="Forgot password" />
             {status && (
-                <p className="mb-4 rounded-md bg-present-soft px-3 py-2 text-sm text-present">
+                <p
+                    role="status"
+                    className="mb-4 rounded-md bg-present-soft px-3 py-2 text-sm text-present"
+                >
                     {status}
                 </p>
             )}

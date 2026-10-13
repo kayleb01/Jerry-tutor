@@ -30,6 +30,8 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                 type="email"
                                 value={email}
                                 readOnly
+                                aria-invalid={!!errors.email}
+                                aria-describedby="email-error"
                             />
                             <FieldError
                                 id="email-error"
