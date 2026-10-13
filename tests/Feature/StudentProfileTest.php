@@ -27,10 +27,10 @@ it('grants the challenging tier only to unlocked KS3 students', function (YearGr
     'year 10 unlocked (KS4)' => [YearGroup::Year10, true, false],
 ]);
 
-it('deletes the profile when the student is deleted', function () {
+it('deletes the profile when the student is permanently deleted', function () {
     $student = User::factory()->student()->create();
 
-    $student->delete();
+    $student->forceDelete();
 
     expect(StudentProfile::count())->toBe(0);
 });

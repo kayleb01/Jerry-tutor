@@ -40,12 +40,12 @@ it('refuses linking a user to themselves', function () {
     $guardian->linkChild($guardian);
 })->throws(InvalidArgumentException::class);
 
-it('removes links when the student is deleted', function () {
+it('removes links when the student is permanently deleted', function () {
     $guardian = User::factory()->guardian()->create();
     $student = User::factory()->student()->create();
     $guardian->linkChild($student);
 
-    $student->delete();
+    $student->forceDelete();
 
-    expect($guardian->children()->count())->toBe(0);
+    $this->assertDatabaseCount('guardian_student', 0);
 });
