@@ -8,10 +8,12 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use InvalidArgumentException;
 
 /**
  * @property int $id
@@ -56,5 +58,39 @@ class User extends Authenticatable
     public function studentProfile(): HasOne
     {
         return $this->hasOne(StudentProfile::class);
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function children(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'guardian_student', 'guardian_id', 'student_id')
+            ->withPivot('relationship')
+            ->withTimestamps();
+    }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function guardians(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'guardian_student', 'student_id', 'guardian_id')
+            ->withPivot('relationship')
+            ->withTimestamps();
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function linkChild(User $student, ?string $relationship = null): void
+    {
+        if ($this->is($student) || ! $this->hasRole(Role::Guardian) || ! $student->hasRole(Role::Student)) {
+            throw new InvalidArgumentException('Only a guardian can be linked to a different student.');
+        }
+
+        $this->children()->syncWithoutDetaching([
+            $student->id => ['relationship' => $relationship],
+        ]);
     }
 }
