@@ -10,8 +10,9 @@ use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Fortify;
 
 /**
- * Answer an unknown email exactly like a known one, so the form can't be used
- * to find out who has an account. Throttling still shows its real error.
+ * Answer an unknown or recently-emailed address exactly like a successful
+ * request, so neither "no such user" nor the per-user throttle reveals who has
+ * an account. The broker still refuses to send repeat emails while throttled.
  */
 class NeutralPasswordResetLinkResponse implements FailedPasswordResetLinkRequestResponse
 {
@@ -22,7 +23,7 @@ class NeutralPasswordResetLinkResponse implements FailedPasswordResetLinkRequest
      */
     public function toResponse($request): RedirectResponse
     {
-        if ($this->status === Password::INVALID_USER) {
+        if (in_array($this->status, [Password::INVALID_USER, Password::RESET_THROTTLED], true)) {
             return back()->with('status', __(Password::RESET_LINK_SENT));
         }
 

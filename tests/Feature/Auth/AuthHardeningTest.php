@@ -40,3 +40,15 @@ it('shows the confirm-password page instead of an error', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component('auth/confirm-password'));
 });
+
+it('does not reveal an account through the reset-link throttle', function () {
+    Notification::fake();
+    User::factory()->create(['email' => 'parent@example.com']);
+
+    $this->post(route('password.email'), ['email' => 'parent@example.com']);
+
+    $this->from(route('password.request'))
+        ->post(route('password.email'), ['email' => 'parent@example.com'])
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('status', __('passwords.sent'));
+});
