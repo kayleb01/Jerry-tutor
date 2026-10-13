@@ -10,8 +10,10 @@ use App\Http\Requests\Admin\ClassGroupRequest;
 use App\Models\ClassGroup;
 use App\Models\User;
 use App\Services\LessonScheduler;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -69,6 +71,29 @@ class ClassGroupController extends Controller
                 'isActive' => $classGroup->is_active,
                 'schedule' => $classGroup->scheduleLabel(),
             ],
+            'students' => $classGroup->activeStudents()
+                ->with('studentProfile')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $student): array => [
+                    'id' => $student->id,
+                    'name' => $student->name,
+                    'username' => $student->username,
+                    'yearGroup' => $student->studentProfile?->year_group->label(),
+                    'enrolledOn' => Carbon::parse($student->pivot->enrolled_at)->format('j M Y'),
+                ]),
+            'candidates' => User::query()
+                ->where('role', Role::Student)
+                ->whereDoesntHave('enrolledClassGroups', fn (Builder $query) => $query
+                    ->whereKey($classGroup->id)
+                    ->whereNull('class_group_student.left_at'))
+                ->with('studentProfile')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $student): array => [
+                    'value' => $student->id,
+                    'label' => $student->name.($student->studentProfile ? " ({$student->studentProfile->year_group->label()})" : ''),
+                ]),
         ]);
     }
 

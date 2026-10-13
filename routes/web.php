@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ClassEnrolmentController;
 use App\Http\Controllers\Admin\ClassGroupController;
 use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\UserController;
@@ -31,6 +32,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::resource('classes', ClassGroupController::class)
         ->except(['show', 'destroy'])
         ->parameters(['classes' => 'classGroup']);
+    Route::post('classes/{classGroup}/students', [ClassEnrolmentController::class, 'store'])->name('classes.students.store');
+    Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
 });
 
 if (app()->isLocal()) {

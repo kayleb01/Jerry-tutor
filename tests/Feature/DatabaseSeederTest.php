@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Enums\YearGroup;
+use App\Models\ClassGroup;
 use App\Models\User;
 
 it('seeds one demo account per role with linked children', function () {
@@ -31,4 +32,14 @@ it('seeds students who can log in with a known username', function () {
 
     expect(User::firstWhere('username', 'ava.year5')->email)->toBeNull()
         ->and(User::firstWhere('username', 'leo.year8'))->not->toBeNull();
+});
+
+it('seeds a demo class with an enrolled student and upcoming lessons', function () {
+    $this->seed();
+
+    $group = ClassGroup::firstWhere('name', 'Year 5 Maths – Saturday');
+
+    expect($group->tutor->email)->toBe('tutor@academy.test')
+        ->and($group->activeStudents()->pluck('username')->all())->toBe(['ava.year5'])
+        ->and($group->lessons()->count())->toBeGreaterThan(0);
 });
