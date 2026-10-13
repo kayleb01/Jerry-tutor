@@ -96,5 +96,5 @@ Components to add as features need them (see the implementation plan): Select, T
 
 ## 6. Brand assets
 
-- The full raster logo is at `public/images/brand/logo-full.jpg`.
+- The full raster logo is at `public/images/brand/logo-full.jpg`, with a tightly cropped copy at `public/images/brand/logo.jpg`. The `AppLogoImage` component uses the cropped copy on every auth page (login, register, forgot/reset password, verify email). It blends the JPG's grey background away in light mode and puts it on a light panel in dark mode.
 - **To do:** request the SVG logo and a square crest mark from the client, for the favicon, the app icon and the nav.

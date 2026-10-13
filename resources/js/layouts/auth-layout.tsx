@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import AppLogo from '@/components/app-logo';
+import AppLogoImage from '@/components/app-logo-image';
 import {
     Card,
     CardContent,
@@ -24,7 +24,7 @@ export default function AuthLayout({
     return (
         <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-4 py-10">
             <Link href={home()} aria-label="Jerry Great Academy home">
-                <AppLogo className="text-3xl" />
+                <AppLogoImage className="w-56 sm:w-64" />
             </Link>
             <Card className="w-full max-w-md">
                 <CardHeader>
