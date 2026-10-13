@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -132,5 +133,31 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->children()->syncWithoutDetaching([
             $student->id => ['relationship' => $relationship],
         ]);
+    }
+
+    /**
+     * @return HasMany<ClassGroup, $this>
+     */
+    public function classGroupsTaught(): HasMany
+    {
+        return $this->hasMany(ClassGroup::class, 'tutor_id');
+    }
+
+    /**
+     * @return BelongsToMany<ClassGroup, $this>
+     */
+    public function enrolledClassGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(ClassGroup::class, 'class_group_student', 'student_id', 'class_group_id')
+            ->withPivot(['enrolled_at', 'left_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<Lesson, $this>
+     */
+    public function lessonsTaught(): HasMany
+    {
+        return $this->hasMany(Lesson::class, 'tutor_id');
     }
 }
