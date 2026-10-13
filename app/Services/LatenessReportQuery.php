@@ -35,7 +35,8 @@ class LatenessReportQuery
      */
     public function filtered(array $filters): Builder
     {
-        $search = '%'.addcslashes($filters['search'], '%_\\').'%';
+        // "!" as the LIKE escape character behaves the same on SQLite, MySQL and PostgreSQL.
+        $search = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $filters['search']).'%';
 
         return LatenessReport::query()
             ->with(['user', 'reviewedBy'])
@@ -43,7 +44,7 @@ class LatenessReportQuery
             ->when($filters['class'], fn (Builder $query, int $class) => $query->whereHas('lesson', fn (Builder $lesson) => $lesson->where('class_group_id', $class)))
             ->when($filters['from'], fn (Builder $query, CarbonImmutable $from) => $query->where('lesson_date', '>=', $from->toDateString()))
             ->when($filters['to'], fn (Builder $query, CarbonImmutable $to) => $query->where('lesson_date', '<=', $to->toDateString()))
-            ->when($filters['search'] !== '', fn (Builder $query) => $query->whereHas('user', fn (Builder $user) => $user->withTrashed()->whereRaw("LOWER(name) LIKE ? ESCAPE '\\'", [$search])))
+            ->when($filters['search'] !== '', fn (Builder $query) => $query->whereHas('user', fn (Builder $user) => $user->withTrashed()->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$search])))
             ->orderByDesc('lesson_date')
             ->orderByDesc('scheduled_start_at')
             ->orderByDesc('id');

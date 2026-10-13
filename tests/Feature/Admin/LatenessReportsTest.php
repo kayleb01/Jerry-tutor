@@ -130,3 +130,13 @@ it('exports the filtered list as CSV, neutralising formulas', function () {
 it('keeps exporting admin-only', function () {
     $this->actingAs(User::factory()->tutor()->create())->get(route('admin.lateness.export'))->assertForbidden();
 });
+
+it('keeps follow-up admin-only', function (string $state) {
+    $report = ($this->lateOn)('2025-10-20', $this->ava);
+
+    $this->actingAs(User::factory()->{$state}()->create())
+        ->put(route('admin.lateness.update', $report), ['follow_up_notes' => 'x', 'reviewed' => true])
+        ->assertForbidden();
+
+    expect($report->fresh()->reviewed_at)->toBeNull();
+})->with(['tutor', 'student', 'guardian']);

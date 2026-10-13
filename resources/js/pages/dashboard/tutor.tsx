@@ -7,6 +7,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import ReportsDue from '@/components/reports-due';
+import type { ReportDue } from '@/components/reports-due';
 import AppLayout from '@/layouts/app-layout';
 import { checkIn } from '@/routes/lessons';
 import { show as register } from '@/routes/lessons/register';
@@ -28,15 +30,18 @@ type TodayLesson = {
 
 type TutorDashboardProps = {
     today: TodayLesson[];
+    reportsDue: ReportDue[];
     upcoming: { id: number; className: string; when: string }[];
 };
 
 export default function TutorDashboard({
     today,
     upcoming,
+    reportsDue,
 }: TutorDashboardProps) {
     return (
         <AppLayout title="Today">
+            <ReportsDue reports={reportsDue} />
             {today.length === 0 ? (
                 <Card>
                     <CardHeader>

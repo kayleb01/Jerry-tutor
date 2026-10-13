@@ -4,6 +4,8 @@ import StatCard from '@/components/stat-card';
 import StrandCard from '@/components/strand-card';
 import { Card } from '@/components/ui/card';
 import WeeklyActivity from '@/components/weekly-activity';
+import ReportsDue from '@/components/reports-due';
+import type { ReportDue } from '@/components/reports-due';
 import AppLayout from '@/layouts/app-layout';
 import type {
     DashboardDay,
@@ -20,6 +22,7 @@ type StudentDashboardProps = {
     todayMinutes: number;
     week: DashboardDay[];
     nextWeek: boolean;
+    reportsDue: ReportDue[];
 };
 
 const percent = (value: number | null) => (value === null ? '—' : `${value}%`);
@@ -32,6 +35,7 @@ export default function StudentDashboard({
     todayMinutes,
     week,
     nextWeek,
+    reportsDue,
 }: StudentDashboardProps) {
     return (
         <AppLayout
@@ -73,6 +77,8 @@ export default function StudentDashboard({
                     tone="gold"
                 />
             </section>
+
+            <ReportsDue reports={reportsDue} />
 
             <section
                 className="grid gap-4 lg:grid-cols-2"
