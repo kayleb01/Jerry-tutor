@@ -7,148 +7,189 @@
 
 /*
  * Jerry Great Academy design tokens.
- * Raw brand scales live in @theme; semantic tokens are CSS variables that
- * swap for dark mode and are exposed to Tailwind via @theme inline.
- * See docs/design/design-system.md.
+ * Tonal scales come from the Jerry Great Academy design system (brand board);
+ * semantic tokens are CSS variables that swap for dark mode and are exposed to
+ * Tailwind via @theme inline. See docs/design/design-system.md.
  */
 @theme {
     --font-sans:
-        'Lexend', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-display: 'Saira Condensed', 'Lexend', ui-sans-serif, sans-serif;
+        'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system,
+        'Segoe UI', sans-serif;
+    --font-display:
+        'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system,
+        'Segoe UI', sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-    /* Royal indigo — sampled from the logo (#1B0063 = 800) */
-    --color-royal-50: #f3f0fb;
-    --color-royal-100: #e6e0f7;
-    --color-royal-200: #cbbfee;
-    --color-royal-300: #a895e0;
-    --color-royal-400: #7f64cc;
-    --color-royal-500: #5a39b3;
-    --color-royal-600: #3f1d96;
-    --color-royal-700: #2c0c7c;
-    --color-royal-800: #1b0063;
-    --color-royal-900: #13004a;
-    --color-royal-950: #0b002e;
+    /* Primary — deep indigo (key #1E0B54) */
+    --color-primary-key: #1e0b54;
+    --color-primary-10: #1e0d54;
+    --color-primary-20: #332669;
+    --color-primary-30: #4a3d81;
+    --color-primary-40: #62559b;
+    --color-primary-50: #7b6eb6;
+    --color-primary-60: #9587d1;
+    --color-primary-70: #b0a2ee;
+    --color-primary-80: #cbbfff;
+    --color-primary-90: #e7deff;
+    --color-primary-95: #f5eeff;
 
-    /* Crown gold — sampled from the logo (#E49C24 = 500) */
-    --color-gold-50: #fdf7ec;
-    --color-gold-100: #fbebcf;
-    --color-gold-200: #f6d59c;
-    --color-gold-300: #f0bc64;
-    --color-gold-400: #eaa93f;
-    --color-gold-500: #e49c24;
-    --color-gold-600: #c67f14;
-    --color-gold-700: #a06210;
-    --color-gold-800: #7d4c12;
-    --color-gold-900: #663f13;
-    --color-gold-950: #3a2107;
+    /* Secondary — academy gold (key #E5A024) */
+    --color-secondary-key: #e5a024;
+    --color-secondary-10: #291800;
+    --color-secondary-20: #442b00;
+    --color-secondary-30: #614000;
+    --color-secondary-40: #815500;
+    --color-secondary-50: #a16c00;
+    --color-secondary-60: #c38300;
+    --color-secondary-70: #e19c1f;
+    --color-secondary-80: #ffb948;
+    --color-secondary-90: #ffddb1;
+    --color-secondary-95: #ffeedb;
 
-    --radius-sm: 0.375rem;
-    --radius-md: 0.625rem;
-    --radius-lg: 0.875rem;
-    --radius-xl: 1.25rem;
+    /* Tertiary — violet-indigo (key #2E1065) */
+    --color-tertiary-key: #2e1065;
+    --color-tertiary-10: #24045b;
+    --color-tertiary-20: #392070;
+    --color-tertiary-30: #503988;
+    --color-tertiary-40: #6951a2;
+    --color-tertiary-50: #826abd;
+    --color-tertiary-60: #9c83d9;
+    --color-tertiary-70: #b89ef6;
+    --color-tertiary-80: #d1bdff;
+    --color-tertiary-90: #eaddff;
+    --color-tertiary-95: #f6edff;
 
-    --shadow-card:
-        0 1px 2px 0 rgb(27 0 99 / 0.06), 0 1px 3px 0 rgb(27 0 99 / 0.08);
-    --shadow-raised:
-        0 4px 12px -2px rgb(27 0 99 / 0.12), 0 2px 4px -2px rgb(27 0 99 / 0.08);
+    /* Neutral — lilac-tinted greys (key #F3F0FA); replaces Tailwind's neutral */
+    --color-neutral-*: initial;
+    --color-neutral-key: #f3f0fa;
+    --color-neutral-10: #1b1b22;
+    --color-neutral-20: #313138;
+    --color-neutral-30: #46464e;
+    --color-neutral-40: #5e5d66;
+    --color-neutral-50: #77767f;
+    --color-neutral-60: #919099;
+    --color-neutral-70: #acaab3;
+    --color-neutral-80: #c7c5cf;
+    --color-neutral-90: #e4e1eb;
+    --color-neutral-95: #f2eff9;
+
+    /* The logo's exact inks — brand marks only, never UI */
+    --color-logo-indigo: #140063;
+    --color-logo-gold: #e79100;
+
+    --radius-xs: 4px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    /* The brand separates cards from the page by tone, not shadow. */
+    --shadow-card: 0 0 #0000;
+    --shadow-raised: 0 24px 48px -16px rgb(30 11 84 / 0.25);
 }
 
 :root {
-    --background: #f7f6fb;
+    --background: #efecf6;
     --surface: #ffffff;
-    --surface-muted: #f1eff8;
-    --foreground: #170d3a;
-    --muted-foreground: #5d5878;
-    --border: #e3e0ee;
-    --input: #d6d2e6;
-    --ring: var(--color-royal-500);
+    --surface-muted: #eae7f1;
+    --foreground: #1b1b22;
+    --muted-foreground: #484550;
+    --border: #e4e1eb;
+    --input: #77767f;
+    --ring: #010009;
 
-    --primary: var(--color-royal-800);
-    --primary-hover: var(--color-royal-700);
+    /* Main action: near-black, as the brand board shows */
+    --primary: #010009;
+    --primary-hover: #303037;
     --primary-foreground: #ffffff;
-    --accent: var(--color-gold-500);
-    --accent-hover: var(--color-gold-400);
-    --accent-foreground: var(--color-royal-950);
+    /* Brand indigo for headers, hero bands and the active menu tint */
+    --brand: var(--color-primary-key);
+    --brand-foreground: #ffffff;
+    --link: var(--color-primary-40);
+    --accent: var(--color-secondary-key);
+    --accent-hover: var(--color-secondary-80);
+    --accent-foreground: var(--color-primary-10);
 
-    /* Attendance statuses */
-    --present: #047857;
-    --present-soft: #d1fae5;
-    --late: #c2410c;
-    --late-soft: #ffedd5;
-    --absent: #b91c1c;
-    --absent-soft: #fee2e2;
-    --excused: #475569;
-    --excused-soft: #e2e8f0;
+    /* Attendance statuses (every one also carries a text label) */
+    --present: var(--color-primary-10);
+    --present-soft: var(--color-primary-90);
+    --late: var(--color-secondary-10);
+    --late-soft: var(--color-secondary-90);
+    --absent: #93000a;
+    --absent-soft: #ffdad6;
+    --excused: var(--color-neutral-30);
+    --excused-soft: var(--color-neutral-90);
 
-    /* Quiz difficulty */
-    --easy: #047857;
-    --easy-soft: #d1fae5;
-    --intermediate: #0369a1;
-    --intermediate-soft: #e0f2fe;
-    --hard: #be123c;
-    --hard-soft: #ffe4e6;
-    --challenging: var(--color-royal-800);
-    --challenging-soft: var(--color-gold-100);
+    /* Quiz difficulty: indigo deepens as it rises; Challenging takes gold */
+    --easy: var(--color-primary-30);
+    --easy-soft: var(--color-primary-95);
+    --intermediate: var(--color-primary-20);
+    --intermediate-soft: var(--color-primary-90);
+    --hard: #ffffff;
+    --hard-soft: var(--color-primary-30);
+    --challenging: var(--color-primary-10);
+    --challenging-soft: var(--color-secondary-80);
 
     /* Maths strands */
-    --strand-number: #4338ca;
-    --strand-algebra: #7e22ce;
-    --strand-statistics: #0f766e;
-    --strand-geometry: #c2410c;
+    --strand-number: var(--color-primary-30);
+    --strand-algebra: var(--color-tertiary-60);
+    --strand-statistics: var(--color-secondary-40);
+    --strand-geometry: var(--color-neutral-50);
 
     /* Feedback */
-    --success: #047857;
-    --warning: #b45309;
-    --danger: #b91c1c;
-    --info: #0369a1;
+    --success: var(--color-primary-30);
+    --warning: var(--color-secondary-40);
+    --danger: #ba1a1a;
+    --info: var(--color-primary-40);
 }
 
 .dark {
-    --background: #0d0820;
-    --surface: #160f30;
-    --surface-muted: #1f173f;
-    --foreground: #f1eefb;
-    --muted-foreground: #a9a3c4;
-    --border: #2d2452;
-    --input: #3a3063;
-    --ring: var(--color-gold-400);
+    --background: #131219;
+    --surface: #1b1b22;
+    --surface-muted: #313138;
+    --foreground: #f2eff9;
+    --muted-foreground: #c7c5cf;
+    --border: #46464e;
+    --input: #919099;
+    --ring: var(--color-primary-80);
 
-    --primary: var(--color-royal-300);
-    --primary-hover: var(--color-royal-200);
-    --primary-foreground: var(--color-royal-950);
-    --accent: var(--color-gold-400);
-    --accent-hover: var(--color-gold-300);
-    --accent-foreground: var(--color-royal-950);
+    --primary: #f2eff9;
+    --primary-hover: #e4e1eb;
+    --primary-foreground: #1b1b22;
+    --brand: var(--color-primary-20);
+    --brand-foreground: #ffffff;
+    --link: var(--color-primary-80);
+    --accent: var(--color-secondary-80);
+    --accent-hover: var(--color-secondary-90);
+    --accent-foreground: var(--color-secondary-10);
 
-    --present: #34d399;
-    --present-soft: rgb(16 185 129 / 0.16);
-    --late: #fb923c;
-    --late-soft: rgb(249 115 22 / 0.16);
-    --absent: #f87171;
-    --absent-soft: rgb(239 68 68 / 0.16);
-    --excused: #94a3b8;
-    --excused-soft: rgb(148 163 184 / 0.16);
+    --present: var(--color-primary-90);
+    --present-soft: var(--color-primary-20);
+    --late: var(--color-secondary-90);
+    --late-soft: var(--color-secondary-20);
+    --absent: #ffdad6;
+    --absent-soft: #93000a;
+    --excused: var(--color-neutral-80);
+    --excused-soft: var(--color-neutral-20);
 
-    --easy: #34d399;
-    --easy-soft: rgb(16 185 129 / 0.16);
-    --intermediate: #38bdf8;
-    --intermediate-soft: rgb(14 165 233 / 0.16);
-    --hard: #fb7185;
-    --hard-soft: rgb(244 63 94 / 0.16);
-    --challenging: var(--color-gold-300);
-    --challenging-soft: rgb(228 156 36 / 0.16);
+    --easy: var(--color-primary-90);
+    --easy-soft: var(--color-primary-20);
+    --intermediate: var(--color-primary-95);
+    --intermediate-soft: var(--color-primary-30);
+    --hard: var(--color-primary-10);
+    --hard-soft: var(--color-primary-80);
+    --challenging: var(--color-primary-10);
+    --challenging-soft: var(--color-secondary-80);
 
-    --strand-number: #818cf8;
-    --strand-algebra: #c084fc;
-    --strand-statistics: #2dd4bf;
-    --strand-geometry: #fb923c;
+    --strand-number: var(--color-primary-70);
+    --strand-algebra: var(--color-tertiary-80);
+    --strand-statistics: var(--color-secondary-80);
+    --strand-geometry: var(--color-neutral-70);
 
-    --success: #34d399;
-    --warning: #fbbf24;
-    --danger: #f87171;
-    --info: #38bdf8;
+    --success: var(--color-primary-80);
+    --warning: var(--color-secondary-80);
+    --danger: #ffb4ab;
+    --info: var(--color-primary-70);
 }
 
 @theme inline {
@@ -164,6 +205,9 @@
     --color-primary: var(--primary);
     --color-primary-hover: var(--primary-hover);
     --color-primary-foreground: var(--primary-foreground);
+    --color-brand: var(--brand);
+    --color-brand-foreground: var(--brand-foreground);
+    --color-link: var(--link);
     --color-accent: var(--accent);
     --color-accent-hover: var(--accent-hover);
     --color-accent-foreground: var(--accent-foreground);
@@ -209,6 +253,7 @@
         color: var(--foreground);
     }
 
+    /* Brand focus ring: a 2px page-colour gap, then 2px of solid action colour. */
     :focus-visible {
         outline: 2px solid var(--ring);
         outline-offset: 2px;

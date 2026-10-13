@@ -1,69 +1,75 @@
 # Design System — Jerry Great Academy
 
-The source of truth is [resources/css/app.css](../../resources/css/app.css), which uses Tailwind v4 CSS-first tokens. You can preview everything at `/styleguide` (that route only exists in the local environment).
+The source of truth is [resources/css/app.css](../../resources/css/app.css), which uses Tailwind v4 CSS-first tokens. It implements the **Jerry Great Academy design system** (brand board + logo), published as a Design System artifact in Claude. You can preview everything at `/styleguide` (that route only exists in the local environment).
 
 ## 1. Colour
 
-### Brand scales (raw)
+### Tonal scales (raw)
 
-The colours were sampled from the logo. Use the `royal-*` and `gold-*` utilities, for example `bg-royal-800` or `text-gold-500`.
+Four Material-style tonal scales, each with steps `10`–`95` plus its key colour (`-key`). Use them as `bg-primary-90`, `text-secondary-40`, `bg-tertiary-30`, `border-neutral-80` and so on. Tailwind's own `neutral` palette is replaced by the brand's lilac-tinted greys.
 
-| Token       | Core value | Use                                            |
-| ----------- | ---------- | ---------------------------------------------- |
-| `royal-800` | `#1B0063`  | Primary brand: headers, primary buttons, links |
-| `gold-500`  | `#E49C24`  | Accent: rewards, highlights, the subscribe CTA |
+| Scale       | Key       | Use                                                              |
+| ----------- | --------- | ---------------------------------------------------------------- |
+| `primary`   | `#1E0B54` | Deep indigo: the brand voice — hero bands, headers, tints        |
+| `secondary` | `#E5A024` | Academy gold: highlights and the accent button                    |
+| `tertiary`  | `#2E1065` | Violet-indigo: supporting shapes and the Algebra strand          |
+| `neutral`   | `#F3F0FA` | Lilac-tinted greys the surfaces and text are built from          |
 
-Rules for gold:
+`logo-indigo` (`#140063`) and `logo-gold` (`#E79100`) are the logo's exact inks — brand marks only, never UI.
 
-- **Never use gold for small text on white.** Its contrast is too low. Use it as a fill with `royal-950` text on top (that's the `accent` button), or use `gold-700` or darker for text.
-- Use at most **one gold element per view**, so it keeps its meaning of "reward / go".
+Rules:
+
+- **The main action colour is near-black (`primary`, `#010009`), not indigo.** Primary buttons and the active menu item use it. Indigo (`bg-brand`) is for hero bands, headers and cards that carry the brand.
+- **Never use gold as text on light grounds** (2.2:1 on white). Use it as a fill with `primary-10` text (the `accent` button), or use `secondary-40` or darker for text.
+- The logo only ever sits on a light ground. `AppLogoImage` puts it on a white panel in dark mode or with `onDark`.
 
 ### Semantic tokens (use these in components)
 
-These switch automatically in dark mode (`.dark` on `<html>`).
+These switch automatically in dark mode (`.dark` on `<html>`). The light values come from the design system; the dark theme is derived from the same scales.
 
-| Utility                                                         | Purpose                                              |
-| --------------------------------------------------------------- | ---------------------------------------------------- |
-| `bg-background`                                                 | Page background                                      |
-| `bg-surface` / `bg-surface-muted`                               | Cards, panels / subtle fills, hover                  |
-| `text-foreground` / `text-muted-foreground`                     | Body text / secondary text                           |
-| `border-border` / `border-input`                                | Dividers / form controls                             |
-| `bg-primary` `text-primary-foreground` `hover:bg-primary-hover` | Primary actions                                      |
-| `bg-accent` `text-accent-foreground` `hover:bg-accent-hover`    | Reward / subscribe actions                           |
-| `ring`                                                          | Focus outline (applied globally to `:focus-visible`) |
-| `success` `warning` `danger` `info`                             | Feedback messages and toasts                         |
+| Utility                                                         | Purpose                                                  |
+| --------------------------------------------------------------- | -------------------------------------------------------- |
+| `bg-background`                                                 | Page background (`#EFECF6`)                              |
+| `bg-surface` / `bg-surface-muted`                               | Cards (white) / recessed fills (secondary button, track) |
+| `text-foreground` / `text-muted-foreground`                     | Headings and key text / body copy and labels             |
+| `border-border` / `border-input`                                | Hairlines / form-control borders (3:1)                   |
+| `bg-primary` `text-primary-foreground` `hover:bg-primary-hover` | Primary actions (near-black)                             |
+| `bg-brand` `text-brand-foreground`                              | Indigo hero bands and brand cards                        |
+| `text-link`                                                     | Text links (`primary-40`)                                |
+| `bg-accent` `text-accent-foreground` `hover:bg-accent-hover`    | Gold accent actions (check in, subscribe)                |
+| `ring`                                                          | Focus outline (applied globally to `:focus-visible`)     |
+| `success` `warning` `danger` `info`                             | Feedback messages and toasts                             |
 
 ### Status palettes
 
-Every status has a strong value and a `-soft` background. Badges use `bg-{x}-soft text-{x}`.
+Every status has a strong value and a `-soft` background. Badges use `bg-{x}-soft text-{x}`, and always carry a word (and, for attendance, an icon).
 
-| Domain        | Tokens                                                                           |
-| ------------- | -------------------------------------------------------------------------------- |
-| Attendance    | `present`, `late`, `absent`, `excused`                                           |
-| Difficulty    | `easy`, `intermediate`, `hard`, `challenging` (indigo on gold, the "crown" tier) |
-| Maths strands | `strand-number`, `strand-algebra`, `strand-statistics`, `strand-geometry`        |
-
-`late` is deliberately orange, not gold, so a lateness flag can never be confused with the brand's reward colour.
+| Domain        | Tokens                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| Attendance    | `present` (indigo tint), `late` (gold tint), `absent` (red), `excused` (grey)                   |
+| Difficulty    | `easy` → `hard` deepen in indigo; `challenging` is indigo on gold. `DifficultyBadge` adds 1–4 pips |
+| Maths strands | `strand-number`, `strand-algebra`, `strand-statistics`, `strand-geometry`                       |
 
 ## 2. Typography
 
-The fonts are loaded via Bunny Fonts in [vite.config.ts](../../vite.config.ts).
+**Plus Jakarta Sans** (400–800) for every role, loaded via Bunny Fonts in [vite.config.ts](../../vite.config.ts). `font-display` is an alias of the same family. Use sentence case for headings; the condensed lettering lives in the logo file only.
 
-| Role               | Font                        | Utility               | Notes                                                                                                             |
-| ------------------ | --------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Body / UI          | **Lexend** 400–700          | `font-sans` (default) | Designed to make reading easier, which suits young readers                                                        |
-| Display            | **Saira Condensed** 600–700 | `font-display`        | Echoes the condensed logo wordmark. Use it for page titles and big scores only, usually `uppercase tracking-wide` |
-| Numbers in quizzes | Lexend + `tabular-nums`     | —                     | Keeps answers and scores aligned                                                                                  |
-
-Type scale: use Tailwind's default `text-xs` to `text-4xl`.
+| Role          | Size / line height | Weight |
+| ------------- | ------------------ | ------ |
+| Page title    | 30 / 38            | 700    |
+| Section title | 24 / 32            | 700    |
+| Card title    | 18 / 26            | 700    |
+| Body          | 14–16 / 20–24      | 400    |
+| Label         | 14 / 20            | 500    |
+| Eyebrow       | 12 / 16, uppercase, 0.08em tracking | 600 |
 
 - **KS2 quiz player:** question stems at a minimum of `text-2xl`, answers at `text-xl`.
-- **Staff tables:** `text-sm`.
+- Numbers in quizzes and stats use `tabular-nums`.
 
 ## 3. Shape, elevation, spacing
 
-- **Radius:** `rounded-sm` (6px) for small controls, `rounded-md` (10px) for buttons and inputs, `rounded-lg` (14px) for cards, `rounded-xl` (20px) for hero and quiz panels.
-- **Shadow:** `shadow-card` (resting) and `shadow-raised` (popovers, the active quiz card). Both are indigo-tinted.
+- **Radius:** `rounded-sm` (4px) for buttons and inputs, `rounded-md` (8px) for badges and small panels, `rounded-lg` (16px) for cards, `rounded-xl` (20px) for hero and quiz panels.
+- **Elevation:** cards are separated from the page by tone and a hairline, not shadow (`shadow-card` is intentionally empty). `shadow-raised` is for floating things only.
 - **Spacing:** the default 4px Tailwind scale. Use `gap-*` between siblings, not margins.
 - **Tap targets:** at least 40px (`h-10`) everywhere, and 48px (`h-12`, `size="lg"`) in the student quiz player.
 
@@ -73,16 +79,16 @@ These live in [resources/js/components/ui/](../../resources/js/components/ui/).
 
 | Component                                                              | Variants                                                                     |
 | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `Button`                                                               | `variant`: primary · accent · outline · ghost · danger; `size`: sm · md · lg |
+| `Button` (+ `buttonClasses()` for links)                               | `variant`: primary · accent · secondary · outline · ghost · danger; `size`: sm · md · lg |
 | `Card` (+ `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`) | —                                                                            |
 | `Badge`                                                                | `tone`: neutral · brand · gold · each attendance status · each difficulty    |
 | `Input`, `Label`                                                       | `aria-invalid` gives a danger border                                         |
 
 There are also domain components in [resources/js/components/](../../resources/js/components/):
 
-- `AppLogo`: a text lockup. Replace it with an SVG once the client supplies vector artwork.
+- `AppLogo` / `AppLogoImage`: the transparent PNG logo (full lockup or crest).
 - `AttendanceStatusBadge`: on time / late (with minutes) / absent / excused.
-- `DifficultyBadge`: easy → challenging.
+- `DifficultyBadge`: easy → challenging, with level pips.
 
 Components to add as features need them (see the implementation plan): Select, Textarea, Checkbox/Radio group, Dialog, Toast, Table, Tabs, Avatar, Progress bar, Empty state, Skeleton (needed for deferred props).
 
@@ -96,5 +102,5 @@ Components to add as features need them (see the implementation plan): Select, T
 
 ## 6. Brand assets
 
-- The full raster logo is at `public/images/brand/logo-full.jpg`, with a tightly cropped copy at `public/images/brand/logo.png`. The `AppLogoImage` component uses the cropped copy on every auth page (login, register, forgot/reset password, verify email). It blends the JPG's grey background away in light mode and puts it on a light panel in dark mode.
+- Transparent PNG logos live in `public/images/brand/`: `logo-tight.png` (the cropped full lockup, used by `AppLogoImage`), `logo-crest.png` (crown and shield, for the collapsed sidebar) and `logo.png` (with margins). `logo-full.jpg` is the original raster.
 - **To do:** request the SVG logo and a square crest mark from the client, for the favicon, the app icon and the nav.

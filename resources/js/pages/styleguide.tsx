@@ -13,9 +13,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-const scaleSteps = [
-    50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950,
-] as const;
+const scaleSteps = [10, 20, 30, 40, 50, 60, 70, 80, 90, 95] as const;
+
+const scales = ['primary', 'secondary', 'tertiary', 'neutral'] as const;
 
 const strands = [
     { name: 'Number', className: 'bg-strand-number' },
@@ -24,22 +24,30 @@ const strands = [
     { name: 'Geometry', className: 'bg-strand-geometry' },
 ];
 
-function Swatches({ scale }: { scale: 'royal' | 'gold' }) {
+function Swatches({ scale }: { scale: (typeof scales)[number] }) {
     return (
-        <div className="grid grid-cols-6 gap-2 sm:grid-cols-11">
-            {scaleSteps.map((step) => (
-                <div key={step} className="flex flex-col gap-1">
-                    <div
-                        className="h-12 rounded-md border"
-                        style={{
-                            backgroundColor: `var(--color-${scale}-${step})`,
-                        }}
-                    />
-                    <span className="text-xs text-muted-foreground">
-                        {step}
-                    </span>
-                </div>
-            ))}
+        <div className="flex flex-col gap-2">
+            <p className="text-sm font-semibold capitalize">
+                {scale}{' '}
+                <span className="font-normal text-muted-foreground">
+                    · key <code>{`--color-${scale}-key`}</code>
+                </span>
+            </p>
+            <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
+                {scaleSteps.map((step) => (
+                    <div key={step} className="flex flex-col gap-1">
+                        <div
+                            className="h-12 rounded-md border"
+                            style={{
+                                backgroundColor: `var(--color-${scale}-${step})`,
+                            }}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                            {step}
+                        </span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
@@ -50,10 +58,8 @@ export default function Styleguide() {
             <Head title="Styleguide" />
             <main className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-10">
                 <header className="flex flex-col gap-4">
-                    <AppLogo className="text-4xl" />
-                    <h1 className="font-display text-3xl font-bold tracking-wide uppercase">
-                        Design system
-                    </h1>
+                    <AppLogo className="w-48" />
+                    <h1 className="text-3xl font-bold">Design system</h1>
                     <p className="text-muted-foreground">
                         Tokens and primitives. Source: resources/css/app.css and
                         docs/design/design-system.md.
@@ -62,8 +68,9 @@ export default function Styleguide() {
 
                 <section className="flex flex-col gap-4">
                     <h2 className="text-xl font-semibold">Brand colours</h2>
-                    <Swatches scale="royal" />
-                    <Swatches scale="gold" />
+                    {scales.map((scale) => (
+                        <Swatches key={scale} scale={scale} />
+                    ))}
                 </section>
 
                 <section className="flex flex-col gap-4">
@@ -71,6 +78,7 @@ export default function Styleguide() {
                     <div className="flex flex-wrap gap-3">
                         <Button>Start quiz</Button>
                         <Button variant="accent">Subscribe</Button>
+                        <Button variant="secondary">Back</Button>
                         <Button variant="outline">View report</Button>
                         <Button variant="ghost">Cancel</Button>
                         <Button variant="danger">Mark absent</Button>

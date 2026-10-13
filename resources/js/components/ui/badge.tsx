@@ -3,8 +3,8 @@ import { cn } from '@/lib/utils';
 
 const tones = {
     neutral: 'bg-surface-muted text-muted-foreground',
-    brand: 'bg-royal-100 text-royal-800 dark:bg-royal-800/40 dark:text-royal-200',
-    gold: 'bg-gold-100 text-gold-800 dark:bg-gold-500/15 dark:text-gold-300',
+    brand: 'bg-primary-90 text-primary-10 dark:bg-primary-20 dark:text-primary-90',
+    gold: 'bg-secondary-90 text-secondary-10 dark:bg-secondary-20 dark:text-secondary-90',
     present: 'bg-present-soft text-present',
     late: 'bg-late-soft text-late',
     absent: 'bg-absent-soft text-absent',
@@ -25,7 +25,7 @@ export function Badge({ tone = 'neutral', className, ...props }: BadgeProps) {
     return (
         <span
             className={cn(
-                'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
+                'inline-flex h-6 items-center gap-1 rounded-md px-2 text-xs font-medium tracking-[0.02em] whitespace-nowrap',
                 tones[tone],
                 className,
             )}

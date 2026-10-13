@@ -4,9 +4,10 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 const tones = {
-    royal: 'bg-royal-100 text-royal-700 dark:bg-royal-800/50 dark:text-royal-200',
-    gold: 'bg-gold-100 text-gold-700 dark:bg-gold-500/15 dark:text-gold-300',
-    present: 'bg-present-soft text-present',
+    royal: 'bg-primary-95 text-primary-30 dark:bg-primary-20 dark:text-primary-90',
+    gold: 'bg-secondary-95 text-secondary-40 dark:bg-secondary-20 dark:text-secondary-90',
+    present:
+        'bg-primary-90 text-primary-10 dark:bg-primary-30 dark:text-primary-95',
 } as const;
 
 type StatCardProps = {
@@ -25,24 +26,26 @@ export default function StatCard({
     tone,
 }: StatCardProps) {
     return (
-        <Card className="flex items-center justify-between gap-4 p-6">
-            <div className="min-w-0">
-                <p className="font-display text-4xl leading-none font-bold tabular-nums">
-                    {value}
+        <Card className="flex flex-col gap-1.5 p-6">
+            <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    {label}
                 </p>
-                <p className="mt-2 text-base text-muted-foreground">{label}</p>
-                {hint && (
-                    <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
-                )}
+                <span
+                    className={cn(
+                        'flex size-10 shrink-0 items-center justify-center rounded-md',
+                        tones[tone],
+                    )}
+                >
+                    <Icon name={icon} />
+                </span>
             </div>
-            <div
-                className={cn(
-                    'flex size-16 shrink-0 items-center justify-center rounded-xl',
-                    tones[tone],
-                )}
-            >
-                <Icon name={icon} className="size-8" />
-            </div>
+            <p className="text-[32px] leading-10 font-bold tracking-[-0.01em] tabular-nums">
+                {value}
+            </p>
+            {hint && (
+                <p className="text-[13px] text-muted-foreground">{hint}</p>
+            )}
         </Card>
     );
 }

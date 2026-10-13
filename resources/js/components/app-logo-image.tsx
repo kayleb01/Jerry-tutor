@@ -2,16 +2,15 @@ import { cn } from '@/lib/utils';
 
 type AppLogoImageProps = {
     className?: string;
-    /** Always sit the logo on a light panel, e.g. in the dark sidebar. Uses the tightly cropped copy. */
+    /** Always sit the logo on a white panel, e.g. on an indigo or dark background. */
     onDark?: boolean;
     /** Show only the crest (crown and shield), for tight spaces like the collapsed sidebar. */
     crest?: boolean;
 };
 
 /**
- * The full raster logo. Its baked-in light grey background is blended away in
- * light mode and sits on a light panel in dark mode, where the indigo
- * lettering would otherwise disappear.
+ * The logo (transparent PNG). Brand rule: it only ever sits on a light
+ * ground, so in dark mode, or when `onDark` is set, it gets a white panel.
  */
 export default function AppLogoImage({
     className,
@@ -20,17 +19,15 @@ export default function AppLogoImage({
 }: AppLogoImageProps) {
     const image = crest
         ? { src: '/images/brand/logo-crest.png', width: 420, height: 558 }
-        : onDark
-          ? { src: '/images/brand/logo-tight.png', width: 1270, height: 560 }
-          : { src: '/images/brand/logo.png', width: 740, height: 340 };
+        : { src: '/images/brand/logo-tight.png', width: 1270, height: 560 };
 
     return (
         <span
             className={cn(
-                'inline-flex rounded-lg',
+                'inline-flex rounded-md',
                 onDark
                     ? 'bg-white px-3 py-2'
-                    : 'dark:bg-[#f2f2f2] dark:px-3 dark:py-2',
+                    : 'dark:bg-white dark:px-3 dark:py-2',
                 className,
             )}
         >
@@ -39,10 +36,7 @@ export default function AppLogoImage({
                 alt="Jerry Great Academy"
                 width={image.width}
                 height={image.height}
-                className={cn(
-                    'h-auto w-full',
-                    !onDark && 'mix-blend-multiply dark:mix-blend-normal',
-                )}
+                className="h-auto w-full"
             />
         </span>
     );

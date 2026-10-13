@@ -1,25 +1,43 @@
 import type { ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
 
-const variants = {
-    primary:
-        'bg-primary text-primary-foreground shadow-card hover:bg-primary-hover',
-    accent: 'bg-accent text-accent-foreground shadow-card hover:bg-accent-hover',
+export const buttonVariants = {
+    primary: 'bg-primary text-primary-foreground hover:bg-primary-hover',
+    accent: 'bg-accent text-accent-foreground hover:bg-accent-hover',
+    secondary:
+        'bg-surface-muted text-muted-foreground hover:bg-neutral-90 hover:text-foreground dark:hover:bg-neutral-30',
     outline:
-        'border border-input bg-surface text-foreground hover:bg-surface-muted',
+        'border border-input bg-transparent text-muted-foreground hover:bg-surface-muted hover:text-foreground',
     ghost: 'text-foreground hover:bg-surface-muted',
-    danger: 'bg-danger text-white shadow-card hover:opacity-90',
+    danger: 'bg-danger text-white hover:opacity-90 dark:text-neutral-10',
 } as const;
 
-const sizes = {
-    sm: 'h-8 gap-1.5 rounded-sm px-3 text-sm',
-    md: 'h-10 gap-2 rounded-md px-4 text-sm',
-    lg: 'h-12 gap-2 rounded-md px-6 text-base',
+export const buttonSizes = {
+    sm: 'h-8 gap-1.5 px-3 text-sm',
+    md: 'h-10 gap-2 px-4 text-sm',
+    lg: 'h-12 gap-2 px-6 text-base',
 } as const;
+
+export type ButtonVariant = keyof typeof buttonVariants;
+export type ButtonSize = keyof typeof buttonSizes;
+
+/** Classes for anything that should look like a button, such as an Inertia `Link`. */
+export function buttonClasses(
+    variant: ButtonVariant = 'primary',
+    size: ButtonSize = 'md',
+    className?: string,
+) {
+    return cn(
+        'inline-flex items-center justify-center rounded-sm font-semibold whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-40',
+        buttonVariants[variant],
+        buttonSizes[size],
+        className,
+    );
+}
 
 export type ButtonProps = ComponentProps<'button'> & {
-    variant?: keyof typeof variants;
-    size?: keyof typeof sizes;
+    variant?: ButtonVariant;
+    size?: ButtonSize;
 };
 
 export function Button({
@@ -32,12 +50,7 @@ export function Button({
     return (
         <button
             type={type}
-            className={cn(
-                'inline-flex items-center justify-center font-medium whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-50',
-                variants[variant],
-                sizes[size],
-                className,
-            )}
+            className={buttonClasses(variant, size, className)}
             {...props}
         />
     );
