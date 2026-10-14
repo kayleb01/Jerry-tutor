@@ -14,7 +14,7 @@ export const buttonVariants = {
 
 export const buttonSizes = {
     sm: 'h-8 gap-1.5 px-3 text-sm',
-    md: 'h-10 gap-2 px-4 text-sm',
+    md: 'h-10 gap-2 px-4 text-sm sm:h-11',
     lg: 'h-11 gap-2 px-5 text-sm sm:h-12 sm:px-6 sm:text-base',
 } as const;
 
@@ -28,7 +28,7 @@ export function buttonClasses(
     className?: string,
 ) {
     return cn(
-        'inline-flex items-center justify-center rounded-sm font-semibold whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-40',
+        'inline-flex items-center justify-center rounded-md font-semibold whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-40',
         buttonVariants[variant],
         buttonSizes[size],
         className,
