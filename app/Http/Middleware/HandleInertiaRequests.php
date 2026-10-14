@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Role;
+use App\Models\LatenessReport;
 use App\Services\ClassReportInbox;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -44,7 +45,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user()?->only(['id', 'name', 'email', 'username', 'role']),
             ],
             'badges' => fn (): array => $request->user()?->role === Role::Admin
-                ? ['classReports' => $this->classReportsToReview()]
+                ? ['classReports' => $this->classReportsToReview(), 'lateness' => LatenessReport::whereNull('reviewed_at')->count()]
                 : [],
         ];
     }

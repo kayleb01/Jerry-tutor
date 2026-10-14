@@ -2,43 +2,65 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AttendeeRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ReviewLatenessReportRequest;
 use App\Models\ClassGroup;
+use App\Models\GuardianNotice;
 use App\Models\LatenessReport;
+use App\Services\LatenessInbox;
 use App\Services\LatenessReportQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LatenessReportController extends Controller
 {
-    public function index(Request $request, LatenessReportQuery $query): Response
+    /**
+     * The lateness inbox: reports in the chosen status on the left, one report's detail on the right.
+     */
+    public function index(Request $request, LatenessReportQuery $query, LatenessInbox $inbox): Response
     {
         $filters = $query->filters($request->query());
+        $selectedId = filter_var($request->query('report'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: null;
 
         return Inertia::render('admin/lateness/index', [
-            'reports' => $query->filtered($filters)
+            'reports' => Inertia::scroll(fn () => $query->filtered($filters)
                 ->paginate(25)
                 ->withQueryString()
-                ->through(fn (LatenessReport $report): array => $this->row($report)),
+                ->through(fn (LatenessReport $report): array => $inbox->row($report))),
+            'counts' => fn () => $inbox->counts($filters),
             'filters' => [
+                'status' => $filters['status'],
                 'role' => $filters['role']?->value,
                 'class' => $filters['class'],
                 'from' => $filters['from']?->toDateString(),
                 'to' => $filters['to']?->toDateString(),
                 'search' => $filters['search'],
+                'report' => $selectedId,
             ],
-            'classes' => ClassGroup::query()->orderBy('name')->get(['id', 'name'])
+            'statuses' => collect(LatenessReportQuery::STATUSES)
+                ->map(fn (string $label, string $value): array => ['value' => $value, 'label' => $label])
+                ->values(),
+            'classes' => fn () => ClassGroup::query()->orderBy('name')->get(['id', 'name'])
                 ->map(fn (ClassGroup $group): array => ['value' => $group->id, 'label' => $group->name])
                 ->all(),
-            'repeat' => $query->repeatOffenders(),
+            'selected' => function () use ($query, $filters, $inbox, $selectedId): ?array {
+                $report = $selectedId ? LatenessReport::find($selectedId) : $query->filtered($filters)->first();
+
+                return $report ? $inbox->detail($report) : null;
+            },
         ]);
     }
 
+    /**
+     * Save the follow-up. With `next`, open that report afterwards (the "Mark as followed up" flow).
+     */
     public function update(ReviewLatenessReportRequest $request, LatenessReport $latenessReport): RedirectResponse
     {
         $reviewed = $request->boolean('reviewed');
@@ -49,9 +71,42 @@ class LatenessReportController extends Controller
             'reviewed_at' => $reviewed ? ($latenessReport->reviewed_at ?? CarbonImmutable::now()) : null,
         ]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Follow-up saved.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => $reviewed ? 'Marked as followed up.' : 'Follow-up saved.']);
 
-        return back();
+        $next = $request->validated('next');
+
+        return $next ? redirect($this->inboxUrl((int) $next)) : back();
+    }
+
+    /**
+     * Send the student's guardians a note they'll see on their dashboard. Sending it counts as the follow-up.
+     */
+    public function notifyParent(Request $request, LatenessReport $latenessReport): RedirectResponse
+    {
+        $validated = $request->validate(['note' => ['required', 'string', 'max:1000']]);
+        $student = $latenessReport->user;
+        $guardians = $latenessReport->attendee_role === AttendeeRole::Student
+            ? $student->guardians()->orderBy('name')->pluck('name')
+            : collect();
+
+        abort_if($guardians->isEmpty(), 422, 'Only students with a linked parent or guardian can be notified.');
+
+        DB::transaction(function () use ($latenessReport, $request, $validated): void {
+            GuardianNotice::create([
+                'student_id' => $latenessReport->user_id,
+                'lateness_report_id' => $latenessReport->id,
+                'sent_by_id' => $request->user()->id,
+                'note' => trim($validated['note']),
+            ]);
+
+            if ($latenessReport->reviewed_at === null) {
+                $latenessReport->update(['reviewed_at' => CarbonImmutable::now(), 'reviewed_by_id' => $request->user()->id]);
+            }
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Sent to '.$guardians->join(', ', ' and ').'.']);
+
+        return redirect($this->inboxUrl($latenessReport->id));
     }
 
     public function export(Request $request, LatenessReportQuery $query): StreamedResponse
@@ -83,25 +138,13 @@ class LatenessReportController extends Controller
     }
 
     /**
-     * @return array<string, mixed>
+     * The inbox with the filters the admin came from (and nothing else from that URL), opened on a report.
      */
-    private function row(LatenessReport $report): array
+    private function inboxUrl(int $reportId): string
     {
-        $timezone = config('academy.timezone');
+        parse_str((string) parse_url(url()->previous(), PHP_URL_QUERY), $query);
 
-        return [
-            'id' => $report->id,
-            'date' => $report->lesson_date->format('D j M Y'),
-            'name' => $report->user->name,
-            'role' => $report->attendee_role->value,
-            'className' => $report->class_name,
-            'scheduled' => $report->scheduled_start_at->setTimezone($timezone)->format('H:i'),
-            'arrived' => $report->arrived_at->setTimezone($timezone)->format('H:i'),
-            'minutesLate' => $report->minutes_late,
-            'followUpNotes' => $report->follow_up_notes,
-            'reviewedBy' => $report->reviewedBy?->name,
-            'reviewedAt' => $report->reviewed_at?->setTimezone($timezone)->format('j M, H:i'),
-        ];
+        return route('admin.lateness.index', [...Arr::only($query, ['status', 'role', 'class', 'from', 'to', 'search']), 'report' => $reportId]);
     }
 
     /**

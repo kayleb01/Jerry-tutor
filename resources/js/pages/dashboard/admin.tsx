@@ -542,6 +542,7 @@ export default function AdminDashboard({
                                 <Link
                                     href={latenessIndex({
                                         query: {
+                                            status: 'all',
                                             search: repeat.name,
                                             from: filters.from,
                                             to: filters.to,

@@ -22,6 +22,7 @@ class ReviewLatenessReportRequest extends FormRequest
         return [
             'follow_up_notes' => ['nullable', 'string', 'max:2000'],
             'reviewed' => ['required', 'boolean'],
+            'next' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }

@@ -13,7 +13,7 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
-            badges: { classReports?: number };
+            badges: { classReports?: number; lateness?: number };
             [key: string]: unknown;
         };
         flashDataType: {
