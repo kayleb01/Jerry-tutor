@@ -14,7 +14,13 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import { bulkStatus, create, edit, index } from '@/routes/admin/questions';
+import {
+    bulkStatus,
+    create,
+    edit,
+    importMethod as importPage,
+    index,
+} from '@/routes/admin/questions';
 import type { Option, Paginated } from '@/types';
 
 type Row = {
@@ -138,9 +144,17 @@ export default function QuestionsIndex({
                         );
                     })}
                 </nav>
-                <Link href={create()} className={buttonClasses('primary')}>
-                    Add question
-                </Link>
+                <div className="flex flex-wrap gap-2">
+                    <Link
+                        href={importPage()}
+                        className={buttonClasses('outline')}
+                    >
+                        Upload CSV
+                    </Link>
+                    <Link href={create()} className={buttonClasses('primary')}>
+                        Add question
+                    </Link>
+                </div>
             </div>
 
             <Card className="p-card">
@@ -399,7 +413,7 @@ export default function QuestionsIndex({
                                         className="px-4 py-6 text-center text-muted-foreground sm:py-8"
                                     >
                                         {total === 0
-                                            ? 'The bank is empty. Add a question to get started.'
+                                            ? 'The bank is empty. Add a question or upload a CSV.'
                                             : 'No questions match these filters.'}
                                     </td>
                                 </tr>
