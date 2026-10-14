@@ -1,6 +1,11 @@
 import { Form, Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import AttendanceStatusBadge from '@/components/attendance-status-badge';
+import DashboardFilters from '@/components/dashboard-filters';
+import type {
+    DashboardFilterOptions,
+    DashboardFilterValues,
+} from '@/components/dashboard-filters';
 import type { AttendanceStatus } from '@/components/attendance-status-badge';
 import Icon from '@/components/icon';
 import type { IconName } from '@/components/icon';
@@ -35,13 +40,16 @@ type TodayLesson = {
 
 type AdminDashboardProps = {
     header: { date: string; greeting: string };
+    filters: DashboardFilterValues;
+    options: DashboardFilterOptions;
     stats: {
         classesToday: number;
         runningNow: number;
         toStart: number;
+        attendanceRole: Role;
         attendance: number | null;
         attendanceChange: number | null;
-        lateToday: number;
+        late: number;
         lateStudents: number;
         lateTutors: number;
         activeStudents: number;
@@ -53,6 +61,7 @@ type AdminDashboardProps = {
         name: string;
         role: Role;
         className: string;
+        date: string;
         arrived: string;
         minutesLate: number;
     }[];
@@ -63,11 +72,14 @@ type AdminDashboardProps = {
         count: number;
         lastDate: string;
     }[];
-    onTimeWeeks: {
+    trend: {
         label: string;
-        students: number | null;
-        tutors: number | null;
-    }[];
+        buckets: {
+            label: string;
+            students: number | null;
+            tutors: number | null;
+        }[];
+    };
     latestReports: {
         id: number;
         author: string;
@@ -77,7 +89,11 @@ type AdminDashboardProps = {
         wentWell: string | null;
         recommendations: string | null;
     }[];
-    studentsByStage: { label: string; count: number }[];
+    quizzes: {
+        categories: { label: string; count: number }[];
+        questionBank: number;
+        available: boolean;
+    };
 };
 
 const roleLabel = (role: Role) => (role === 'tutor' ? 'Tutor' : 'Student');
@@ -220,21 +236,36 @@ function ReportState({ lesson }: { lesson: TodayLesson }) {
     );
 }
 
-function percentChange(change: number | null): string {
+const comparisonLabel: Record<string, string> = {
+    today: 'yesterday',
+    week: 'the same point last week',
+    month: 'the same point last month',
+};
+
+function percentChange(
+    change: number | null,
+    filters: DashboardFilterValues,
+): string {
+    const against = comparisonLabel[filters.period] ?? 'the period before';
+
     if (change === null) {
-        return 'This week · no data for last week yet';
+        return `${filters.label} · nothing to compare with yet`;
     }
 
     if (change === 0) {
-        return 'This week · same as last week';
+        return `${filters.label} · same as ${against}`;
     }
 
-    return `This week · ${change > 0 ? 'up' : 'down'} ${Math.abs(change)} ${Math.abs(change) === 1 ? 'point' : 'points'} on last week`;
+    return `${filters.label} · ${change > 0 ? 'up' : 'down'} ${Math.abs(change)} ${Math.abs(change) === 1 ? 'point' : 'points'} on ${against}`;
 }
 
 const BAR_HEIGHT = 150;
 
-function OnTimeChart({ weeks }: { weeks: AdminDashboardProps['onTimeWeeks'] }) {
+function OnTimeChart({
+    weeks,
+}: {
+    weeks: AdminDashboardProps['trend']['buckets'];
+}) {
     const describe = (value: number | null) =>
         value === null ? 'no data' : `${value}%`;
     const summary = weeks
@@ -244,14 +275,25 @@ function OnTimeChart({ weeks }: { weeks: AdminDashboardProps['onTimeWeeks'] }) {
         )
         .join('; ');
 
+    const dense = weeks.length > 8;
+    const columns = {
+        gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`,
+    };
+
     const bar = (value: number | null, tone: string) => (
         <div className="flex h-full flex-col items-center justify-end gap-1">
-            <span className="text-[11px] text-muted-foreground tabular-nums">
-                {value === null ? '—' : value}
-            </span>
+            {!dense && (
+                <span className="text-[11px] text-muted-foreground tabular-nums">
+                    {value === null ? '—' : value}
+                </span>
+            )}
             {value !== null && (
                 <span
-                    className={cn('block w-[18px] rounded-t', tone)}
+                    className={cn(
+                        'block rounded-t',
+                        dense ? 'w-1.5 sm:w-2' : 'w-3 sm:w-[18px]',
+                        tone,
+                    )}
                     style={{
                         height: `${Math.max(2, (value / 100) * BAR_HEIGHT)}px`,
                     }}
@@ -264,8 +306,9 @@ function OnTimeChart({ weeks }: { weeks: AdminDashboardProps['onTimeWeeks'] }) {
         <>
             <div
                 role="img"
-                aria-label={`On-time arrivals by week. ${summary}.`}
-                className="grid h-[200px] grid-cols-6 items-end gap-3 border-b border-neutral-80 pt-2 dark:border-neutral-30"
+                aria-label={`On-time arrivals. ${summary}.`}
+                className="grid h-[200px] items-end gap-1 border-b border-neutral-80 pt-2 sm:gap-3 dark:border-neutral-30"
+                style={columns}
             >
                 {weeks.map((week) => (
                     <div
@@ -277,9 +320,20 @@ function OnTimeChart({ weeks }: { weeks: AdminDashboardProps['onTimeWeeks'] }) {
                     </div>
                 ))}
             </div>
-            <div className="mt-2 grid grid-cols-6 gap-3 text-center text-[13px] text-muted-foreground">
-                {weeks.map((week) => (
-                    <span key={week.label}>{week.label}</span>
+            <div
+                className="mt-2 grid gap-1 text-center text-[11px] text-muted-foreground sm:gap-3 sm:text-[13px]"
+                style={columns}
+            >
+                {weeks.map((week, index) => (
+                    <span
+                        key={week.label}
+                        className={cn(
+                            'whitespace-nowrap',
+                            dense && index % 2 === 1 && 'invisible',
+                        )}
+                    >
+                        {week.label}
+                    </span>
                 ))}
             </div>
         </>
@@ -288,19 +342,22 @@ function OnTimeChart({ weeks }: { weeks: AdminDashboardProps['onTimeWeeks'] }) {
 
 export default function AdminDashboard({
     header,
+    filters,
+    options,
     stats,
     today,
     lateness,
     repeatLateness,
-    onTimeWeeks,
+    trend,
     latestReports,
-    studentsByStage,
+    quizzes,
 }: AdminDashboardProps) {
     const repeat = repeatLateness[0];
-    const largestStage = Math.max(
+    const largestQuizCategory = Math.max(
         1,
-        ...studentsByStage.map((stage) => stage.count),
+        ...quizzes.categories.map((category) => category.count),
     );
+    const periodLabel = filters.label.toLowerCase();
 
     return (
         <AppLayout
@@ -330,8 +387,10 @@ export default function AdminDashboard({
                 </>
             }
         >
+            <DashboardFilters filters={filters} options={options} />
+
             <section
-                aria-label="Today at a glance"
+                aria-label="At a glance"
                 className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"
             >
                 <Kpi
@@ -341,19 +400,19 @@ export default function AdminDashboard({
                     icon="classes"
                 />
                 <Kpi
-                    label="Student attendance"
+                    label={`${roleLabel(stats.attendanceRole)} attendance`}
                     value={
                         stats.attendance === null ? '—' : `${stats.attendance}%`
                     }
-                    note={percentChange(stats.attendanceChange)}
+                    note={percentChange(stats.attendanceChange, filters)}
                     icon="check"
                 />
                 <Kpi
-                    label="Late today"
-                    value={stats.lateToday}
+                    label="Late arrivals"
+                    value={stats.late}
                     note={
-                        stats.lateToday === 0
-                            ? 'No late arrivals so far today'
+                        stats.late === 0
+                            ? `No late arrivals · ${periodLabel}`
                             : `${stats.lateStudents} ${stats.lateStudents === 1 ? 'student' : 'students'} · ${stats.lateTutors} ${stats.lateTutors === 1 ? 'tutor' : 'tutors'} · reports created`
                     }
                     icon="alarm"
@@ -444,7 +503,7 @@ export default function AdminDashboard({
 
                 <Card className="flex-[1_1_320px] p-card">
                     <SectionHead
-                        title="Lateness reports today"
+                        title={`Lateness · ${filters.label}`}
                         action={
                             <Link
                                 href={latenessIndex()}
@@ -456,7 +515,11 @@ export default function AdminDashboard({
                     />
                     {lateness.length === 0 ? (
                         <p className="py-4 text-sm text-muted-foreground">
-                            No one has been late today.
+                            No one has been late{' '}
+                            {periodLabel === 'today'
+                                ? 'today'
+                                : `in ${periodLabel}`}
+                            .
                         </p>
                     ) : (
                         <ul className="flex flex-col">
@@ -478,7 +541,8 @@ export default function AdminDashboard({
                                                 </span>
                                             </p>
                                             <p className="truncate text-[13px] text-muted-foreground">
-                                                {report.className} · arrived{' '}
+                                                {report.className} ·{' '}
+                                                {report.date}, arrived{' '}
                                                 {report.arrived}
                                             </p>
                                         </div>
@@ -495,10 +559,14 @@ export default function AdminDashboard({
                             <Icon name="flag" className="mt-0.5 size-4.5" />
                             <p>
                                 {repeat.name} has been late {repeat.count} times
-                                in the last 30 days.{' '}
+                                ({periodLabel}).{' '}
                                 <Link
                                     href={latenessIndex({
-                                        query: { search: repeat.name },
+                                        query: {
+                                            search: repeat.name,
+                                            from: filters.from,
+                                            to: filters.to,
+                                        },
                                     })}
                                     className="font-semibold underline-offset-4 hover:underline"
                                 >
@@ -510,10 +578,14 @@ export default function AdminDashboard({
                 </Card>
             </div>
 
-            <div className="flex flex-wrap items-start gap-3 sm:gap-4">
+            <div className="flex flex-wrap items-stretch gap-3 sm:gap-4">
                 <Card className="flex-[1_1_340px] p-card">
                     <SectionHead
-                        title="On-time arrivals, last 6 weeks"
+                        title={
+                            trend.label === 'Last 6 weeks'
+                                ? 'On-time arrivals, last 6 weeks'
+                                : `On-time arrivals · ${filters.label}, ${trend.label.toLowerCase()}`
+                        }
                         hint="Share of class arrivals that were on time"
                         action={
                             <div className="flex gap-3.5 text-[13px] text-muted-foreground">
@@ -528,7 +600,7 @@ export default function AdminDashboard({
                             </div>
                         }
                     />
-                    {onTimeWeeks.every(
+                    {trend.buckets.every(
                         (week) =>
                             week.students === null && week.tutors === null,
                     ) ? (
@@ -536,7 +608,7 @@ export default function AdminDashboard({
                             This fills in once registers have been taken.
                         </p>
                     ) : (
-                        <OnTimeChart weeks={onTimeWeeks} />
+                        <OnTimeChart weeks={trend.buckets} />
                     )}
                 </Card>
 
@@ -601,55 +673,69 @@ export default function AdminDashboard({
                         </div>
                     )}
                 </Card>
-
-                <Card className="flex-[1_1_280px] p-card">
-                    <SectionHead title="Students by stage" />
-                    {studentsByStage.length === 0 ? (
-                        <p className="py-2 text-sm text-muted-foreground">
-                            No students yet.
-                        </p>
-                    ) : (
-                        <ul className="flex flex-col gap-3.5">
-                            {studentsByStage.map((stage) => (
-                                <li
-                                    key={stage.label}
-                                    className="grid grid-cols-[64px_1fr_40px] items-center gap-3 text-sm"
-                                >
-                                    <span>{stage.label}</span>
-                                    <span className="h-1.5 overflow-hidden rounded-full bg-surface-muted">
-                                        <span
-                                            className="block h-full rounded-full bg-primary"
-                                            style={{
-                                                width: `${(stage.count / largestStage) * 100}%`,
-                                            }}
-                                        />
-                                    </span>
-                                    <span className="text-right text-[13px] tabular-nums">
-                                        {stage.count}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                    <hr className="my-4 border-0 border-t" />
-                    <div className="flex items-center justify-between gap-3">
-                        <div>
-                            <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-                                Quizzes
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Question bank coming soon
-                            </p>
-                        </div>
-                        <Link
-                            href={usersIndex()}
-                            className={buttonClasses('outline', 'sm')}
-                        >
-                            Manage users
-                        </Link>
-                    </div>
-                </Card>
             </div>
+
+            <Card className="p-card">
+                <SectionHead
+                    title="Quizzes this week"
+                    hint={
+                        quizzes.available
+                            ? undefined
+                            : 'Quiz activity appears here once the quiz platform launches.'
+                    }
+                />
+                <ul className="flex flex-col gap-3">
+                    {quizzes.categories.map((category, index) => (
+                        <li
+                            key={category.label}
+                            className="grid grid-cols-[56px_1fr_40px] items-center gap-3 text-sm sm:grid-cols-[120px_1fr_48px]"
+                        >
+                            <span>{category.label}</span>
+                            <span className="h-1.5 overflow-hidden rounded-full bg-surface-muted">
+                                <span
+                                    className={cn(
+                                        'block h-full rounded-full',
+                                        index < 2
+                                            ? 'bg-primary'
+                                            : 'bg-secondary-40',
+                                    )}
+                                    style={{
+                                        width: `${(category.count / largestQuizCategory) * 100}%`,
+                                    }}
+                                />
+                            </span>
+                            <span className="text-right text-[13px] tabular-nums">
+                                {category.count.toLocaleString('en-GB')}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+                <hr className="my-4 border-0 border-t" />
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
+                            Question bank
+                        </p>
+                        <p className="text-base font-bold sm:text-lg">
+                            {quizzes.questionBank.toLocaleString('en-GB')}{' '}
+                            {quizzes.questionBank === 1
+                                ? 'question'
+                                : 'questions'}
+                        </p>
+                    </div>
+                    {quizzes.available ? null : (
+                        <span
+                            className={cn(
+                                buttonClasses('outline', 'sm'),
+                                'pointer-events-none opacity-60',
+                            )}
+                            aria-disabled="true"
+                        >
+                            Manage · coming soon
+                        </span>
+                    )}
+                </div>
+            </Card>
         </AppLayout>
     );
 }

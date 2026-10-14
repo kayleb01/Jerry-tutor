@@ -140,3 +140,10 @@ it('keeps follow-up admin-only', function (string $state) {
 
     expect($report->fresh()->reviewed_at)->toBeNull();
 })->with(['tutor', 'student', 'guardian']);
+
+it('includes reports on the last day of the date range', function () {
+    ($this->lateOn)('2025-10-20', $this->ava);
+
+    $this->actingAs($this->admin)->get(route('admin.lateness.index', ['from' => '2025-10-20', 'to' => '2025-10-20']))
+        ->assertInertia(fn (Assert $page) => $page->has('reports.data', 1));
+});

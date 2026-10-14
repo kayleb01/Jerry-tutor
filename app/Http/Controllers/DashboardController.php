@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\AdminDashboard;
 use App\Services\ReportsDue;
 use App\Services\StudentDashboard;
+use App\Support\AdminDashboardFilters;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -27,7 +28,7 @@ class DashboardController extends Controller
         $user = $request->user();
 
         $props = match ($user->role) {
-            Role::Admin => app(AdminDashboard::class)->for($user),
+            Role::Admin => app(AdminDashboard::class)->for($user, AdminDashboardFilters::fromQuery($request->query())),
             Role::Tutor => $this->tutorToday($user),
             Role::Student => app(StudentDashboard::class)->for($user, $request->query('week') === 'next'),
             default => [],

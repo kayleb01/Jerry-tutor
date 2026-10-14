@@ -44,14 +44,14 @@ it('fills six weeks of history with attendance, lateness and reports', function 
 });
 
 it('gives the admin dashboard something in every section', function () {
-    $this->actingAs($this->admin)->get(route('dashboard'))
+    $this->actingAs($this->admin)->get(route('dashboard', ['period' => 'last_30']))
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard/admin')
             ->where('stats.classesToday', fn (int $count) => $count >= 4)
             ->where('stats.runningNow', fn (int $count) => $count >= 1)
             ->where('stats.toStart', fn (int $count) => $count >= 1)
             ->where('stats.attendance', fn (?int $value) => $value !== null)
-            ->where('stats.lateToday', fn (int $count) => $count >= 1)
+            ->where('stats.late', fn (int $count) => $count >= 1)
             ->where('today', fn ($today) => collect($today)->pluck('state')->contains('cancelled') && collect($today)->pluck('state')->contains('finished'))
             ->where('repeatLateness', fn ($rows) => count($rows) >= 2)
             ->where('latestReports', fn ($rows) => count($rows) >= 1)

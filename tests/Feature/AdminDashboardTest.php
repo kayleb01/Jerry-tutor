@@ -28,14 +28,16 @@ it('shows an empty dashboard when nothing has happened yet', function () {
             ->where('stats.classesToday', 0)
             ->where('stats.attendance', null)
             ->where('stats.attendanceChange', null)
-            ->where('stats.lateToday', 0)
+            ->where('stats.late', 0)
             ->has('today', 0)
             ->has('lateness', 0)
             ->has('repeatLateness', 0)
-            ->has('onTimeWeeks', 6)
-            ->where('onTimeWeeks.5.students', null)
+            ->where('trend.label', 'Last 6 weeks')
+            ->has('trend.buckets', 6)
+            ->where('trend.buckets.5.students', null)
             ->has('latestReports', 0)
-            ->has('studentsByStage', 0));
+            ->where('quizzes.questionBank', 0)
+            ->has('quizzes.categories', 5));
 });
 
 it('summarises today for students and tutors alike', function () {
@@ -71,7 +73,7 @@ it('summarises today for students and tutors alike', function () {
             ->where('stats.runningNow', 1)
             ->where('stats.toStart', 1)
             ->where('stats.attendance', 50)
-            ->where('stats.lateToday', 1)
+            ->where('stats.late', 1)
             ->where('stats.lateTutors', 1)
             ->where('stats.lateStudents', 0)
             ->where('stats.activeStudents', 2)
@@ -96,18 +98,16 @@ it('summarises today for students and tutors alike', function () {
             ->where('lateness.0.role', 'tutor')
             ->where('lateness.0.arrived', '09:05')
             ->where('lateness.0.minutesLate', 5)
-            ->where('onTimeWeeks.5.label', '13 Oct')
-            ->where('onTimeWeeks.5.students', 100)
-            ->where('onTimeWeeks.5.tutors', 0)
-            ->where('onTimeWeeks.0.students', null)
+            ->where('trend.buckets.5.label', '13 Oct')
+            ->where('trend.buckets.5.students', 100)
+            ->where('trend.buckets.5.tutors', 0)
+            ->where('trend.buckets.0.students', null)
             ->has('latestReports', 2)
             ->where('latestReports.0.role', 'student')
             ->where('latestReports.1.role', 'tutor')
             ->where('latestReports.1.wentWell', 'Strong on place value.')
-            ->where('studentsByStage', [
-                ['label' => 'KS2', 'count' => 1],
-                ['label' => 'KS3', 'count' => 1],
-            ]));
+            ->where('quizzes.categories.0.label', 'KS2')
+            ->where('quizzes.categories.4.label', 'GCSE'));
 });
 
 it('compares student attendance with the same point last week', function () {

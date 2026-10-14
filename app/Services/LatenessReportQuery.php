@@ -44,8 +44,8 @@ class LatenessReportQuery
             ->with(['user', 'reviewedBy'])
             ->when($filters['role'], fn (Builder $query, AttendeeRole $role) => $query->where('attendee_role', $role))
             ->when($filters['class'], fn (Builder $query, int $class) => $query->whereHas('lesson', fn (Builder $lesson) => $lesson->where('class_group_id', $class)))
-            ->when($filters['from'], fn (Builder $query, CarbonImmutable $from) => $query->where('lesson_date', '>=', $from->toDateString()))
-            ->when($filters['to'], fn (Builder $query, CarbonImmutable $to) => $query->where('lesson_date', '<=', $to->toDateString()))
+            ->when($filters['from'], fn (Builder $query, CarbonImmutable $from) => $query->whereDate('lesson_date', '>=', $from->toDateString()))
+            ->when($filters['to'], fn (Builder $query, CarbonImmutable $to) => $query->whereDate('lesson_date', '<=', $to->toDateString()))
             ->when($filters['search'] !== '', fn (Builder $query) => $query->whereHas('user', fn (Builder $user) => $user->withTrashed()->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$search])))
             ->orderByDesc('lesson_date')
             ->orderByDesc('scheduled_start_at')
@@ -53,17 +53,21 @@ class LatenessReportQuery
     }
 
     /**
-     * People late 3 or more times in the last 30 days (academy dates), most frequent first.
+     * People late 3 or more times between two academy dates (default: the last 30 days), most frequent first.
+     * An optional scope narrows the reports further, e.g. to one class.
      *
+     * @param  (callable(Builder<LatenessReport>): mixed)|null  $scope
      * @return array<int, array{userId: int, name: string, role: string, count: int, lastDate: string}>
      */
-    public function repeatOffenders(): array
+    public function repeatOffenders(?string $since = null, ?string $until = null, ?callable $scope = null): array
     {
-        $since = CarbonImmutable::now(config('academy.timezone'))->subDays(30)->toDateString();
+        $since ??= CarbonImmutable::now(config('academy.timezone'))->subDays(30)->toDateString();
 
         $rows = LatenessReport::query()
             ->select('user_id', 'attendee_role', DB::raw('COUNT(*) as late_count'), DB::raw('MAX(lesson_date) as last_date'))
-            ->where('lesson_date', '>=', $since)
+            ->whereDate('lesson_date', '>=', $since)
+            ->when($until, fn (Builder $query) => $query->whereDate('lesson_date', '<=', $until))
+            ->when($scope, fn (Builder $query) => $scope($query))
             ->groupBy('user_id', 'attendee_role')
             ->havingRaw('COUNT(*) >= 3')
             ->orderByDesc('late_count')
