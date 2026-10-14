@@ -83,6 +83,12 @@ it('shows form errors with the shared rules', function () {
     $this->actingAs($this->admin)->post(route('admin.questions.store'), questionPayload(['correct' => [0, 1]]))
         ->assertSessionHasErrors(['correct' => 'A multiple-choice question has exactly one correct answer.']);
 
+    $this->actingAs($this->admin)->post(route('admin.questions.store'), questionPayload(['type' => 'multi_select', 'correct' => [0, 1, 2]]))
+        ->assertSessionHasErrors(['correct' => 'At least one option must be wrong.']);
+
+    $this->actingAs($this->admin)->post(route('admin.questions.store'), questionPayload(['type' => 'numeric', 'numeric_answer' => '']))
+        ->assertSessionHasErrors(['numeric_answer' => 'Enter the correct number.']);
+
     expect(Question::count())->toBe(0);
 });
 

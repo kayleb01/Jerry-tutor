@@ -121,3 +121,30 @@ it('offers a template whose example rows import cleanly', function () {
 it('is only for admins', function () {
     $this->actingAs(User::factory()->tutor()->create())->get(route('admin.questions.import'))->assertForbidden();
 });
+
+it('reads a Windows-1252 CSV saved by Excel', function () {
+    $file = csvFile([csvRow(['type' => 'numeric', 'stem' => 'Share £60 in the ratio 2 : 3. What is the larger share?', 'option_a' => '', 'option_b' => '', 'option_c' => '', 'correct' => '', 'numeric_answer' => '36', 'exam_tracks' => ''])]);
+    $windows = UploadedFile::fake()->createWithContent('questions.csv', mb_convert_encoding(substr(file_get_contents($file->getRealPath()), 3), 'Windows-1252', 'UTF-8'));
+
+    $this->actingAs($this->admin)->post(route('admin.questions.import.store'), ['file' => $windows])
+        ->assertInertiaFlash('toast.type', 'success');
+
+    expect(Question::sole()->stem)->toBe('Share £60 in the ratio 2 : 3. What is the larger share?');
+
+    $this->actingAs($this->admin)->get(route('admin.questions.index'))->assertOk();
+});
+
+it('applies the type rules to CSV rows too', function () {
+    $file = csvFile([
+        csvRow(['type' => 'multi_select', 'correct' => 'A;B;C']),
+        csvRow(['type' => 'numeric', 'option_a' => '', 'option_b' => '', 'option_c' => '', 'correct' => '', 'numeric_answer' => '']),
+    ]);
+
+    $this->actingAs($this->admin)->post(route('admin.questions.import.store'), ['file' => $file])
+        ->assertInertiaFlash('importErrors', [
+            'Row 2: At least one option must be wrong.',
+            'Row 3: Enter the correct number.',
+        ]);
+
+    expect(Question::count())->toBe(0);
+});

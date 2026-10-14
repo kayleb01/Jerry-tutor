@@ -21,3 +21,11 @@ it('seeds published demo questions of every type and key stage, once', function 
         ->and($questions->pluck('type')->unique()->sortBy->value->values()->all())->toEqualCanonicalizing(QuestionType::cases())
         ->and($questions->pluck('topic.key_stage')->unique()->values()->all())->toEqualCanonicalizing(KeyStage::cases());
 });
+
+it('leaves a real question bank alone', function () {
+    User::factory()->admin()->create(['email' => 'owner@school.example']);
+    $this->seed(CurriculumSeeder::class);
+    $this->seed(DemoQuestionSeeder::class);
+
+    expect(Question::count())->toBe(0);
+});

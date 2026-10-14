@@ -84,8 +84,8 @@ final class QuestionInput
             'options.*' => ['required', 'string', 'max:500'],
             'correct' => ['sometimes', 'required', 'array'],
             'correct.*' => ['integer', 'min:0', "max:{$lastOption}"],
-            'numeric_answer' => ['sometimes', 'required', 'numeric', 'between:-1000000000,1000000000'],
-            'numeric_tolerance' => ['sometimes', 'numeric', 'min:0', 'max:1000000'],
+            'numeric_answer' => ['sometimes', 'required', 'numeric', 'between:-99999999,99999999', 'decimal:0,4'],
+            'numeric_tolerance' => ['sometimes', 'numeric', 'min:0', 'max:99999999', 'decimal:0,4'],
             'accepted_answers' => ['sometimes', 'required', 'array', 'max:10'],
             'accepted_answers.*' => ['string', 'max:100'],
         ];

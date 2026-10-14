@@ -86,7 +86,16 @@ class ImportQuestions
      */
     private function readRows(string $path): array|string
     {
-        $handle = fopen($path, 'r');
+        $contents = preg_replace('/^\xEF\xBB\xBF/', '', (string) file_get_contents($path));
+
+        // Excel's plain "CSV" export on Windows is Windows-1252, not UTF-8 (e.g. "£" is a single 0xA3 byte).
+        if (! mb_check_encoding($contents, 'UTF-8')) {
+            $contents = mb_convert_encoding($contents, 'UTF-8', 'Windows-1252');
+        }
+
+        $handle = fopen('php://temp', 'r+');
+        fwrite($handle, $contents);
+        rewind($handle);
         $header = fgetcsv($handle, escape: '');
 
         if ($header === false) {
@@ -94,7 +103,6 @@ class ImportQuestions
         }
 
         $header = array_map(fn (?string $cell): string => strtolower(trim((string) $cell)), $header);
-        $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header[0]);
         $missing = array_values(array_diff(self::REQUIRED, $header));
 
         if ($missing !== []) {

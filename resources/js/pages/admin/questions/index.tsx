@@ -83,8 +83,11 @@ export default function QuestionsIndex({
     const [strand, setStrand] = useState(filters.strand ?? '');
     const [selected, setSelected] = useState<number[]>([]);
     const pageIds = questions.data.map((question) => question.id);
+    // Only rows on screen can be acted on, so filtering or paging never hides a selection.
+    const visibleSelected = selected.filter((id) => pageIds.includes(id));
     const allSelected =
-        pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+        pageIds.length > 0 &&
+        pageIds.every((id) => visibleSelected.includes(id));
     const toggle = (id: number) =>
         setSelected((current) =>
             current.includes(id)
@@ -302,14 +305,14 @@ export default function QuestionsIndex({
                 </Form>
             </Card>
 
-            {selected.length > 0 && (
+            {visibleSelected.length > 0 && (
                 <div
                     role="region"
                     aria-label="Bulk actions"
                     className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-lg border bg-surface p-3 shadow-lg"
                 >
                     <span className="text-sm font-semibold">
-                        {selected.length} selected
+                        {visibleSelected.length} selected
                     </span>
                     {bulkActions.map((action) => (
                         <Form
@@ -320,7 +323,7 @@ export default function QuestionsIndex({
                         >
                             {({ processing }) => (
                                 <>
-                                    {selected.map((id) => (
+                                    {visibleSelected.map((id) => (
                                         <input
                                             key={id}
                                             type="hidden"

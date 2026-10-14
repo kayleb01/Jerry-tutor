@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Validator;
 
 /**
  * A small published question bank for demos: every key stage, strand and answer type.
+ * Only runs where the demo admin (admin@academy.test) exists, so a real bank is never touched.
  * Seeded through the same rules and workflow as the admin screens. Safe to run repeatedly.
  */
 class DemoQuestionSeeder extends Seeder
@@ -52,7 +53,7 @@ class DemoQuestionSeeder extends Seeder
 
     public function run(SaveQuestion $saveQuestion, ChangeQuestionStatus $changeStatus): void
     {
-        $admin = User::where('role', Role::Admin)->orderBy('id')->first();
+        $admin = User::where('email', 'admin@academy.test')->where('role', Role::Admin)->first();
 
         if (! $admin || Question::where('stem', self::QUESTIONS[0]['stem'])->exists()) {
             return;

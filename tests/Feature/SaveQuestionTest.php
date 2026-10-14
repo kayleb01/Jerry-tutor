@@ -86,6 +86,9 @@ it('refuses type-specific mistakes', function (array $overrides, string $field, 
     'year group outside the key stage' => [['year_group' => '8'], 'year_group', "Year 8 isn't in KS2. Choose a KS2 year or leave it blank."],
     'unknown exam track' => [['exam_tracks' => ['a-level']], 'exam_tracks.0', 'The selected exam track is invalid.'],
     'no stem' => [['stem' => '   '], 'stem', 'The question field is required.'],
+    'answer too large to store' => [['type' => 'numeric', 'numeric_answer' => '500000000'], 'numeric_answer', 'The answer field must be between -99999999 and 99999999.'],
+    'answer with too many decimals' => [['type' => 'numeric', 'numeric_answer' => '0.33333'], 'numeric_answer', 'The answer field must have 0-4 decimal places.'],
+    'tolerance with too many decimals' => [['type' => 'numeric', 'numeric_tolerance' => '0.00001'], 'numeric_tolerance', 'The tolerance field must have 0-4 decimal places.'],
 ]);
 
 it('creates a draft with its options and exam tracks', function () {

@@ -103,7 +103,9 @@ export default function EditQuestion({ question, options }: EditQuestionProps) {
                     <>
                         <input type="hidden" name="_method" value="put" />
                         <QuestionFields
-                            key={question.id}
+                            // Remount when the saved diagram changes so the file input and
+                            // "remove" box reset instead of re-sending stale choices.
+                            key={`${question.id}-${question.imageUrl ?? ''}`}
                             initial={question}
                             options={options}
                             errors={errors}
