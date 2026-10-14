@@ -81,7 +81,7 @@ export default function ChildAttendance({
                 />
             </section>
             <Card>
-                <CardContent className="overflow-x-auto p-0">
+                <CardContent className="relative overflow-x-auto p-0">
                     <table className="w-full text-left text-sm">
                         <caption className="sr-only">
                             Recent classes for {child.name}
