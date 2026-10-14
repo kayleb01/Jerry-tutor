@@ -485,7 +485,13 @@ export default function AdminDashboard({
                         title={`Lateness · ${filters.label}`}
                         action={
                             <Link
-                                href={latenessIndex()}
+                                href={latenessIndex({
+                                    query: {
+                                        status: 'all',
+                                        from: filters.from,
+                                        to: filters.to,
+                                    },
+                                })}
                                 className="text-sm font-semibold text-link hover:underline"
                             >
                                 View all

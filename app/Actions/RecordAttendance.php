@@ -93,7 +93,11 @@ class RecordAttendance
     private function syncLatenessReport(AttendanceRecord $record, Lesson $lesson): void
     {
         if ($record->status !== AttendanceStatus::Late) {
-            LatenessReport::query()->where('attendance_record_id', $record->id)->delete();
+            $report = LatenessReport::query()->where('attendance_record_id', $record->id)->first();
+
+            // The lateness no longer stands, so parents shouldn't keep reading about it.
+            $report?->guardianNotices()->whereNull('acknowledged_at')->delete();
+            $report?->delete();
 
             return;
         }

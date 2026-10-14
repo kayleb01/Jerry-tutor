@@ -1,6 +1,10 @@
 <?php
 
+use App\Actions\RecordAttendance;
+use App\Enums\AttendanceStatus;
+use App\Models\ClassGroup;
 use App\Models\GuardianNotice;
+use App\Models\Lesson;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -62,4 +66,19 @@ it('keeps notices private to the child\'s guardians', function () {
         ->assertInertia(fn (Assert $page) => $page->has('fromAcademy', 0));
 
     expect($notice->fresh()->acknowledged_at)->toBeNull();
+});
+
+it('withdraws unread notices when the lateness is corrected away', function () {
+    $group = ClassGroup::factory()->create();
+    $group->enrol($this->tolu);
+    $startsAt = CarbonImmutable::parse('2026-10-13 13:00:00', 'UTC');
+    $lesson = Lesson::factory()->for($group)->create(['tutor_id' => $group->tutor_id, 'starts_at' => $startsAt, 'ends_at' => $startsAt->addHour()]);
+    $record = app(RecordAttendance::class);
+    $report = $record->handle($lesson, $this->tolu, AttendanceStatus::Present, null, $startsAt->addMinutes(12))->latenessReport;
+    GuardianNotice::factory()->create(['student_id' => $this->tolu->id, 'lateness_report_id' => $report->id]);
+
+    $record->handle($lesson, $this->tolu, AttendanceStatus::Present, null, $startsAt);
+
+    $this->actingAs($this->mum)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->has('fromAcademy', 0));
 });
