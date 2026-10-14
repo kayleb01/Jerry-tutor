@@ -11,6 +11,11 @@ use Carbon\CarbonImmutable;
 class LessonPolicy
 {
     /**
+     * How long after a lesson ends its reports can still be written.
+     */
+    public const REPORT_WINDOW_HOURS = 48;
+
+    /**
      * Only the lesson's own tutor checks in, inside their window.
      */
     public function checkIn(User $user, Lesson $lesson): bool
@@ -52,7 +57,7 @@ class LessonPolicy
     {
         $now = CarbonImmutable::now();
 
-        if ($lesson->isCancelled() || $now->lessThan($lesson->starts_at) || $now->greaterThan($lesson->ends_at->addHours(48))) {
+        if ($lesson->isCancelled() || $now->lessThan($lesson->starts_at) || $now->greaterThan($lesson->ends_at->addHours(self::REPORT_WINDOW_HOURS))) {
             return false;
         }
 
