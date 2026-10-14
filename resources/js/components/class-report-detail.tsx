@@ -29,6 +29,7 @@ export type ClassReportLesson = {
     attendance: string | null;
     state: string;
     stateLabel: string;
+    latestSubmittedAt: string | null;
     reportWindowClosesAt: string | null;
     tutorReport: ClassReport | null;
     studentReports: ClassReport[];
@@ -222,6 +223,13 @@ export default function ClassReportDetail({
                     >
                         {({ errors, processing }) => (
                             <>
+                                {lesson.latestSubmittedAt && (
+                                    <input
+                                        type="hidden"
+                                        name="seen"
+                                        value={lesson.latestSubmittedAt}
+                                    />
+                                )}
                                 <div className="flex flex-col gap-1.5">
                                     <Label htmlFor="note">
                                         Note to {lesson.tutor ?? 'the tutor'}
@@ -283,6 +291,13 @@ export default function ClassReportDetail({
                     >
                         {({ processing }) => (
                             <>
+                                {lesson.latestSubmittedAt && (
+                                    <input
+                                        type="hidden"
+                                        name="seen"
+                                        value={lesson.latestSubmittedAt}
+                                    />
+                                )}
                                 {nextLessonId !== null && (
                                     <input
                                         type="hidden"

@@ -288,6 +288,7 @@ export default function LessonReportsInbox({
                         <InfiniteScroll
                             data="lessons"
                             manual
+                            preserveUrl
                             next={({ loading, fetch, hasMore }) =>
                                 hasMore && (
                                     <div className="px-5 pt-2 pb-5">
@@ -371,7 +372,10 @@ function InboxRow({
         <Link
             href={href}
             only={['selected', 'filters']}
-            preserveScroll
+            // Below lg the list is replaced by the detail, so start it at the top.
+            preserveScroll={() =>
+                window.matchMedia('(min-width: 64rem)').matches
+            }
             preserveState
             aria-current={active ? 'true' : undefined}
             className={cn(

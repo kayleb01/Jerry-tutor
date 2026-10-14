@@ -9,6 +9,7 @@ use App\Models\Lesson;
 use App\Models\RaisedIssue;
 use App\Models\User;
 use App\Services\ClassReportInbox;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -55,7 +56,16 @@ class LessonReportController extends Controller
      */
     public function review(Request $request, Lesson $lesson): RedirectResponse
     {
-        $validated = $request->validate(['next' => ['nullable', 'integer', 'min:1']]);
+        $validated = $request->validate([
+            'next' => ['nullable', 'integer', 'min:1'],
+            'seen' => ['nullable', 'date'],
+        ]);
+
+        if ($this->hasUnseenReports($lesson, $validated['seen'] ?? null)) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'A new report arrived while you were reading. Have a look, then mark it as reviewed.']);
+
+            return redirect($this->inboxUrl($lesson->id));
+        }
 
         $this->markReviewed($lesson, $request->user());
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$lesson->classGroup->name} marked as reviewed."]);
@@ -64,25 +74,42 @@ class LessonReportController extends Controller
     }
 
     /**
-     * Send the lesson's tutor a note they'll see on their dashboard. Raising it counts as reviewing the lesson.
+     * Send the lesson's tutor a note they'll see on their dashboard. Raising it counts as reviewing the lesson,
+     * unless a report arrived after the admin opened it.
      */
     public function raise(Request $request, Lesson $lesson): RedirectResponse
     {
-        $validated = $request->validate(['note' => ['required', 'string', 'max:1000']]);
+        $validated = $request->validate([
+            'note' => ['required', 'string', 'max:1000'],
+            'seen' => ['nullable', 'date'],
+        ]);
+        $unseen = $this->hasUnseenReports($lesson, $validated['seen'] ?? null);
 
-        DB::transaction(function () use ($lesson, $request, $validated): void {
+        DB::transaction(function () use ($lesson, $request, $validated, $unseen): void {
             RaisedIssue::create([
                 'lesson_id' => $lesson->id,
                 'tutor_id' => $lesson->tutor_id,
                 'raised_by_id' => $request->user()->id,
                 'note' => trim($validated['note']),
             ]);
-            $this->markReviewed($lesson, $request->user());
+            if (! $unseen) {
+                $this->markReviewed($lesson, $request->user());
+            }
         });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Sent to {$lesson->tutor->name}."]);
 
         return redirect($this->inboxUrl($lesson->id));
+    }
+
+    /**
+     * Whether a report was submitted after the newest one the admin's page showed (`seen`, UTC).
+     */
+    private function hasUnseenReports(Lesson $lesson, ?string $seen): bool
+    {
+        return $lesson->lessonReports()
+            ->when($seen !== null, fn ($reports) => $reports->where('submitted_at', '>', CarbonImmutable::parse($seen, 'UTC')))
+            ->exists();
     }
 
     private function markReviewed(Lesson $lesson, User $admin): void

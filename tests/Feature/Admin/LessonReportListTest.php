@@ -64,7 +64,7 @@ it('marks a lesson reviewed and moves to the next one with the same filters', fu
 
     $this->actingAs($this->admin)
         ->from(route('admin.lesson-reports.index', ['queue' => 'review', 'class' => $this->group->id, 'lesson' => $lesson->id, 'evil' => 'x']))
-        ->put(route('admin.lesson-reports.review', $lesson), ['next' => $next->id])
+        ->put(route('admin.lesson-reports.review', $lesson), ['next' => $next->id, 'seen' => '2026-10-13 10:00:00'])
         ->assertRedirect(route('admin.lesson-reports.index', ['queue' => 'review', 'class' => $this->group->id, 'lesson' => $next->id]))
         ->assertInertiaFlash('toast.message', 'Year 5 Maths marked as reviewed.');
 
@@ -73,8 +73,30 @@ it('marks a lesson reviewed and moves to the next one with the same filters', fu
 
     $this->actingAs($this->admin)
         ->from(route('admin.lesson-reports.index'))
-        ->put(route('admin.lesson-reports.review', $next))
+        ->put(route('admin.lesson-reports.review', $next), ['seen' => '2026-10-12 10:00:00'])
         ->assertRedirect(route('admin.lesson-reports.index'));
+});
+
+it('will not mark a lesson reviewed when a report arrived after the admin opened it', function () {
+    $lesson = ($this->lessonWithReport)('2026-10-13 09:00:00');
+
+    $this->actingAs($this->admin)->get(route('admin.lesson-reports.index', ['lesson' => $lesson->id]))
+        ->assertInertia(fn (Assert $page) => $page->where('selected.latestSubmittedAt', '2026-10-13 10:00:00'));
+
+    $student = User::factory()->student()->create();
+    LessonReport::factory()->for($lesson)->create(['author_id' => $student->id, 'author_role' => AttendeeRole::Student, 'submitted_at' => now()]);
+
+    $this->actingAs($this->admin)
+        ->from(route('admin.lesson-reports.index', ['lesson' => $lesson->id]))
+        ->put(route('admin.lesson-reports.review', $lesson), ['seen' => '2026-10-13 10:00:00'])
+        ->assertRedirect(route('admin.lesson-reports.index', ['lesson' => $lesson->id]))
+        ->assertInertiaFlash('toast.type', 'error');
+
+    $this->actingAs($this->admin)
+        ->post(route('admin.lesson-reports.raise', $lesson), ['note' => 'Please follow up.', 'seen' => '2026-10-13 10:00:00']);
+
+    expect($lesson->fresh()->reports_reviewed_at)->toBeNull()
+        ->and(RaisedIssue::count())->toBe(1);
 });
 
 it('raises an issue with the tutor and marks the lesson reviewed', function () {
@@ -87,7 +109,7 @@ it('raises an issue with the tutor and marks the lesson reviewed', function () {
 
     $this->actingAs($this->admin)
         ->from(route('admin.lesson-reports.index', ['queue' => 'review']))
-        ->post(route('admin.lesson-reports.raise', $lesson), ['note' => 'Please recap place value for Tolu.'])
+        ->post(route('admin.lesson-reports.raise', $lesson), ['note' => 'Please recap place value for Tolu.', 'seen' => '2026-10-13 10:00:00'])
         ->assertRedirect(route('admin.lesson-reports.index', ['queue' => 'review', 'lesson' => $lesson->id]))
         ->assertInertiaFlash('toast.message', 'Sent to Tunde Bakare.');
 

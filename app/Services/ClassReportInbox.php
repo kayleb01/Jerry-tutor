@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeRole;
 use App\Enums\LessonStatus;
+use App\Models\AttendanceRecord;
 use App\Models\Lesson;
 use App\Models\LessonReport;
 use App\Models\RaisedIssue;
@@ -82,12 +83,12 @@ class ClassReportInbox
             'raised' => $query->whereHas('raisedIssues', fn (Builder $issues) => $issues->whereNull('acknowledged_at')),
             'missing' => $query
                 ->where('lessons.ends_at', '<', $now)
-                ->whereHas('attendanceRecords')
+                ->whereHas('attendanceRecords', $this->attended(...))
                 ->whereDoesntHave('lessonReports', fn (Builder $reports) => $reports->where('author_role', AttendeeRole::Tutor)),
             'reviewed' => $query
                 ->whereNotNull('lessons.reports_reviewed_at')
                 ->whereDoesntHave('lessonReports', $this->unreviewed(...)),
-            default => $query->where(fn (Builder $query) => $query->whereHas('lessonReports')->orWhereHas('attendanceRecords')),
+            default => $query->where(fn (Builder $query) => $query->whereHas('lessonReports')->orWhereHas('attendanceRecords', $this->attended(...))),
         };
     }
 
@@ -187,6 +188,7 @@ class ClassReportInbox
             'attendance' => $students->isEmpty() ? null : "{$attended} of {$students->count()} present",
             'state' => $state,
             'stateLabel' => $stateLabel,
+            'latestSubmittedAt' => $lesson->lessonReports->max('submitted_at')?->utc()->format('Y-m-d H:i:s'),
             'reportWindowClosesAt' => $tutorReport ? null : $this->local($lesson->ends_at->addHours(LessonPolicy::REPORT_WINDOW_HOURS)),
             'tutorReport' => $tutorReport ? $this->report($tutorReport) : null,
             'studentReports' => $studentReports->map($this->report(...))->all(),
@@ -231,6 +233,16 @@ class ClassReportInbox
     private function ordered(Builder $query): Builder
     {
         return $query->orderByDesc('lessons.starts_at')->orderByDesc('lessons.id');
+    }
+
+    /**
+     * Someone was actually there. Absent records alone don't count: the no-show job writes those for every lesson.
+     *
+     * @param  Builder<AttendanceRecord>  $records
+     */
+    private function attended(Builder $records): void
+    {
+        $records->whereIn('status', [AttendanceStatus::Present, AttendanceStatus::Late]);
     }
 
     /**

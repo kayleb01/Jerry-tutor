@@ -221,3 +221,17 @@ it('builds the detail with the tutor report, students needing attention first an
 
     expect($this->inbox->detail($lesson->fresh())['raisedIssues'][0]['acknowledgedAt'])->toBe('14 Oct, 13:00');
 });
+
+it('does not chase tutor reports for classes nobody attended', function () {
+    $noShow = inboxLesson('2026-10-13 09:00:00');
+    $noShow->classGroup->enrol(User::factory()->student()->create());
+
+    $ran = inboxLesson('2026-10-12 09:00:00');
+    inboxAttend($ran, AttendanceStatus::Late);
+
+    $this->artisan('attendance:mark-no-shows')->assertSuccessful();
+
+    expect($noShow->attendanceRecords()->count())->toBeGreaterThan(0)
+        ->and(inboxIds('missing'))->toBe([$ran->id])
+        ->and(inboxIds('all'))->toBe([$ran->id]);
+});
