@@ -270,14 +270,17 @@ class DemoDataSeeder extends Seeder
     private function today(array $classes, CarbonImmutable $now): void
     {
         $local = $now->setTimezone(config('academy.timezone'));
-        $base = $local->setTime(max(10, min(19, $local->hour)), 0);
+        $todayStart = $local->startOfDay();
+        $todayEnd = $local->endOfDay();
 
-        $plans = [
-            ['class' => $classes[0], 'start' => $base->subHours(3), 'state' => 'finished'],
+        // Times are relative to now so each lesson really is finished, running or still to come;
+        // any that would fall outside today (late at night or early morning) are skipped.
+        $plans = array_filter([
+            ['class' => $classes[0], 'start' => $local->subMinutes($classes[0]->duration_minutes + 90)->startOfMinute(), 'state' => 'finished'],
             ['class' => $classes[4], 'start' => $local->subMinutes(20)->startOfMinute(), 'state' => 'in_progress'],
-            ['class' => $classes[1], 'start' => $base->addHours(2), 'state' => 'upcoming'],
-            ['class' => $classes[5], 'start' => $base->addHours(3), 'state' => 'cancelled'],
-        ];
+            ['class' => $classes[1], 'start' => $local->addHours(2)->startOfHour(), 'state' => 'upcoming'],
+            ['class' => $classes[5], 'start' => $local->addHours(3)->startOfHour(), 'state' => 'cancelled'],
+        ], fn (array $plan): bool => $plan['start']->greaterThanOrEqualTo($todayStart) && $plan['start']->lessThanOrEqualTo($todayEnd));
 
         foreach ($plans as $plan) {
             /** @var ClassGroup $group */
