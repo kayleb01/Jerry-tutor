@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import { create, edit, index } from '@/routes/admin/questions';
+import { bulkStatus, create, edit, index } from '@/routes/admin/questions';
 import type { Option, Paginated } from '@/types';
 
 type Row = {
@@ -52,6 +52,12 @@ type QuestionsIndexProps = {
     options: QuestionFormOptions;
 };
 
+const bulkActions = [
+    { status: 'in_review', label: 'Send for review', variant: 'outline' },
+    { status: 'published', label: 'Publish', variant: 'primary' },
+    { status: 'retired', label: 'Retire', variant: 'outline' },
+] as const;
+
 /** Drops empty filters so links stay short. */
 function query(filters: Filters, overrides: Partial<Filters> = {}) {
     return Object.fromEntries(
@@ -69,6 +75,16 @@ export default function QuestionsIndex({
 }: QuestionsIndexProps) {
     const [keyStage, setKeyStage] = useState(filters.key_stage ?? '');
     const [strand, setStrand] = useState(filters.strand ?? '');
+    const [selected, setSelected] = useState<number[]>([]);
+    const pageIds = questions.data.map((question) => question.id);
+    const allSelected =
+        pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+    const toggle = (id: number) =>
+        setSelected((current) =>
+            current.includes(id)
+                ? current.filter((value) => value !== id)
+                : [...current, id],
+        );
     const topics = options.topics.filter(
         (topic) =>
             (keyStage === '' || topic.keyStage === keyStage) &&
@@ -272,11 +288,77 @@ export default function QuestionsIndex({
                 </Form>
             </Card>
 
+            {selected.length > 0 && (
+                <div
+                    role="region"
+                    aria-label="Bulk actions"
+                    className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-lg border bg-surface p-3 shadow-lg"
+                >
+                    <span className="text-sm font-semibold">
+                        {selected.length} selected
+                    </span>
+                    {bulkActions.map((action) => (
+                        <Form
+                            key={action.status}
+                            {...bulkStatus.form()}
+                            options={{ preserveScroll: true }}
+                            onSuccess={() => setSelected([])}
+                        >
+                            {({ processing }) => (
+                                <>
+                                    {selected.map((id) => (
+                                        <input
+                                            key={id}
+                                            type="hidden"
+                                            name="ids[]"
+                                            value={id}
+                                        />
+                                    ))}
+                                    <input
+                                        type="hidden"
+                                        name="status"
+                                        value={action.status}
+                                    />
+                                    <Button
+                                        type="submit"
+                                        size="sm"
+                                        variant={action.variant}
+                                        disabled={processing}
+                                    >
+                                        {action.label}
+                                    </Button>
+                                </>
+                            )}
+                        </Form>
+                    ))}
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelected([])}
+                    >
+                        Clear
+                    </Button>
+                </div>
+            )}
+
             <Card>
                 <CardContent className="overflow-x-auto p-0">
                     <table className="w-full min-w-[720px] text-left text-sm">
                         <thead className="border-b text-xs tracking-[0.04em] text-muted-foreground uppercase">
                             <tr>
+                                <th scope="col" className="w-10 py-3 pl-4">
+                                    <input
+                                        type="checkbox"
+                                        checked={allSelected}
+                                        onChange={() =>
+                                            setSelected(
+                                                allSelected ? [] : pageIds,
+                                            )
+                                        }
+                                        aria-label="Select every question on this page"
+                                        className="size-4 accent-primary"
+                                    />
+                                </th>
                                 <th
                                     scope="col"
                                     className="px-4 py-3 font-semibold"
@@ -313,7 +395,7 @@ export default function QuestionsIndex({
                             {questions.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={5}
+                                        colSpan={6}
                                         className="px-4 py-6 text-center text-muted-foreground sm:py-8"
                                     >
                                         {total === 0
@@ -327,6 +409,17 @@ export default function QuestionsIndex({
                                     key={question.id}
                                     className="border-b align-top last:border-0"
                                 >
+                                    <td className="py-3 pl-4">
+                                        <input
+                                            type="checkbox"
+                                            checked={selected.includes(
+                                                question.id,
+                                            )}
+                                            onChange={() => toggle(question.id)}
+                                            aria-label={`Select question ${question.id}`}
+                                            className="size-4 accent-primary"
+                                        />
+                                    </td>
                                     <td className="max-w-md px-4 py-3">
                                         <MathText
                                             text={question.stem}

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ClassGroupController;
 use App\Http\Controllers\Admin\LatenessReportController;
 use App\Http\Controllers\Admin\LessonReportController as AdminLessonReportController;
 use App\Http\Controllers\Admin\QuestionController;
+use App\Http\Controllers\Admin\QuestionStatusController;
 use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
@@ -55,6 +56,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('lateness', [LatenessReportController::class, 'index'])->name('lateness.index');
     Route::put('lateness/{latenessReport}', [LatenessReportController::class, 'update'])->name('lateness.update');
 
+    Route::put('questions/bulk-status', [QuestionStatusController::class, 'bulk'])->name('questions.bulk-status');
+    Route::put('questions/{question}/status', [QuestionStatusController::class, 'update'])->name('questions.status.update');
     Route::resource('questions', QuestionController::class)->except(['show']);
 });
 

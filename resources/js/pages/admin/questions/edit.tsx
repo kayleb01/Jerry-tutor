@@ -9,6 +9,7 @@ import type { QuestionStatus } from '@/components/question-status-badge';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { destroy, update } from '@/routes/admin/questions';
+import { update as statusUpdate } from '@/routes/admin/questions/status';
 import type { Option } from '@/types';
 
 export type EditableQuestion = QuestionFormValues & {
@@ -20,6 +21,16 @@ export type EditableQuestion = QuestionFormValues & {
     reviewedBy: string | null;
     publishedAt: string | null;
     canDelete: boolean;
+};
+
+const statusActions: Record<
+    string,
+    { label: string; variant: 'primary' | 'outline' }
+> = {
+    in_review: { label: 'Send for review', variant: 'primary' },
+    published: { label: 'Publish', variant: 'primary' },
+    draft: { label: 'Back to draft', variant: 'outline' },
+    retired: { label: 'Retire', variant: 'outline' },
 };
 
 type EditQuestionProps = {
@@ -46,6 +57,39 @@ export default function EditQuestion({ question, options }: EditQuestionProps) {
                                 ` by ${question.reviewedBy}`}
                         </span>
                     )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {question.nextStatuses.map((next) => {
+                        const action = statusActions[String(next.value)];
+
+                        return (
+                            <Form
+                                key={next.value}
+                                {...statusUpdate.form(question.id)}
+                                options={{ preserveScroll: true }}
+                            >
+                                {({ processing }) => (
+                                    <>
+                                        <input
+                                            type="hidden"
+                                            name="status"
+                                            value={next.value}
+                                        />
+                                        <Button
+                                            type="submit"
+                                            size="sm"
+                                            variant={
+                                                action?.variant ?? 'outline'
+                                            }
+                                            disabled={processing}
+                                        >
+                                            {action?.label ?? next.label}
+                                        </Button>
+                                    </>
+                                )}
+                            </Form>
+                        );
+                    })}
                 </div>
             </div>
 
