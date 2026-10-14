@@ -12,17 +12,30 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
- * Filters for the lateness list and its CSV export, plus the repeat-lateness summary. Unknown or malformed filters are ignored.
+ * Filters for the lateness list and its CSV export, plus the repeat-lateness summary. Unknown or malformed filters are ignored;
+ * the status defaults to reports not yet followed up.
  */
 class LatenessReportQuery
 {
+    /** @var array<string, string> status key => tab label, in tab order */
+    public const STATUSES = [
+        'new' => 'New',
+        'followed' => 'Followed up',
+        'all' => 'All',
+    ];
+
+    public const DEFAULT_STATUS = 'new';
+
     /**
      * @param  array<string, mixed>  $input
-     * @return array{role: AttendeeRole|null, class: int|null, from: CarbonImmutable|null, to: CarbonImmutable|null, search: string}
+     * @return array{status: string, role: AttendeeRole|null, class: int|null, from: CarbonImmutable|null, to: CarbonImmutable|null, search: string}
      */
     public function filters(array $input): array
     {
+        $status = $input['status'] ?? null;
+
         return [
+            'status' => is_string($status) && array_key_exists($status, self::STATUSES) ? $status : self::DEFAULT_STATUS,
             'role' => AttendeeRole::tryFrom(is_string($input['role'] ?? null) ? $input['role'] : ''),
             'class' => filter_var($input['class'] ?? null, FILTER_VALIDATE_INT) ?: null,
             'from' => AcademyDate::fromQuery($input['from'] ?? null),
@@ -32,7 +45,7 @@ class LatenessReportQuery
     }
 
     /**
-     * @param  array{role: AttendeeRole|null, class: int|null, from: CarbonImmutable|null, to: CarbonImmutable|null, search: string}  $filters
+     * @param  array{status: string, role: AttendeeRole|null, class: int|null, from: CarbonImmutable|null, to: CarbonImmutable|null, search: string}  $filters
      * @return Builder<LatenessReport>
      */
     public function filtered(array $filters): Builder
@@ -42,6 +55,8 @@ class LatenessReportQuery
 
         return LatenessReport::query()
             ->with(['user', 'reviewedBy'])
+            ->when($filters['status'] === 'new', fn (Builder $query) => $query->whereNull('reviewed_at'))
+            ->when($filters['status'] === 'followed', fn (Builder $query) => $query->whereNotNull('reviewed_at'))
             ->when($filters['role'], fn (Builder $query, AttendeeRole $role) => $query->where('attendee_role', $role))
             ->when($filters['class'], fn (Builder $query, int $class) => $query->whereHas('lesson', fn (Builder $lesson) => $lesson->where('class_group_id', $class)))
             ->when($filters['from'], fn (Builder $query, CarbonImmutable $from) => $query->whereDate('lesson_date', '>=', $from->toDateString()))
