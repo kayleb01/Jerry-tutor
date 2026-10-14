@@ -14,6 +14,7 @@ use App\Http\Controllers\ChildAttendanceController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ChildPasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GuardianNoticeController;
 use App\Http\Controllers\LessonReportController;
 use App\Http\Controllers\RaisedIssueController;
 use App\Http\Controllers\RegisterController;
@@ -29,6 +30,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('raised-issues/{raisedIssue}/acknowledge', [RaisedIssueController::class, 'acknowledge'])
         ->middleware('role:tutor')
         ->name('raised-issues.acknowledge');
+    Route::put('guardian-notices/{guardianNotice}/acknowledge', [GuardianNoticeController::class, 'acknowledge'])
+        ->middleware('role:guardian')
+        ->name('guardian-notices.acknowledge');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::post('/lessons/{lesson}/check-in', TutorCheckInController::class)->name('lessons.check-in');

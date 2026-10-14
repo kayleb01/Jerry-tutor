@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\AttendanceStatus;
 use App\Enums\LessonStatus;
 use App\Enums\Role;
+use App\Models\GuardianNotice;
 use App\Models\Lesson;
 use App\Models\RaisedIssue;
 use App\Models\User;
@@ -32,6 +33,7 @@ class DashboardController extends Controller
             Role::Admin => app(AdminDashboard::class)->for($user, AdminDashboardFilters::fromQuery($request->query())),
             Role::Tutor => [...$this->tutorToday($user), 'fromAcademy' => $this->fromAcademy($user)],
             Role::Student => app(StudentDashboard::class)->for($user, $request->query('week') === 'next'),
+            Role::Guardian => ['fromAcademy' => $this->noticesForGuardian($user)],
             default => [],
         };
 
@@ -117,6 +119,29 @@ class DashboardController extends Controller
                 'when' => $issue->lesson->localStart()->format('D j M'),
                 'note' => $issue->note,
                 'raisedBy' => $issue->raisedBy?->name,
+            ])
+            ->all();
+    }
+
+    /**
+     * Unread notes from the academy about the guardian's children, newest first.
+     *
+     * @return array<int, array{id: int, childName: string, when: string, note: string, sentBy: string|null}>
+     */
+    private function noticesForGuardian(User $guardian): array
+    {
+        return GuardianNotice::query()
+            ->whereIn('student_id', $guardian->children()->select('users.id'))
+            ->whereNull('acknowledged_at')
+            ->with(['student', 'sentBy'])
+            ->latest('id')
+            ->get()
+            ->map(fn (GuardianNotice $notice): array => [
+                'id' => $notice->id,
+                'childName' => $notice->student->name,
+                'when' => $notice->created_at->setTimezone(config('academy.timezone'))->format('D j M'),
+                'note' => $notice->note,
+                'sentBy' => $notice->sentBy?->name,
             ])
             ->all();
     }
