@@ -16,6 +16,8 @@ type NavItem = {
     label: string;
     icon: IconName;
     href: () => { url: string; method: 'get' };
+    /** A count from the shared `badges` prop, shown as a pill when above zero. */
+    badge?: 'classReports';
 };
 
 const navItems: Record<Role, NavItem[]> = {
@@ -28,6 +30,7 @@ const navItems: Record<Role, NavItem[]> = {
             label: 'Class reports',
             icon: 'report',
             href: adminLessonReportsIndex,
+            badge: 'classReports',
         },
         {
             label: 'Question bank',
@@ -56,7 +59,7 @@ const roleLabels: Record<Role, string> = {
 };
 
 const itemClass =
-    'flex h-11 items-center gap-3 rounded-md px-3 text-sm transition-colors';
+    'relative flex h-11 items-center gap-3 rounded-md px-3 text-sm transition-colors';
 
 function initials(name: string): string {
     return name
@@ -69,7 +72,7 @@ function initials(name: string): string {
 }
 
 export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
-    const { auth } = usePage().props;
+    const { auth, badges } = usePage().props;
     const currentPath = usePage().url.split('?')[0];
 
     if (!auth.user) {
@@ -100,6 +103,7 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
             <nav aria-label="Main" className="flex flex-1 flex-col gap-1">
                 {navItems[auth.user.role].map((item) => {
                     const active = isActive(item.href().url);
+                    const count = item.badge ? (badges?.[item.badge] ?? 0) : 0;
 
                     return (
                         <Link
@@ -120,6 +124,18 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
                             <span className={cn(collapsed && 'sr-only')}>
                                 {item.label}
                             </span>
+                            {count > 0 && (
+                                <span
+                                    className={cn(
+                                        'ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary-80 px-1.5 text-[11px] font-bold text-secondary-10 tabular-nums',
+                                        collapsed &&
+                                            'absolute top-1 right-1 ml-0 h-4 min-w-4 px-1 text-[10px]',
+                                    )}
+                                >
+                                    {count > 99 ? '99+' : count}
+                                    <span className="sr-only"> to review</span>
+                                </span>
+                            )}
                         </Link>
                     );
                 })}

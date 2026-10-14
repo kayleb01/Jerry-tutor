@@ -8,6 +8,7 @@ import type {
 } from '@/components/dashboard-filters';
 import type { AttendanceStatus } from '@/components/attendance-status-badge';
 import Icon from '@/components/icon';
+import PersonAvatar from '@/components/person-avatar';
 import type { IconName } from '@/components/icon';
 import { Badge } from '@/components/ui/badge';
 import { buttonClasses } from '@/components/ui/button';
@@ -99,31 +100,8 @@ type AdminDashboardProps = {
 
 const roleLabel = (role: Role) => (role === 'tutor' ? 'Tutor' : 'Student');
 
-function initials(name: string): string {
-    return name
-        .replace(/^(Mr|Mrs|Ms|Miss|Dr)\.?\s+/i, '')
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0])
-        .join('')
-        .toUpperCase();
-}
-
 function Avatar({ name, role }: { name: string; role: Role }) {
-    return (
-        <span
-            aria-hidden="true"
-            className={cn(
-                'flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold',
-                role === 'tutor'
-                    ? 'bg-brand text-brand-foreground'
-                    : 'bg-secondary-90 text-secondary-10 dark:bg-secondary-20 dark:text-secondary-90',
-            )}
-        >
-            {initials(name)}
-        </span>
-    );
+    return <PersonAvatar name={name} role={role} />;
 }
 
 function Kpi({

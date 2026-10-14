@@ -9,6 +9,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import FromAcademy from '@/components/from-academy';
+import type { AcademyNote } from '@/components/from-academy';
 import ReportsDue from '@/components/reports-due';
 import type { ReportDue } from '@/components/reports-due';
 import AppLayout from '@/layouts/app-layout';
@@ -33,6 +35,7 @@ type TodayLesson = {
 type TutorDashboardProps = {
     today: TodayLesson[];
     reportsDue: ReportDue[];
+    fromAcademy: AcademyNote[];
     upcoming: { id: number; className: string; when: string }[];
 };
 
@@ -40,9 +43,11 @@ export default function TutorDashboard({
     today,
     upcoming,
     reportsDue,
+    fromAcademy,
 }: TutorDashboardProps) {
     return (
         <AppLayout title="Today" subtitle="Your classes">
+            <FromAcademy notes={fromAcademy} />
             <ReportsDue reports={reportsDue} />
             {today.length === 0 ? (
                 <Card>
