@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Role;
+use App\Services\ClassReportInbox;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -41,6 +43,19 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user()?->only(['id', 'name', 'email', 'username', 'role']),
             ],
+            'badges' => fn (): array => $request->user()?->role === Role::Admin
+                ? ['classReports' => $this->classReportsToReview()]
+                : [],
         ];
+    }
+
+    /**
+     * Lessons with end-of-class reports no admin has reviewed yet, for the sidebar badge.
+     */
+    private function classReportsToReview(): int
+    {
+        $inbox = app(ClassReportInbox::class);
+
+        return $inbox->query($inbox->filters([]), 'review')->count();
     }
 }

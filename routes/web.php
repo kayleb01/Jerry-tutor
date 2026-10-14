@@ -52,6 +52,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
 
     Route::get('lesson-reports', [AdminLessonReportController::class, 'index'])->name('lesson-reports.index');
+    Route::put('lesson-reports/{lesson}/review', [AdminLessonReportController::class, 'review'])->name('lesson-reports.review');
+    Route::post('lesson-reports/{lesson}/raise', [AdminLessonReportController::class, 'raise'])->name('lesson-reports.raise');
 
     Route::get('lateness/export', [LatenessReportController::class, 'export'])->name('lateness.export');
     Route::get('lateness', [LatenessReportController::class, 'index'])->name('lateness.index');
