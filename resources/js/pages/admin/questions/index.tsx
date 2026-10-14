@@ -356,7 +356,7 @@ export default function QuestionsIndex({
             )}
 
             <Card>
-                <CardContent className="overflow-x-auto p-0">
+                <CardContent className="relative overflow-x-auto p-0">
                     <table className="w-full min-w-[720px] text-left text-sm">
                         <thead className="border-b text-xs tracking-[0.04em] text-muted-foreground uppercase">
                             <tr>

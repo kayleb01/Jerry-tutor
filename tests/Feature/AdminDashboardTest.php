@@ -8,6 +8,7 @@ use App\Enums\YearGroup;
 use App\Models\ClassGroup;
 use App\Models\Lesson;
 use App\Models\LessonReport;
+use App\Models\Question;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -126,4 +127,14 @@ it('compares student attendance with the same point last week', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('stats.attendance', 100)
             ->where('stats.attendanceChange', 100));
+});
+
+it('counts only published questions in the question bank', function () {
+    Question::factory()->published()->count(2)->create();
+    Question::factory()->published()->create()->delete();
+    Question::factory()->inReview()->create();
+    Question::factory()->create();
+
+    $this->actingAs(User::factory()->admin()->create())->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->where('quizzes.questionBank', 2));
 });

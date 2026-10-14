@@ -10,6 +10,7 @@ use App\Models\ClassGroup;
 use App\Models\LatenessReport;
 use App\Models\Lesson;
 use App\Models\LessonReport;
+use App\Models\Question;
 use App\Models\User;
 use App\Support\AdminDashboardFilters;
 use Carbon\CarbonImmutable;
@@ -88,7 +89,7 @@ class AdminDashboard
             'latestReports' => $this->latestReports($filters),
             'quizzes' => [
                 'categories' => array_map(fn (string $label): array => ['label' => $label, 'count' => 0], self::QUIZ_CATEGORIES),
-                'questionBank' => 0,
+                'questionBank' => Question::published()->count(),
                 'available' => false,
             ],
         ];

@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(CurriculumSeeder::class);
+        $this->call([CurriculumSeeder::class, DemoQuestionSeeder::class]);
 
         if (User::where('email', 'admin@academy.test')->exists()) {
             return;
@@ -52,6 +52,6 @@ class DatabaseSeeder extends Seeder
         $class->enrol($ava);
         app(LessonScheduler::class)->generateFor($class);
 
-        $this->call(DemoDataSeeder::class);
+        $this->call([DemoDataSeeder::class, DemoQuestionSeeder::class]);
     }
 }

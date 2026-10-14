@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { create as createClass } from '@/routes/admin/classes';
 import { index as latenessIndex } from '@/routes/admin/lateness';
 import { index as lessonReportsIndex } from '@/routes/admin/lesson-reports';
+import { index as questionsIndex } from '@/routes/admin/questions';
 import { index as usersIndex } from '@/routes/admin/users';
 import { show as register } from '@/routes/lessons/register';
 import type { LessonState } from '@/types';
@@ -723,17 +724,12 @@ export default function AdminDashboard({
                                 : 'questions'}
                         </p>
                     </div>
-                    {quizzes.available ? null : (
-                        <span
-                            className={cn(
-                                buttonClasses('outline', 'sm'),
-                                'pointer-events-none opacity-60',
-                            )}
-                            aria-disabled="true"
-                        >
-                            Manage · coming soon
-                        </span>
-                    )}
+                    <Link
+                        href={questionsIndex()}
+                        className={buttonClasses('outline', 'sm')}
+                    >
+                        Manage
+                    </Link>
                 </div>
             </Card>
         </AppLayout>
