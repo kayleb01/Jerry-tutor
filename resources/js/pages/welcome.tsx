@@ -171,14 +171,10 @@ function SectionHeading({
             <p className="text-xs font-semibold tracking-[0.08em] text-secondary-40 uppercase dark:text-secondary-80">
                 {eyebrow}
             </p>
-            <h2 className="text-3xl leading-tight font-extrabold tracking-[-0.01em] text-brand sm:text-[40px] sm:leading-[48px] dark:text-primary-90">
+            <h2 className="text-headline font-extrabold text-brand dark:text-primary-90">
                 {title}
             </h2>
-            {body && (
-                <p className="text-[17px] leading-relaxed text-muted-foreground">
-                    {body}
-                </p>
-            )}
+            {body && <p className="text-lead text-muted-foreground">{body}</p>}
         </div>
     );
 }
@@ -274,7 +270,7 @@ function Showcase() {
     const [view, setView] = useState<ShowcaseView>('admin');
 
     return (
-        <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-6 sm:gap-8">
             <Tabs
                 label="Choose a view"
                 options={[...showcaseViews]}
@@ -284,7 +280,7 @@ function Showcase() {
             <div className="w-full max-w-4xl">
                 <BrowserFrame url={`jerrygreatacademy · ${view}`}>
                     <div
-                        className="flex min-h-[380px] flex-col gap-3.5 bg-neutral-95 p-5 dark:bg-background"
+                        className="flex min-h-[320px] flex-col gap-3 bg-neutral-95 p-4 sm:min-h-[380px] sm:gap-3.5 sm:p-5 dark:bg-background"
                         aria-hidden="true"
                     >
                         {view === 'admin' && (
@@ -338,7 +334,7 @@ function Showcase() {
                                     <p className="text-lg font-semibold">
                                         Solve for x: 3x + 7 = 25
                                     </p>
-                                    <div className="grid grid-cols-2 gap-2.5 text-[15px]">
+                                    <div className="grid grid-cols-2 gap-2.5 text-body">
                                         <span className="rounded-md border p-3.5">
                                             A. x = 4
                                         </span>
@@ -392,7 +388,7 @@ function StageMatrix() {
     const [stage, setStage] = useState<keyof typeof stages>('ks2');
 
     return (
-        <div className="flex flex-col gap-7">
+        <div className="flex flex-col gap-5 sm:gap-7">
             <Tabs
                 label="Choose a stage"
                 options={(Object.keys(stages) as (keyof typeof stages)[]).map(
@@ -405,7 +401,7 @@ function StageMatrix() {
                 {stages[stage].cards.map((card) => (
                     <article
                         key={card.title}
-                        className="flex flex-col gap-3 rounded-lg border bg-surface p-6"
+                        className="flex flex-col gap-3 rounded-lg border bg-surface p-card sm:p-6"
                     >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <h3 className="text-xl font-bold">{card.title}</h3>
@@ -447,7 +443,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
             <Head title="Maths quizzes and attendance" />
             <div className="min-h-screen bg-neutral-95 text-foreground dark:bg-background">
                 <header className="border-b bg-surface">
-                    <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-x-8 gap-y-4 px-6 py-3.5">
+                    <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3 sm:gap-x-8 sm:px-6 sm:py-3.5">
                         <Link href="/" aria-label="Jerry Great Academy home">
                             <AppLogoImage className="w-32" />
                         </Link>
@@ -508,13 +504,13 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                 </header>
 
                 <main>
-                    <section className="mx-auto grid max-w-[1240px] items-center gap-12 px-6 pt-16 pb-14 lg:grid-cols-2 lg:pt-20">
+                    <section className="mx-auto grid max-w-[1240px] items-center gap-8 px-4 pt-10 pb-10 sm:px-6 sm:pt-14 sm:pb-14 lg:grid-cols-2 lg:gap-12 lg:pt-20">
                         <div className="flex flex-col gap-6">
                             <span className="inline-flex items-center gap-2 self-start rounded-full bg-secondary-95 px-3 py-1.5 text-[13px] font-semibold text-secondary-30 dark:bg-secondary-20 dark:text-secondary-90">
                                 <Icon name="school" className="size-4" />
                                 KS2 · KS3 · 11+ · SATs · GCSE
                             </span>
-                            <h1 className="text-[40px] leading-[46px] font-extrabold tracking-[-0.02em] text-brand sm:text-[56px] sm:leading-[60px] dark:text-primary-90">
+                            <h1 className="text-display text-brand dark:text-primary-90">
                                 Excellence in mathematics and academic
                                 accountability
                             </h1>
@@ -544,7 +540,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
 
                         <div className="relative" aria-hidden="true">
                             <BrowserFrame url="Live class register · Year 6 · Fractions">
-                                <div className="flex flex-col gap-3.5 p-5">
+                                <div className="flex flex-col gap-3 p-4 sm:gap-3.5 sm:p-5">
                                     <div className="flex flex-wrap items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
@@ -644,15 +640,15 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
 
                     <section
                         aria-label="What the platform covers"
-                        className="mx-auto max-w-[1240px] px-6 pt-6 pb-16"
+                        className="mx-auto max-w-[1240px] px-4 pt-4 pb-10 sm:px-6 sm:pt-6 sm:pb-16"
                     >
                         <div className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
                             {facts.map((fact) => (
                                 <div
                                     key={fact.value}
-                                    className="bg-surface p-6 text-center"
+                                    className="bg-surface p-4 text-center sm:p-6"
                                 >
-                                    <p className="text-[28px] font-extrabold text-brand dark:text-primary-90">
+                                    <p className="text-stat font-extrabold text-brand dark:text-primary-90">
                                         {fact.value}
                                     </p>
                                     <p className="mt-1 text-[13px] text-muted-foreground">
@@ -664,7 +660,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                     </section>
 
                     <section id="showcase" className="border-y bg-surface">
-                        <div className="mx-auto flex max-w-[1240px] flex-col gap-8 px-6 py-20">
+                        <div className="mx-auto flex max-w-[1240px] flex-col gap-6 px-4 py-12 sm:gap-8 sm:px-6 sm:py-16 lg:py-20">
                             <SectionHeading
                                 centred
                                 eyebrow="Inside the platform"
@@ -675,7 +671,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                         </div>
                     </section>
 
-                    <section className="mx-auto flex max-w-[1240px] flex-col gap-10 px-6 pt-22 pb-10">
+                    <section className="mx-auto flex max-w-[1240px] flex-col gap-6 px-4 pt-12 pb-8 sm:gap-8 sm:px-6 sm:pt-16 lg:gap-10 lg:pt-22 lg:pb-10">
                         <SectionHeading
                             eyebrow="Two connected modules"
                             title="Engineered for academic precision and mutual accountability"
@@ -683,12 +679,12 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                         <div className="grid gap-6 lg:grid-cols-2">
                             <article
                                 id="attendance"
-                                className="flex flex-col gap-5 rounded-[20px] border bg-surface p-8"
+                                className="flex flex-col gap-4 rounded-[20px] border bg-surface p-5 sm:gap-5 sm:p-6 lg:p-8"
                             >
-                                <span className="flex size-12 items-center justify-center rounded-md bg-primary-95 text-primary-30 dark:bg-primary-20 dark:text-primary-90">
+                                <span className="flex size-10 items-center justify-center rounded-md bg-primary-95 text-primary-30 sm:size-12 dark:bg-primary-20 dark:text-primary-90">
                                     <Icon name="check" className="size-6" />
                                 </span>
-                                <h3 className="text-2xl font-bold">
+                                <h3 className="text-section">
                                     Attendance and punctuality
                                 </h3>
                                 <p className="text-base leading-relaxed text-muted-foreground">
@@ -696,7 +692,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                     they arrived on time — for students and for
                                     tutors alike.
                                 </p>
-                                <ul className="flex flex-col gap-3.5 text-[15px] leading-relaxed">
+                                <ul className="flex flex-col gap-3 text-body sm:gap-3.5">
                                     {attendancePoints.map((point) => (
                                         <li
                                             key={point.title}
@@ -716,15 +712,15 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                             </article>
                             <article
                                 id="quizzes"
-                                className="flex flex-col gap-5 rounded-[20px] bg-brand p-8 text-brand-foreground"
+                                className="flex flex-col gap-4 rounded-[20px] bg-brand p-5 text-brand-foreground sm:gap-5 sm:p-6 lg:p-8"
                             >
-                                <span className="flex size-12 items-center justify-center rounded-md bg-secondary-key text-primary-10">
+                                <span className="flex size-10 items-center justify-center rounded-md bg-secondary-key text-primary-10 sm:size-12">
                                     <Icon
                                         name="calculator"
                                         className="size-6"
                                     />
                                 </span>
-                                <h3 className="text-2xl font-bold">
+                                <h3 className="text-section">
                                     Maths quiz platform
                                 </h3>
                                 <p className="text-base leading-relaxed text-primary-90">
@@ -757,7 +753,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
 
                     <section
                         id="stages"
-                        className="mx-auto flex max-w-[1240px] flex-col gap-8 px-6 pt-12 pb-22"
+                        className="mx-auto flex max-w-[1240px] flex-col gap-6 px-4 pt-8 pb-12 sm:gap-8 sm:px-6 sm:pt-12 lg:pb-22"
                     >
                         <SectionHeading
                             centred
@@ -768,18 +764,18 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                     </section>
 
                     <section className="border-y bg-surface">
-                        <div className="mx-auto grid max-w-[1240px] items-center gap-12 px-6 py-20 lg:grid-cols-2">
+                        <div className="mx-auto grid max-w-[1240px] items-center gap-8 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-2 lg:gap-12 lg:py-20">
                             <SectionHeading
                                 eyebrow="End-of-class reports"
                                 title="An equal voice for student and tutor"
                                 body="After every class, both sides can give feedback and make recommendations. The academy sees two points of view on each lesson — what worked, what to improve, and what to raise."
                             />
                             <div className="grid gap-4 sm:grid-cols-2">
-                                <article className="flex flex-col gap-3 rounded-lg border border-primary-90 bg-primary-95 p-6 dark:border-primary-20 dark:bg-primary-20/40">
+                                <article className="flex flex-col gap-3 rounded-lg border border-primary-90 bg-primary-95 p-card sm:p-6 dark:border-primary-20 dark:bg-primary-20/40">
                                     <p className="font-semibold">
                                         Tutor report
                                     </p>
-                                    <p className="text-[15px] leading-relaxed">
+                                    <p className="text-body">
                                         “Good focus on equivalent fractions. Two
                                         students need more practice converting
                                         to decimals.”
@@ -792,7 +788,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                     <p className="font-semibold">
                                         Student report
                                     </p>
-                                    <p className="text-[15px] leading-relaxed">
+                                    <p className="text-body">
                                         “The worked examples helped. I’d like
                                         more time on word problems.”
                                     </p>
@@ -806,7 +802,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
 
                     <section
                         id="pricing"
-                        className="mx-auto flex max-w-[1240px] flex-col items-center gap-8 px-6 py-22"
+                        className="mx-auto flex max-w-[1240px] flex-col items-center gap-6 px-4 py-12 sm:gap-8 sm:px-6 sm:py-16 lg:py-22"
                     >
                         <SectionHeading
                             centred
@@ -814,7 +810,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                             title="Complete maths platform access"
                             body="One monthly subscription per child, paid in naira. Cancel any time from your billing page."
                         />
-                        <article className="flex w-full max-w-md flex-col gap-5 rounded-[20px] border-2 border-secondary-key bg-surface p-8">
+                        <article className="flex w-full max-w-md flex-col gap-5 rounded-[20px] border-2 border-secondary-key bg-surface p-5 sm:p-6 lg:p-8">
                             <div>
                                 <p className="text-xl font-bold">
                                     Monthly membership
@@ -824,7 +820,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                 </p>
                             </div>
                             <p>
-                                <span className="text-5xl font-extrabold text-brand dark:text-primary-90">
+                                <span className="text-display text-brand dark:text-primary-90">
                                     {MONTHLY_PRICE}
                                 </span>
                                 <span className="text-muted-foreground">
@@ -832,7 +828,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                     / month
                                 </span>
                             </p>
-                            <ul className="flex flex-col gap-3 text-[15px]">
+                            <ul className="flex flex-col gap-3 text-body">
                                 {planFeatures.map((feature) => (
                                     <li key={feature} className="flex gap-2.5">
                                         <Icon
@@ -858,8 +854,8 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                         </article>
                     </section>
 
-                    <section className="px-6 pb-22">
-                        <div className="relative mx-auto flex max-w-[1192px] flex-col items-center gap-5 overflow-hidden rounded-[28px] bg-brand px-8 py-16 text-center text-brand-foreground">
+                    <section className="px-4 pb-12 sm:px-6 sm:pb-16 lg:pb-22">
+                        <div className="relative mx-auto flex max-w-[1192px] flex-col items-center gap-5 overflow-hidden rounded-[20px] bg-brand px-5 py-10 text-center text-brand-foreground sm:rounded-[28px] sm:px-8 sm:py-14 lg:py-16">
                             <span
                                 aria-hidden="true"
                                 className="absolute -top-16 -right-16 size-56 rounded-bl-full bg-secondary-key"
@@ -868,11 +864,11 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                 aria-hidden="true"
                                 className="absolute -bottom-10 -left-10 size-40 rounded-tr-full bg-tertiary-30"
                             />
-                            <h2 className="relative max-w-3xl text-3xl leading-tight font-extrabold sm:text-[44px] sm:leading-[52px]">
+                            <h2 className="relative max-w-3xl text-headline font-extrabold">
                                 Build real mathematical confidence, one year at
                                 a time
                             </h2>
-                            <p className="relative max-w-xl text-[17px] leading-relaxed text-primary-90">
+                            <p className="relative max-w-xl text-lead text-primary-90">
                                 Create an account to see your child’s quizzes,
                                 attendance and class reports in one place.
                             </p>
@@ -904,7 +900,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                 </main>
 
                 <footer className="border-t bg-surface">
-                    <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-6 px-6 py-10">
+                    <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-4 px-4 py-8 sm:gap-6 sm:px-6 sm:py-10">
                         <AppLogoImage className="w-28" />
                         <p className="text-[13px] text-muted-foreground">
                             © {new Date().getFullYear()} Jerry Great Academy

@@ -19,7 +19,7 @@ type StrandCardProps = {
 export default function StrandCard({ strand, yearGroup }: StrandCardProps) {
     return (
         <Card className="flex flex-col">
-            <div className="flex items-start justify-between gap-3 border-b px-6 py-5">
+            <div className="flex items-start justify-between gap-3 border-b px-4 py-3.5 sm:px-5 sm:py-4">
                 <div>
                     <h3 className="flex flex-wrap items-center gap-2 text-lg font-bold">
                         <span
@@ -35,7 +35,7 @@ export default function StrandCard({ strand, yearGroup }: StrandCardProps) {
                     <p className="mt-1 text-sm text-muted-foreground">Maths</p>
                 </div>
             </div>
-            <div className="flex flex-1 flex-col gap-4 px-6 py-5">
+            <div className="flex flex-1 flex-col gap-3 px-4 py-3.5 sm:gap-4 sm:px-5 sm:py-4">
                 <p className="text-sm leading-relaxed">{strand.summary}</p>
                 <div className="mt-auto flex items-center gap-3">
                     <div

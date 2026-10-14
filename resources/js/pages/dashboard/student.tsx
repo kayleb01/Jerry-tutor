@@ -44,7 +44,7 @@ export default function StudentDashboard({
             subtitle={header.weekLabel}
         >
             <section
-                className="grid gap-4 md:grid-cols-3"
+                className="grid gap-3 sm:grid-cols-3 sm:gap-4"
                 aria-label="This week at a glance"
             >
                 <StatCard
@@ -81,7 +81,7 @@ export default function StudentDashboard({
             <ReportsDue reports={reportsDue} />
 
             <section
-                className="grid gap-4 lg:grid-cols-2"
+                className="grid gap-3 sm:gap-4 md:grid-cols-2"
                 aria-label="Maths topics"
             >
                 {strands.map((strand) => (
@@ -98,7 +98,7 @@ export default function StudentDashboard({
                 aria-labelledby="today-activity"
             >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 id="today-activity" className="text-2xl font-bold">
+                    <h2 id="today-activity" className="text-section">
                         Today’s activity
                     </h2>
                     <span className="inline-flex h-9 items-center gap-2 rounded-full bg-surface-muted px-4 text-sm font-medium text-muted-foreground">
@@ -107,7 +107,7 @@ export default function StudentDashboard({
                     </span>
                 </div>
                 {today.length === 0 ? (
-                    <Card className="p-8 text-center text-muted-foreground">
+                    <Card className="p-card text-center text-sm text-muted-foreground sm:p-8">
                         No lessons today. Enjoy your day!
                     </Card>
                 ) : (

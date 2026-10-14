@@ -259,3 +259,115 @@
         outline-offset: 2px;
     }
 }
+
+/*
+ * Responsive type and spacing scale, mobile first, stepping up at Tailwind v4's
+ * default breakpoints (sm 40rem, md 48rem, lg 64rem, xl 80rem, 2xl 96rem).
+ * Use these instead of fixed pixel sizes so cards and text stay compact on phones.
+ */
+@utility p-card {
+    padding: 1rem;
+
+    @variant sm {
+        padding: 1.25rem;
+    }
+}
+
+@utility text-title {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+
+    @variant sm {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+
+    @variant lg {
+        font-size: 1.625rem;
+        line-height: 2.25rem;
+    }
+}
+
+@utility text-section {
+    font-size: 1.125rem;
+    line-height: 1.625rem;
+    font-weight: 700;
+
+    @variant sm {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+    }
+
+    @variant lg {
+        font-size: 1.375rem;
+        line-height: 2rem;
+    }
+}
+
+@utility text-stat {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+
+    @variant sm {
+        font-size: 1.75rem;
+        line-height: 2.25rem;
+    }
+}
+
+@utility text-body {
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+
+    @variant sm {
+        font-size: 0.9375rem;
+        line-height: 1.5rem;
+    }
+}
+
+@utility text-lead {
+    font-size: 0.9375rem;
+    line-height: 1.5rem;
+
+    @variant sm {
+        font-size: 1.0625rem;
+        line-height: 1.75rem;
+    }
+}
+
+@utility text-headline {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+
+    @variant sm {
+        font-size: 1.875rem;
+        line-height: 2.375rem;
+    }
+
+    @variant lg {
+        font-size: 2.25rem;
+        line-height: 2.75rem;
+    }
+}
+
+@utility text-display {
+    font-size: 1.875rem;
+    line-height: 2.375rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+
+    @variant sm {
+        font-size: 2.5rem;
+        line-height: 3rem;
+    }
+
+    @variant lg {
+        font-size: 2.875rem;
+        line-height: 3.375rem;
+    }
+}

@@ -73,7 +73,7 @@ export default function ClassesIndex({ classes }: { classes: Row[] }) {
                                 <tr>
                                     <td
                                         colSpan={6}
-                                        className="px-4 py-8 text-center text-muted-foreground"
+                                        className="px-4 py-6 text-center text-muted-foreground sm:py-8"
                                     >
                                         No classes yet. Add your first class to
                                         start scheduling lessons.

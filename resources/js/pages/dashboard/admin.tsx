@@ -123,14 +123,14 @@ function Kpi({
     gold?: boolean;
 }) {
     return (
-        <Card className="flex flex-col gap-1.5 p-6">
+        <Card className="flex flex-col gap-1 p-card sm:gap-1.5">
             <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
                     {label}
                 </p>
                 <span
                     className={cn(
-                        'flex size-10 items-center justify-center rounded-md',
+                        'flex size-8 shrink-0 items-center justify-center rounded-md sm:size-10',
                         gold
                             ? 'bg-secondary-95 text-secondary-40 dark:bg-secondary-20 dark:text-secondary-90'
                             : 'bg-primary-95 text-primary-30 dark:bg-primary-20 dark:text-primary-90',
@@ -139,10 +139,10 @@ function Kpi({
                     <Icon name={icon} />
                 </span>
             </div>
-            <p className="text-[32px] leading-10 font-bold tracking-[-0.01em] tabular-nums">
-                {value}
+            <p className="text-stat tabular-nums">{value}</p>
+            <p className="text-xs text-muted-foreground sm:text-[13px]">
+                {note}
             </p>
-            <p className="text-[13px] text-muted-foreground">{note}</p>
         </Card>
     );
 }
@@ -157,11 +157,13 @@ function SectionHead({
     action?: ReactNode;
 }) {
     return (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 sm:mb-4">
             <div>
-                <h2 className="text-lg font-bold">{title}</h2>
+                <h2 className="text-base font-bold sm:text-lg">{title}</h2>
                 {hint && (
-                    <p className="text-[13px] text-muted-foreground">{hint}</p>
+                    <p className="text-xs text-muted-foreground sm:text-[13px]">
+                        {hint}
+                    </p>
                 )}
             </div>
             {action}
@@ -330,7 +332,7 @@ export default function AdminDashboard({
         >
             <section
                 aria-label="Today at a glance"
-                className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"
             >
                 <Kpi
                     label="Classes today"
@@ -365,8 +367,8 @@ export default function AdminDashboard({
                 />
             </section>
 
-            <div className="flex flex-wrap items-start gap-4">
-                <Card className="flex-[999_1_560px] p-6">
+            <div className="flex flex-wrap items-start gap-3 sm:gap-4">
+                <Card className="flex-[999_1_720px] p-card">
                     <SectionHead
                         title="Today’s classes"
                         hint="Select a class to open its register."
@@ -376,7 +378,7 @@ export default function AdminDashboard({
                             No classes are scheduled today.
                         </p>
                     ) : (
-                        <div className="-mx-6 overflow-x-auto px-6">
+                        <div className="-mx-4 overflow-x-auto px-4 sm:-mx-5 sm:px-5">
                             <table className="w-full min-w-[640px] border-collapse text-left text-sm">
                                 <thead>
                                     <tr className="border-b text-xs tracking-[0.04em] text-muted-foreground uppercase">
@@ -440,7 +442,7 @@ export default function AdminDashboard({
                     )}
                 </Card>
 
-                <Card className="flex-[1_1_340px] p-6">
+                <Card className="flex-[1_1_320px] p-card">
                     <SectionHead
                         title="Lateness reports today"
                         action={
@@ -508,8 +510,8 @@ export default function AdminDashboard({
                 </Card>
             </div>
 
-            <div className="flex flex-wrap items-start gap-4">
-                <Card className="flex-[1_1_360px] p-6">
+            <div className="flex flex-wrap items-start gap-3 sm:gap-4">
+                <Card className="flex-[1_1_340px] p-card">
                     <SectionHead
                         title="On-time arrivals, last 6 weeks"
                         hint="Share of class arrivals that were on time"
@@ -538,7 +540,7 @@ export default function AdminDashboard({
                     )}
                 </Card>
 
-                <Card className="flex-[1_1_360px] p-6">
+                <Card className="flex-[1_1_340px] p-card">
                     <SectionHead
                         title="Latest end-of-class reports"
                         action={
@@ -600,7 +602,7 @@ export default function AdminDashboard({
                     )}
                 </Card>
 
-                <Card className="flex-[1_1_280px] p-6">
+                <Card className="flex-[1_1_280px] p-card">
                     <SectionHead title="Students by stage" />
                     {studentsByStage.length === 0 ? (
                         <p className="py-2 text-sm text-muted-foreground">

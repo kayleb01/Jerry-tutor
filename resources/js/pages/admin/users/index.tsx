@@ -126,7 +126,7 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
                                 <tr>
                                     <td
                                         colSpan={4}
-                                        className="px-4 py-8 text-center text-muted-foreground"
+                                        className="px-4 py-6 text-center text-muted-foreground sm:py-8"
                                     >
                                         No users match these filters.
                                     </td>

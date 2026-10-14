@@ -47,7 +47,7 @@ export default function ChildAttendance({
                 </Link>
             </div>
             <section
-                className="grid gap-4 md:grid-cols-3"
+                className="grid gap-3 sm:grid-cols-3 sm:gap-4"
                 aria-label="Attendance summary"
             >
                 <StatCard
@@ -119,7 +119,7 @@ export default function ChildAttendance({
                                 <tr>
                                     <td
                                         colSpan={4}
-                                        className="px-4 py-8 text-center text-muted-foreground"
+                                        className="px-4 py-6 text-center text-muted-foreground sm:py-8"
                                     >
                                         No classes recorded yet.
                                     </td>

@@ -55,22 +55,22 @@ export default function TutorDashboard({
                     <CardContent />
                 </Card>
             ) : (
-                <ul className="grid gap-4 lg:grid-cols-2">
+                <ul className="grid gap-3 sm:gap-4 lg:grid-cols-2">
                     {today.map((lesson) => (
                         <li key={lesson.id}>
-                            <article className="relative flex h-full flex-col gap-5 overflow-hidden rounded-lg bg-brand p-6 text-brand-foreground">
+                            <article className="relative flex h-full flex-col gap-4 overflow-hidden rounded-lg bg-brand p-card text-brand-foreground sm:gap-5 sm:p-6">
                                 <span
                                     aria-hidden="true"
-                                    className="absolute -top-8 -right-8 size-28 rounded-bl-full bg-secondary-key"
+                                    className="absolute -top-8 -right-8 size-20 rounded-bl-full bg-secondary-key sm:size-28"
                                 />
                                 <div className="relative flex flex-col gap-1.5">
                                     <p className="text-xs font-semibold tracking-[0.08em] text-secondary-80 uppercase">
                                         {lesson.time}
                                     </p>
-                                    <h2 className="text-2xl leading-8 font-bold">
+                                    <h2 className="text-section">
                                         {lesson.className}
                                     </h2>
-                                    <p className="text-[15px] text-primary-90">
+                                    <p className="text-body text-primary-90">
                                         {lesson.location
                                             ? `${lesson.location} · `
                                             : ''}

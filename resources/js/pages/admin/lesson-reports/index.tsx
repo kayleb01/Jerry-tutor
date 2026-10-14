@@ -105,14 +105,14 @@ export default function LessonReports({
             </Form>
 
             {reports.data.length === 0 ? (
-                <Card className="p-8 text-center text-muted-foreground">
+                <Card className="p-card text-center text-sm text-muted-foreground sm:p-8">
                     No reports match these filters.
                 </Card>
             ) : (
                 <ul className="flex flex-col gap-4">
                     {reports.data.map((report) => (
                         <li key={report.id}>
-                            <Card className="flex flex-col gap-4 p-5">
+                            <Card className="flex flex-col gap-3 p-card sm:gap-4">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div>
                                         <p className="font-semibold">

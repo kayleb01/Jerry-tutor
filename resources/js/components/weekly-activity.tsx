@@ -30,7 +30,7 @@ export default function WeeklyActivity({
             aria-labelledby="weekly-activity"
         >
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 id="weekly-activity" className="text-2xl font-bold">
+                <h2 id="weekly-activity" className="text-section">
                     Weekly activity
                 </h2>
                 <div className="flex flex-wrap items-center gap-3">
@@ -83,7 +83,7 @@ export default function WeeklyActivity({
                 </div>
             </div>
             {week.length === 0 ? (
-                <Card className="p-8 text-center text-muted-foreground">
+                <Card className="p-card text-center text-sm text-muted-foreground sm:p-8">
                     No lessons {nextWeek ? 'next' : 'this'} week.
                 </Card>
             ) : view === 'kanban' ? (

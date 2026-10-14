@@ -240,7 +240,7 @@ export default function Lateness({
                                 <tr>
                                     <td
                                         colSpan={5}
-                                        className="px-4 py-8 text-center text-muted-foreground"
+                                        className="px-4 py-6 text-center text-muted-foreground sm:py-8"
                                     >
                                         No lateness recorded for these filters.
                                     </td>

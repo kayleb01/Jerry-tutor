@@ -24,7 +24,7 @@ export default function AuthLayout({
 }: AuthLayoutProps) {
     return (
         <div className="flex min-h-screen flex-wrap bg-surface">
-            <aside className="relative hidden flex-[1_1_480px] flex-col justify-between gap-10 overflow-hidden bg-brand p-14 text-brand-foreground lg:flex">
+            <aside className="relative hidden flex-[1_1_480px] flex-col justify-between gap-10 overflow-hidden bg-brand p-10 text-brand-foreground lg:flex xl:p-14">
                 <span
                     aria-hidden="true"
                     className="absolute -top-20 -right-20 size-72 rounded-bl-full bg-secondary-key"
@@ -37,14 +37,14 @@ export default function AuthLayout({
                     Jerry Great Academy
                 </p>
                 <div className="relative flex max-w-md flex-col gap-5">
-                    <p className="text-[44px] leading-[52px] font-extrabold tracking-[-0.01em]">
+                    <p className="text-headline font-extrabold">
                         Excellence in maths, on time every time
                     </p>
-                    <p className="text-[17px] leading-relaxed text-primary-90">
+                    <p className="text-lead text-primary-90">
                         Pick up your quizzes, take the register or check on your
                         child’s progress — all from one account.
                     </p>
-                    <ul className="mt-2 flex flex-col gap-3 text-[15px]">
+                    <ul className="mt-2 flex flex-col gap-3 text-body">
                         {highlights.map((item) => (
                             <li
                                 key={item.label}
@@ -64,21 +64,19 @@ export default function AuthLayout({
                 </p>
             </aside>
 
-            <main className="flex flex-[1_1_480px] items-center justify-center px-6 py-12">
-                <div className="flex w-full max-w-[420px] flex-col gap-7">
+            <main className="flex flex-[1_1_480px] items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+                <div className="flex w-full max-w-[420px] flex-col gap-5 sm:gap-7">
                     <Link
                         href={home()}
                         aria-label="Jerry Great Academy home"
                         className="self-start"
                     >
-                        <AppLogoImage className="w-44" />
+                        <AppLogoImage className="w-36 sm:w-44" />
                     </Link>
                     <div className="flex flex-col gap-2">
-                        <h1 className="text-[30px] leading-[38px] font-bold">
-                            {title}
-                        </h1>
+                        <h1 className="text-title">{title}</h1>
                         {description && (
-                            <p className="text-[15px] leading-relaxed text-muted-foreground">
+                            <p className="text-body text-muted-foreground">
                                 {description}
                             </p>
                         )}
