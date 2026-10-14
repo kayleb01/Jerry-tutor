@@ -21,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable $ends_at
  * @property LessonStatus $status
  * @property string|null $cancelled_reason
+ * @property CarbonImmutable|null $reports_reviewed_at when an admin last marked the reports reviewed
+ * @property int|null $reports_reviewed_by_id
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
@@ -41,6 +43,7 @@ class Lesson extends Model
             'starts_at' => 'immutable_datetime',
             'ends_at' => 'immutable_datetime',
             'status' => LessonStatus::class,
+            'reports_reviewed_at' => 'immutable_datetime',
         ];
     }
 
@@ -84,6 +87,24 @@ class Lesson extends Model
     public function lessonReports(): HasMany
     {
         return $this->hasMany(LessonReport::class);
+    }
+
+    /**
+     * @return HasMany<RaisedIssue, $this>
+     */
+    public function raisedIssues(): HasMany
+    {
+        return $this->hasMany(RaisedIssue::class);
+    }
+
+    /**
+     * The admin who last marked this lesson's reports as reviewed.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function reportsReviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reports_reviewed_by_id')->withTrashed();
     }
 
     public function localStart(): CarbonImmutable
