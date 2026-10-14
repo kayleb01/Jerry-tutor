@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A snapshot created whenever someone is late, so the history survives schedule changes.
@@ -77,5 +78,13 @@ class LatenessReport extends Model
     public function reviewedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by_id')->withTrashed();
+    }
+
+    /**
+     * @return HasMany<GuardianNotice, $this>
+     */
+    public function guardianNotices(): HasMany
+    {
+        return $this->hasMany(GuardianNotice::class);
     }
 }
