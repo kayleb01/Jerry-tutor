@@ -49,5 +49,7 @@ class DatabaseSeeder extends Seeder
         ]);
         $class->enrol($ava);
         app(LessonScheduler::class)->generateFor($class);
+
+        $this->call(DemoDataSeeder::class);
     }
 }
