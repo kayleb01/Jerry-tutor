@@ -12,10 +12,10 @@ The project is split into phases. Each phase ships working, tested software and 
 | --- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
 | D1  | **Auth package** (this is a blank starter kit, so there's no auth yet) | Add `laravel/fortify` (headless; we build the React screens with our design system)                                                                                                                                                  | Phase 2 |
 | D2  | **Payments**                                                           | ✅ **Paystack and Flutterwave (pinned to the stable v3 API)**, both behind one `PaymentGateway` contract and switchable through `PAYMENT_GATEWAY`. No new packages (the Laravel `Http` client); one monthly subscription per student | Phase 6 |
-| D3  | **Maths rendering**                                                    | Add `katex` (npm) for fractions, indices and so on in question stems                                                                                                                                                                 | Phase 5 |
+| D3  | **Maths rendering**                                                    | ✅ Approved: `katex` (npm) for fractions, indices and so on in question stems                                                                                                                                                        | Phase 5 |
 | D4  | **Who takes the register?**                                            | ✅ Approved: tutors mark students; tutors check themselves in; admins can override anything                                                                                                                                          | Phase 3 |
 | D5  | **Lateness grace period**                                              | ✅ Approved: 0 minutes by default, configurable                                                                                                                                                                                      | Phase 3 |
-| D6  | **Question bank source**                                               | Authored in-house, optionally drafted with AI, always human-reviewed. Import via CSV                                                                                                                                                 | Phase 5 |
+| D6  | **Question bank source**                                               | ✅ Approved: stored in the DB; admins author them by form or CSV upload, reviewed before publishing                                                                                                                                  | Phase 5 |
 | D7  | **Price and trial**                                                    | ✅ **NGN** for every subscription; ✅ **no free trial** for now (subscriptions are paid from day one). Still open: the monthly ₦ amount. Plans are created in the Paystack and Flutterwave dashboards with that amount               | Phase 6 |
 | D8  | **Git**                                                                | The folder isn't a git repo yet. Run `git init` before Phase 1 so each task can commit                                                                                                                                               | Phase 1 |
 
@@ -58,7 +58,10 @@ Split into **3a**, classes, enrolments and lesson scheduling ([detailed plan](..
 - Guardian view of their child's attendance history and lateness.
 - **Tests:** duplicate submission is rejected, an absent student can't submit, the repeat-lateness threshold, and a guardian can only see their own child.
 
-## Phase 5: Quiz platform core (needs D3, D6)
+## Phase 5: Quiz platform core (D3 ✅, D6 ✅)
+
+- **5a ✅ Question bank** ([detailed plan](../superpowers/plans/2026-10-14-phase-5a-question-bank.md)): curriculum strands and topics, admin authoring with KaTeX preview, draft → review → published workflow, CSV upload.
+- **5b Quizzes:** recipes, `QuestionPicker`, the student player, marking and the student home (below).
 
 - Seed `strands` and the KS2/KS3/GCSE `topics` (National Curriculum list).
 - Admin question bank: CRUD with a preview, the draft → review → published workflow, exam-track tagging, and CSV import.
