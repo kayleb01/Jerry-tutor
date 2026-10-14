@@ -6,6 +6,7 @@ use App\Enums\AttendanceStatus;
 use App\Enums\LessonStatus;
 use App\Enums\Role;
 use App\Models\Lesson;
+use App\Models\RaisedIssue;
 use App\Models\User;
 use App\Services\AdminDashboard;
 use App\Services\ReportsDue;
@@ -29,7 +30,7 @@ class DashboardController extends Controller
 
         $props = match ($user->role) {
             Role::Admin => app(AdminDashboard::class)->for($user, AdminDashboardFilters::fromQuery($request->query())),
-            Role::Tutor => $this->tutorToday($user),
+            Role::Tutor => [...$this->tutorToday($user), 'fromAcademy' => $this->fromAcademy($user)],
             Role::Student => app(StudentDashboard::class)->for($user, $request->query('week') === 'next'),
             default => [],
         };
@@ -95,5 +96,28 @@ class DashboardController extends Controller
             ->all();
 
         return ['today' => $today, 'upcoming' => $upcoming];
+    }
+
+    /**
+     * Notes the academy raised about this tutor's classes that they haven't acknowledged yet.
+     *
+     * @return array<int, array{id: int, className: string, when: string, note: string, raisedBy: string|null}>
+     */
+    private function fromAcademy(User $tutor): array
+    {
+        return RaisedIssue::query()
+            ->where('tutor_id', $tutor->id)
+            ->whereNull('acknowledged_at')
+            ->with(['lesson.classGroup', 'raisedBy'])
+            ->latest('id')
+            ->get()
+            ->map(fn (RaisedIssue $issue): array => [
+                'id' => $issue->id,
+                'className' => $issue->lesson->classGroup->name,
+                'when' => $issue->lesson->localStart()->format('D j M'),
+                'note' => $issue->note,
+                'raisedBy' => $issue->raisedBy?->name,
+            ])
+            ->all();
     }
 }

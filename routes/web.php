@@ -15,6 +15,7 @@ use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ChildPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LessonReportController;
+use App\Http\Controllers\RaisedIssueController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\TutorCheckInController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,9 @@ Route::inertia('/', 'welcome', [
 ])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::put('raised-issues/{raisedIssue}/acknowledge', [RaisedIssueController::class, 'acknowledge'])
+        ->middleware('role:tutor')
+        ->name('raised-issues.acknowledge');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::post('/lessons/{lesson}/check-in', TutorCheckInController::class)->name('lessons.check-in');
