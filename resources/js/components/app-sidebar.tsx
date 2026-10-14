@@ -7,6 +7,7 @@ import { dashboard, logout } from '@/routes';
 import { index as adminClassesIndex } from '@/routes/admin/classes';
 import { index as adminLatenessIndex } from '@/routes/admin/lateness';
 import { index as adminLessonReportsIndex } from '@/routes/admin/lesson-reports';
+import { index as adminQuestionsIndex } from '@/routes/admin/questions';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as childrenIndex } from '@/routes/children';
 import type { Role } from '@/types';
@@ -27,6 +28,11 @@ const navItems: Record<Role, NavItem[]> = {
             label: 'Class reports',
             icon: 'report',
             href: adminLessonReportsIndex,
+        },
+        {
+            label: 'Question bank',
+            icon: 'question',
+            href: adminQuestionsIndex,
         },
     ],
     tutor: [{ label: 'Today', icon: 'today', href: dashboard }],

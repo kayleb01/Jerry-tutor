@@ -31,7 +31,8 @@ export type IconName =
     | 'shield'
     | 'sparkle'
     | 'plus'
-    | 'filter';
+    | 'filter'
+    | 'question';
 
 const paths: Record<IconName, ReactNode> = {
     dashboard: (
@@ -167,6 +168,12 @@ const paths: Record<IconName, ReactNode> = {
     ),
     plus: <path d="M12 5v14M5 12h14" />,
     filter: <path d="M4 5h16l-6 7.5V19l-4 1.5v-8L4 5Z" />,
+    question: (
+        <>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01" />
+        </>
+    ),
     sparkle: (
         <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18" />
     ),

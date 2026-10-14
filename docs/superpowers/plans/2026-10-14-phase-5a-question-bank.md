@@ -15,6 +15,7 @@
 **Tech Stack:** Laravel 13, Inertia v3, React 19, Wayfinder, Tailwind v4, Pest 5, and `katex` (npm, approved as D3 on 2026-10-14).
 
 **Spec:**
+
 - [docs/architecture/database-schema.md](../../architecture/database-schema.md) §2 (enums) and §5 (`strands`, `topics`, `questions`, `question_options`, `exam_track_question`)
 - [docs/plans/implementation-plan.md](../../plans/implementation-plan.md) Phase 5, D3 and D6
 - [docs/design/design-brief.md](../../design/design-brief.md) §1 and §6
@@ -26,18 +27,18 @@
 - **Transitions:** Draft → In review; In review → Draft or Published; Published → Retired; Retired → Draft. Nothing else is allowed. Publishing records `reviewed_by_id` (the acting admin) and sets `published_at` the first time only.
 - **Deleting:** only Draft and In review questions can be deleted (soft delete). Published ones must be retired instead, so the history stays intact.
 - **Question types:**
-  - **Multiple choice:** 2–6 options with exactly one correct.
-  - **Multi-select:** 2–6 options, at least one correct and at least one wrong.
-  - **Numeric:** an answer, plus a tolerance ≥ 0 that defaults to 0.
-  - **Short text:** 1–10 accepted answers, each up to 100 characters (matched case-insensitively in 5b).
-  - Fields a type doesn't use are dropped, never stored.
+    - **Multiple choice:** 2–6 options with exactly one correct.
+    - **Multi-select:** 2–6 options, at least one correct and at least one wrong.
+    - **Numeric:** an answer, plus a tolerance ≥ 0 that defaults to 0.
+    - **Short text:** 1–10 accepted answers, each up to 100 characters (matched case-insensitively in 5b).
+    - Fields a type doesn't use are dropped, never stored.
 - **Limits:** stem and explanation up to 5000 characters; each option up to 500 characters; marks 1–5, default 1.
 - **Year group:** optional, but if set it must belong to the topic's key stage (a Year 5 question can't sit in a KS3 topic).
 - **Images:** optional png/jpg/webp up to 2 MB (no SVG), stored on the `public` disk under `questions/`. Replacing or removing an image deletes the old file.
 - **CSV:**
-  - **Limits and encoding:** UTF-8, at most 500 rows and 2 MB, with an optional BOM. Columns are matched by header name in any order, and unknown columns are ignored.
-  - **All or nothing:** every row is validated first. Any problem means nothing is imported, and the admin sees up to 50 `Row N: …` messages, where N is the spreadsheet row number with the header as row 1.
-  - **Matching values:** key stage, strand, topic, difficulty, type and exam tracks are matched case-insensitively against values or labels.
+    - **Limits and encoding:** UTF-8, at most 500 rows and 2 MB, with an optional BOM. Columns are matched by header name in any order, and unknown columns are ignored.
+    - **All or nothing:** every row is validated first. Any problem means nothing is imported, and the admin sees up to 50 `Row N: …` messages, where N is the spreadsheet row number with the header as row 1.
+    - **Matching values:** key stage, strand, topic, difficulty, type and exam tracks are matched case-insensitively against values or labels.
 - **Maths:** stems, options and explanations use `$…$`/`$$…$$` for maths, and `\$` gives a literal dollar sign. KaTeX runs with `throwOnError: false` and `trust: false`.
 - **Local database:** never run `migrate:fresh`. Use `php artisan migrate`. The new seeders are additive and idempotent (memory `feedback-local-db`).
 - **Staging:** stage explicit paths only (memory `feedback-staging`).
@@ -47,7 +48,7 @@
 ## Review Focus
 
 1. **A CSV with one bad row imports nothing.** The bad row is named by its spreadsheet row number, and the good rows are not half-imported. → Task 5 tests.
-2. **Type-specific rules hold on both entry paths.** Two correct answers on multiple choice, a multi-select with every option correct, a numeric question with no answer, and a mismatched year group and topic are all refused by the form *and* the CSV. → Task 2 and Task 5 tests.
+2. **Type-specific rules hold on both entry paths.** Two correct answers on multiple choice, a multi-select with every option correct, a numeric question with no answer, and a mismatched year group and topic are all refused by the form _and_ the CSV. → Task 2 and Task 5 tests.
 3. **Invalid status jumps are refused, singly and in bulk.** Draft → Published and Published → Draft are refused. Bulk changes move the valid ones and report the skipped ones. → Task 4 tests.
 4. **Edits don't orphan data.** Changing a choice question's options keeps option ids by position, switching the type to numeric removes the options, and replacing an image deletes the old file. → Task 2 tests.
 5. **Published questions can't be deleted**, and soft-deleted or unpublished questions never count as the bank on the dashboard. → Task 3 and Task 6 tests.
@@ -59,36 +60,36 @@
 **Files:**
 
 - Create:
-  - `app/Enums/QuestionType.php`, `app/Enums/QuestionStatus.php`
-  - `database/migrations/<ts>_create_question_bank_tables.php`
-  - `app/Models/Strand.php`, `app/Models/Topic.php`, `app/Models/Question.php`, `app/Models/QuestionOption.php`, `app/Models/QuestionExamTrack.php`
-  - `database/factories/StrandFactory.php`, `TopicFactory.php`, `QuestionFactory.php`, `QuestionOptionFactory.php`
-  - `database/seeders/CurriculumSeeder.php`
+    - `app/Enums/QuestionType.php`, `app/Enums/QuestionStatus.php`
+    - `database/migrations/<ts>_create_question_bank_tables.php`
+    - `app/Models/Strand.php`, `app/Models/Topic.php`, `app/Models/Question.php`, `app/Models/QuestionOption.php`, `app/Models/QuestionExamTrack.php`
+    - `database/factories/StrandFactory.php`, `TopicFactory.php`, `QuestionFactory.php`, `QuestionOptionFactory.php`
+    - `database/seeders/CurriculumSeeder.php`
 - Modify:
-  - `app/Enums/Difficulty.php`, `app/Enums/ExamTrack.php`, `app/Enums/KeyStage.php` (add `options()`)
-  - `database/seeders/DatabaseSeeder.php` (call `CurriculumSeeder` first, before the early return)
+    - `app/Enums/Difficulty.php`, `app/Enums/ExamTrack.php`, `app/Enums/KeyStage.php` (add `options()`)
+    - `database/seeders/DatabaseSeeder.php` (call `CurriculumSeeder` first, before the early return)
 - Test: `tests/Feature/QuestionBankSchemaTest.php`
 
 **Interfaces:**
 
 - Produces:
-  - **Enums:**
-    - `QuestionType` (`multiple_choice`, `multi_select`, `numeric`, `short_text`) with `label()`, `hasOptions()` and `options()`.
-    - `QuestionStatus` (`draft`, `in_review`, `published`, `retired`) with `label()`, `nextStatuses(): array<QuestionStatus>`, `canMoveTo(QuestionStatus): bool`, `isDeletable(): bool` and `options()`.
-    - `KeyStage::options()`, `Difficulty::options()` and `ExamTrack::options()`, each returning `array<int, array{value: string, label: string}>`.
-  - **Models:**
-    - `Strand`: `topics()`.
-    - `Topic`: `strand()`, `questions()`; casts `key_stage: KeyStage`.
-    - `Question` (SoftDeletes):
-      - Casts: `type`, `status`, `difficulty` and `year_group` to their enums; `accepted_answers` to an array; `published_at` to immutable.
-      - Relations: `topic()`, `options()` (ordered by `sort_order`), `examTrackRows()`, `author()`, `reviewedBy()`.
-      - `#[Scope] published()` and `examTracks(): array<int, ExamTrack>`.
-    - `QuestionOption`: `body`, `is_correct`, `sort_order`.
-    - `QuestionExamTrack`: table `exam_track_question`; casts `exam_track: ExamTrack`.
-  - **`QuestionFactory`:**
-    - The default is a Draft multiple-choice question with 4 options, the first one correct.
-    - States: `multiSelect()`, `numeric(float $answer = 12, float $tolerance = 0)`, `shortText(array $answers = ['twelve'])`, `published()`, `inReview()`, `retired()`.
-  - **`CurriculumSeeder`**, with the public const `STRANDS` and `TOPICS`.
+    - **Enums:**
+        - `QuestionType` (`multiple_choice`, `multi_select`, `numeric`, `short_text`) with `label()`, `hasOptions()` and `options()`.
+        - `QuestionStatus` (`draft`, `in_review`, `published`, `retired`) with `label()`, `nextStatuses(): array<QuestionStatus>`, `canMoveTo(QuestionStatus): bool`, `isDeletable(): bool` and `options()`.
+        - `KeyStage::options()`, `Difficulty::options()` and `ExamTrack::options()`, each returning `array<int, array{value: string, label: string}>`.
+    - **Models:**
+        - `Strand`: `topics()`.
+        - `Topic`: `strand()`, `questions()`; casts `key_stage: KeyStage`.
+        - `Question` (SoftDeletes):
+            - Casts: `type`, `status`, `difficulty` and `year_group` to their enums; `accepted_answers` to an array; `published_at` to immutable.
+            - Relations: `topic()`, `options()` (ordered by `sort_order`), `examTrackRows()`, `author()`, `reviewedBy()`.
+            - `#[Scope] published()` and `examTracks(): array<int, ExamTrack>`.
+        - `QuestionOption`: `body`, `is_correct`, `sort_order`.
+        - `QuestionExamTrack`: table `exam_track_question`; casts `exam_track: ExamTrack`.
+    - **`QuestionFactory`:**
+        - The default is a Draft multiple-choice question with 4 options, the first one correct.
+        - States: `multiSelect()`, `numeric(float $answer = 12, float $tolerance = 0)`, `shortText(array $answers = ['twelve'])`, `published()`, `inReview()`, `retired()`.
+    - **`CurriculumSeeder`**, with the public const `STRANDS` and `TOPICS`.
 
 **Ruling:** `exam_track_question` gets its own `id` plus `unique(question_id, exam_track)` instead of a composite primary key. Eloquent can't update or delete composite-key rows cleanly. If that turns out wrong, the cost is one extra column.
 
@@ -690,17 +691,17 @@ git commit -m "feat: curriculum strands and topics, question bank schema and mod
 
 - Consumes: Task 1 models and enums.
 - Produces:
-  - `QuestionInput::normalise(array $input): array`
-  - `QuestionInput::rules(array $data): array`
-  - `QuestionInput::messages(): array`
-  - `QuestionInput::attributes(): array`
-  - `QuestionInput::after(array $data): array<int, Closure(Validator): void>`
-  - `SaveQuestion::handle(array $data, User $author, ?Question $question = null, ?UploadedFile $image = null, bool $removeImage = false): Question`
-  - **The normalised data shape:**
-    - Always: `topic_id`, `difficulty`, `year_group` (null when blank), `type`, `stem`, `explanation`, `marks` (default 1), `exam_tracks: list<string>`.
-    - Choice types: `options: list<string>` (trailing blanks dropped) and `correct: list<int>` (0-based indexes).
-    - Numeric: `numeric_answer` and `numeric_tolerance` (default 0).
-    - Short text: `accepted_answers: list<string>`, which also accepts a newline-separated string.
+    - `QuestionInput::normalise(array $input): array`
+    - `QuestionInput::rules(array $data): array`
+    - `QuestionInput::messages(): array`
+    - `QuestionInput::attributes(): array`
+    - `QuestionInput::after(array $data): array<int, Closure(Validator): void>`
+    - `SaveQuestion::handle(array $data, User $author, ?Question $question = null, ?UploadedFile $image = null, bool $removeImage = false): Question`
+    - **The normalised data shape:**
+        - Always: `topic_id`, `difficulty`, `year_group` (null when blank), `type`, `stem`, `explanation`, `marks` (default 1), `exam_tracks: list<string>`.
+        - Choice types: `options: list<string>` (trailing blanks dropped) and `correct: list<int>` (0-based indexes).
+        - Numeric: `numeric_answer` and `numeric_tolerance` (default 0).
+        - Short text: `accepted_answers: list<string>`, which also accepts a newline-separated string.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1114,7 +1115,7 @@ class SaveQuestion
 - [ ] **Step 5: Run the tests**
 
 Run: `php artisan test --compact tests/Feature/SaveQuestionTest.php`
-Expected: PASS. If a framework default message differs from a dataset row (e.g. the tolerance or exam track wording), fix the *dataset* to the framework's exact wording only when it's the stock message; the custom messages above are the contract.
+Expected: PASS. If a framework default message differs from a dataset row (e.g. the tolerance or exam track wording), fix the _dataset_ to the framework's exact wording only when it's the stock message; the custom messages above are the contract.
 
 - [ ] **Step 6: Commit**
 
@@ -1131,33 +1132,33 @@ git commit -m "feat: shared question validation and the SaveQuestion action"
 **Files:**
 
 - Create:
-  - `app/Http/Controllers/Admin/QuestionController.php`
-  - `app/Http/Requests/Admin/QuestionRequest.php`
-  - `resources/js/components/math-text.tsx`, `resources/js/components/question-status-badge.tsx`, `resources/js/components/question-fields.tsx`
-  - `resources/js/pages/admin/questions/index.tsx`, `create.tsx`, `edit.tsx`
+    - `app/Http/Controllers/Admin/QuestionController.php`
+    - `app/Http/Requests/Admin/QuestionRequest.php`
+    - `resources/js/components/math-text.tsx`, `resources/js/components/question-status-badge.tsx`, `resources/js/components/question-fields.tsx`
+    - `resources/js/pages/admin/questions/index.tsx`, `create.tsx`, `edit.tsx`
 - Modify:
-  - `routes/web.php`
-  - `resources/js/components/app-sidebar.tsx` (a "Question bank" item)
-  - `resources/js/components/icon.tsx` (a `question` icon)
-  - `package.json` (`katex`)
+    - `routes/web.php`
+    - `resources/js/components/app-sidebar.tsx` (a "Question bank" item)
+    - `resources/js/components/icon.tsx` (a `question` icon)
+    - `package.json` (`katex`)
 - Test: `tests/Feature/Admin/QuestionBankTest.php`
 
 **Interfaces:**
 
 - Consumes: `QuestionInput`, `SaveQuestion`, and the Task 1 enums and models.
 - **Routes** (inside the admin group), in this order:
-  - `Route::put('questions/bulk-status', …)` (Task 4)
-  - `Route::get('questions/import', …)`, `questions/import/template` and `POST questions/import` (Task 5)
-  - `Route::resource('questions', QuestionController::class)->except(['show'])`
+    - `Route::put('questions/bulk-status', …)` (Task 4)
+    - `Route::get('questions/import', …)`, `questions/import/template` and `POST questions/import` (Task 5)
+    - `Route::resource('questions', QuestionController::class)->except(['show'])`
 - Produces these page props:
-  - **`admin/questions/index`:**
-    - `questions: Paginated<Row>`, where a Row has `id, stem, topic, strand, keyStage, yearGroup, difficulty, type, status, statusLabel, examTracks: string[], updatedAt, canDelete, nextStatuses: Option[]`.
-    - `filters: {search, key_stage, strand, topic, difficulty, type, status, exam_track}` (strings or null).
-    - `counts: Record<status, number>`.
-    - `options` (see `formOptions()`).
-  - **`admin/questions/create`:** `options`.
-  - **`admin/questions/edit`:** `options` plus `question: {id, topicId, difficulty, yearGroup, type, stem, options: string[], correct: number[], numericAnswer, numericTolerance, acceptedAnswers: string[], explanation, marks, examTracks: string[], imageUrl, status, statusLabel, nextStatuses: Option[], author, reviewedBy, publishedAt, canDelete}`.
-  - **`options`:** `{keyStages, strands: Option[] (value = slug), topics: {value: id, label, keyStage, strand}[], difficulties, types, statuses, examTracks, yearGroups: {value, label, keyStage}[]}`.
+    - **`admin/questions/index`:**
+        - `questions: Paginated<Row>`, where a Row has `id, stem, topic, strand, keyStage, yearGroup, difficulty, type, status, statusLabel, examTracks: string[], updatedAt, canDelete, nextStatuses: Option[]`.
+        - `filters: {search, key_stage, strand, topic, difficulty, type, status, exam_track}` (strings or null).
+        - `counts: Record<status, number>`.
+        - `options` (see `formOptions()`).
+    - **`admin/questions/create`:** `options`.
+    - **`admin/questions/edit`:** `options` plus `question: {id, topicId, difficulty, yearGroup, type, stem, options: string[], correct: number[], numericAnswer, numericTolerance, acceptedAnswers: string[], explanation, marks, examTracks: string[], imageUrl, status, statusLabel, nextStatuses: Option[], author, reviewedBy, publishedAt, canDelete}`.
+    - **`options`:** `{keyStages, strands: Option[] (value = slug), topics: {value: id, label, keyStage, strand}[], difficulties, types, statuses, examTracks, yearGroups: {value, label, keyStage}[]}`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1726,7 +1727,12 @@ import type { Option } from '@/types';
 export type QuestionFormOptions = {
     keyStages: Option[];
     strands: Option[];
-    topics: { value: number; label: string; keyStage: string; strand: string }[];
+    topics: {
+        value: number;
+        label: string;
+        keyStage: string;
+        strand: string;
+    }[];
     difficulties: Option[];
     types: Option[];
     statuses: Option[];
@@ -1993,8 +1999,8 @@ git commit -m "feat: admin question bank with KaTeX preview"
 
 - `ChangeQuestionStatus::handle(Question $question, QuestionStatus $status, User $admin): bool`
 - **Routes:**
-  - `PUT admin/questions/bulk-status` → `bulk`, named `admin.questions.bulk-status`, with `ids[]` (max 100) and `status`. It is declared **before** the resource.
-  - `PUT admin/questions/{question}/status` → `update`, named `admin.questions.status.update`, with `status`.
+    - `PUT admin/questions/bulk-status` → `bulk`, named `admin.questions.bulk-status`, with `ids[]` (max 100) and `status`. It is declared **before** the resource.
+    - `PUT admin/questions/{question}/status` → `update`, named `admin.questions.status.update`, with `status`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -2179,13 +2185,13 @@ Routes, above `Route::resource('questions', …)`:
 ```
 
 - **Frontend, edit page:** one button per `question.nextStatuses`, each inside its own `<Form {...statusUpdate.form(question.id)} options={{ preserveScroll: true }}>` with `<input type="hidden" name="status" value={next.value} />`.
-  - "Published" uses the primary button with the label "Publish".
-  - "In review" reads "Send for review".
-  - "Draft" reads "Back to draft".
-  - "Retired" is the outline button "Retire".
+    - "Published" uses the primary button with the label "Publish".
+    - "In review" reads "Send for review".
+    - "Draft" reads "Back to draft".
+    - "Retired" is the outline button "Retire".
 - **Frontend, index page:** a row checkbox, plus a select-all checkbox for the page, both held in `useState<number[]>`.
-  - When any are selected, a sticky bar shows "{n} selected" with buttons "Send for review", "Publish" and "Retire".
-  - Each button submits `<Form {...bulkStatus.form()}>` with hidden `ids[]` inputs and a `status`, then clears the selection `onSuccess`.
+    - When any are selected, a sticky bar shows "{n} selected" with buttons "Send for review", "Publish" and "Retire".
+    - Each button submits `<Form {...bulkStatus.form()}>` with hidden `ids[]` inputs and a `status`, then clears the selection `onSuccess`.
 
 - [ ] **Step 4: Run the tests, checks and commit**
 
@@ -2213,16 +2219,17 @@ git commit -m "feat: question review workflow with bulk status changes"
 - `ImportQuestions::HEADERS` (list<string>), `ImportQuestions::MAX_ROWS = 500`, `ImportQuestions::EXAMPLES` (list of rows for the template).
 - `ImportQuestions::handle(string $path, User $author): array{imported: int, errors: list<string>}`
 - **Routes** (above the resource):
-  - `GET admin/questions/import` → `create`, named `admin.questions.import`.
-  - `GET admin/questions/import/template` → `template`, named `admin.questions.import.template`.
-  - `POST admin/questions/import` → `store`, named `admin.questions.import.store`.
+    - `GET admin/questions/import` → `create`, named `admin.questions.import`.
+    - `GET admin/questions/import/template` → `template`, named `admin.questions.import.template`.
+    - `POST admin/questions/import` → `store`, named `admin.questions.import.store`.
 
 **CSV columns:**
+
 - **Required in the header:** `key_stage, strand, topic, difficulty, type, stem`.
 - **Optional:** `year_group, option_a … option_f, correct, numeric_answer, numeric_tolerance, accepted_answers, explanation, marks, exam_tracks`.
 - **Value formats:**
-  - `correct` takes option letters separated by `;`, `,`, `|` or spaces (`B`, `A;C`).
-  - `accepted_answers` and `exam_tracks` are separated by `|` or `;`.
+    - `correct` takes option letters separated by `;`, `,`, `|` or spaces (`B`, `A;C`).
+    - `accepted_answers` and `exam_tracks` are separated by `|` or `;`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -2575,6 +2582,7 @@ class ImportQuestions
 ```
 
 Expected-message reconciliation:
+
 - `Year 9 isn't` comes from `QuestionInput` and uses an ASCII apostrophe.
 - The topic and key-stage messages use typographic quotes.
 - The test strings above match these exactly.
@@ -2656,13 +2664,13 @@ Routes, above the resource:
 **Page** (`admin/questions/import.tsx`, under AppLayout with the title "Upload questions" and subtitle "Question bank"):
 
 1. **"How it works" card.** Steps: download the template, fill one row per question, upload. Every question is imported as a draft, a file with any problem imports nothing, and at most {maxRows} rows.
-   - The template link is a plain `<a href={template.url()} download>` (a file download, not an Inertia visit).
+    - The template link is a plain `<a href={template.url()} download>` (a file download, not an Inertia visit).
 2. **Columns table.** Each column has a short description, and the required ones are marked. For example:
-   - `correct`: option letters, like `B` or `A;C`.
-   - `accepted_answers` and `exam_tracks`: separated by `|`.
-   - `stem`: maths between `$…$`.
+    - `correct`: option letters, like `B` or `A;C`.
+    - `accepted_answers` and `exam_tracks`: separated by `|`.
+    - `stem`: maths between `$…$`.
 3. **Upload form.** `<Form {...importStore.form()}>` with `<input type="file" name="file" accept=".csv,text/csv">`, a `FieldError` for `file`, and an Upload button.
-   - When `usePage().flash.importErrors` is present, it renders under the error as an `<ol>` in a danger-tinted box (`role="alert"`), as a list of row problems.
+    - When `usePage().flash.importErrors` is present, it renders under the error as an `<ol>` in a danger-tinted box (`role="alert"`), as a list of row problems.
 
 Add `importErrors?: string[];` to `flashDataType` in `global.d.ts`. Add an "Upload CSV" outline link next to "Add question" on the index page.
 
@@ -2685,9 +2693,9 @@ git commit -m "feat: CSV question upload with a template, all-or-nothing validat
 
 - Create: `database/seeders/DemoQuestionSeeder.php`
 - Modify:
-  - `app/Services/AdminDashboard.php` (`quizzes.questionBank` = published count)
-  - `resources/js/pages/dashboard/admin.tsx` (Manage → link to the bank)
-  - `database/seeders/DatabaseSeeder.php` (call `DemoQuestionSeeder` right after `CurriculumSeeder`)
+    - `app/Services/AdminDashboard.php` (`quizzes.questionBank` = published count)
+    - `resources/js/pages/dashboard/admin.tsx` (Manage → link to the bank)
+    - `database/seeders/DatabaseSeeder.php` (call `DemoQuestionSeeder` right after `CurriculumSeeder`)
 - Test: `tests/Feature/AdminDashboardTest.php` (one new test), `tests/Feature/DemoQuestionSeederTest.php`
 
 **Interfaces:**
@@ -2750,10 +2758,10 @@ Expected: FAIL (the seeder class is missing, and `questionBank` is 0).
 - **`AdminDashboard`:** set `'questionBank' => Question::published()->count()` and keep `available => false` (quiz activity comes in 5b).
 - **`admin.tsx`:** replace the disabled "Manage · coming soon" span with `<Link href={questionsIndex()} className={buttonClasses('outline', 'sm')}>Manage</Link>` (import `index as questionsIndex` from `@/routes/admin/questions`). Keep the hint about quiz activity.
 - **`DemoQuestionSeeder`:**
-  - **Idempotency:** it returns early when `Question::where('stem', self::QUESTIONS[0]['stem'])->exists()` or when there's no admin.
-  - **Content:** about 24 hand-written questions, 8 each for KS2, KS3 and GCSE. Together they cover all four strands and all four types, use `$…$` maths, and include SATs, 11+ and GCSE track tags.
-  - **Each entry:** it resolves the topic by key stage, strand slug and topic name. Then it calls `QuestionInput::normalise()` and `SaveQuestion::handle($data, $admin)`, and moves the question through `ChangeQuestionStatus` to InReview, then Published.
-  - **Topic names:** use `CurriculumSeeder::TOPICS` names exactly.
+    - **Idempotency:** it returns early when `Question::where('stem', self::QUESTIONS[0]['stem'])->exists()` or when there's no admin.
+    - **Content:** about 24 hand-written questions, 8 each for KS2, KS3 and GCSE. Together they cover all four strands and all four types, use `$…$` maths, and include SATs, 11+ and GCSE track tags.
+    - **Each entry:** it resolves the topic by key stage, strand slug and topic name. Then it calls `QuestionInput::normalise()` and `SaveQuestion::handle($data, $admin)`, and moves the question through `ChangeQuestionStatus` to InReview, then Published.
+    - **Topic names:** use `CurriculumSeeder::TOPICS` names exactly.
 - **`DatabaseSeeder`:** add `$this->call(DemoQuestionSeeder::class);` after `CurriculumSeeder`. It no-ops without an admin, so a fresh seed (where the admin is created later in `run()`) also calls it again at the end, after `DemoDataSeeder`.
 
 - [ ] **Step 4: Run the tests, seed locally, verify, commit**

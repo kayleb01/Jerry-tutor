@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ClassEnrolmentController;
 use App\Http\Controllers\Admin\ClassGroupController;
 use App\Http\Controllers\Admin\LatenessReportController;
 use App\Http\Controllers\Admin\LessonReportController as AdminLessonReportController;
+use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
@@ -53,6 +54,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('lateness/export', [LatenessReportController::class, 'export'])->name('lateness.export');
     Route::get('lateness', [LatenessReportController::class, 'index'])->name('lateness.index');
     Route::put('lateness/{latenessReport}', [LatenessReportController::class, 'update'])->name('lateness.update');
+
+    Route::resource('questions', QuestionController::class)->except(['show']);
 });
 
 if (app()->isLocal()) {
