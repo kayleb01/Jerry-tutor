@@ -1,12 +1,36 @@
 import { Link } from '@inertiajs/react';
+import FromAcademy from '@/components/from-academy';
 import Icon from '@/components/icon';
 import { buttonClasses } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { index as childrenIndex } from '@/routes/children';
+import { acknowledge as acknowledgeNotice } from '@/routes/guardian-notices';
 
-export default function GuardianDashboard() {
+type GuardianDashboardProps = {
+    fromAcademy: {
+        id: number;
+        childName: string;
+        when: string;
+        note: string;
+        sentBy: string | null;
+    }[];
+};
+
+export default function GuardianDashboard({
+    fromAcademy,
+}: GuardianDashboardProps) {
     return (
         <AppLayout title="Your family" subtitle="Parent overview">
+            <FromAcademy
+                notes={fromAcademy.map((notice) => ({
+                    id: notice.id,
+                    heading: `${notice.childName} · ${notice.when}`,
+                    note: notice.note,
+                    from: notice.sentBy,
+                }))}
+                description="Notes about your children from the academy office."
+                acknowledge={(id) => acknowledgeNotice.form(id)}
+            />
             <section className="relative flex flex-col gap-4 overflow-hidden rounded-lg bg-brand p-card text-brand-foreground sm:p-7">
                 <span
                     aria-hidden="true"

@@ -8,18 +8,28 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { acknowledge } from '@/routes/raised-issues';
+import type { RouteFormDefinition } from '@/wayfinder';
 
 export type AcademyNote = {
     id: number;
-    className: string;
-    when: string;
+    /** e.g. "Year 4 Number · Tue 13 Oct" or "Tolu Ade · Wed 14 Oct". */
+    heading: string;
     note: string;
-    raisedBy: string | null;
+    from: string | null;
 };
 
-/** Notes the academy raised about the tutor's classes, until the tutor marks them read. */
-export default function FromAcademy({ notes }: { notes: AcademyNote[] }) {
+type FromAcademyProps = {
+    notes: AcademyNote[];
+    description: string;
+    acknowledge: (id: number) => RouteFormDefinition<'post'>;
+};
+
+/** Notes from the academy office, shown until the reader marks them as read. */
+export default function FromAcademy({
+    notes,
+    description,
+    acknowledge,
+}: FromAcademyProps) {
     if (notes.length === 0) {
         return null;
     }
@@ -34,9 +44,7 @@ export default function FromAcademy({ notes }: { notes: AcademyNote[] }) {
                     />
                     From the academy
                 </CardTitle>
-                <CardDescription>
-                    Notes about your classes from the academy office.
-                </CardDescription>
+                <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent>
                 <ul className="divide-y divide-primary-90 dark:divide-primary-20">
@@ -46,18 +54,16 @@ export default function FromAcademy({ notes }: { notes: AcademyNote[] }) {
                             className="flex flex-wrap items-start justify-between gap-3 py-3 text-sm"
                         >
                             <div className="min-w-0 flex-1">
-                                <p className="font-semibold">
-                                    {note.className} · {note.when}
-                                </p>
+                                <p className="font-semibold">{note.heading}</p>
                                 <p className="mt-1 break-words">{note.note}</p>
-                                {note.raisedBy && (
+                                {note.from && (
                                     <p className="mt-1 text-[13px] text-muted-foreground">
-                                        From {note.raisedBy}
+                                        From {note.from}
                                     </p>
                                 )}
                             </div>
                             <Form
-                                {...acknowledge.form(note.id)}
+                                {...acknowledge(note.id)}
                                 options={{ preserveScroll: true }}
                             >
                                 {({ processing }) => (
@@ -70,7 +76,7 @@ export default function FromAcademy({ notes }: { notes: AcademyNote[] }) {
                                         Got it
                                         <span className="sr-only">
                                             {' '}
-                                            (note about {note.className})
+                                            ({note.heading})
                                         </span>
                                     </Button>
                                 )}

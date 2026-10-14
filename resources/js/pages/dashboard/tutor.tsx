@@ -10,11 +10,11 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import FromAcademy from '@/components/from-academy';
-import type { AcademyNote } from '@/components/from-academy';
 import ReportsDue from '@/components/reports-due';
 import type { ReportDue } from '@/components/reports-due';
 import AppLayout from '@/layouts/app-layout';
 import { checkIn } from '@/routes/lessons';
+import { acknowledge as acknowledgeIssue } from '@/routes/raised-issues';
 import { show as register } from '@/routes/lessons/register';
 import { edit as editReport } from '@/routes/lessons/report';
 
@@ -35,7 +35,13 @@ type TodayLesson = {
 type TutorDashboardProps = {
     today: TodayLesson[];
     reportsDue: ReportDue[];
-    fromAcademy: AcademyNote[];
+    fromAcademy: {
+        id: number;
+        className: string;
+        when: string;
+        note: string;
+        raisedBy: string | null;
+    }[];
     upcoming: { id: number; className: string; when: string }[];
 };
 
@@ -47,7 +53,16 @@ export default function TutorDashboard({
 }: TutorDashboardProps) {
     return (
         <AppLayout title="Today" subtitle="Your classes">
-            <FromAcademy notes={fromAcademy} />
+            <FromAcademy
+                notes={fromAcademy.map((note) => ({
+                    id: note.id,
+                    heading: `${note.className} · ${note.when}`,
+                    note: note.note,
+                    from: note.raisedBy,
+                }))}
+                description="Notes about your classes from the academy office."
+                acknowledge={(id) => acknowledgeIssue.form(id)}
+            />
             <ReportsDue reports={reportsDue} />
             {today.length === 0 ? (
                 <Card>

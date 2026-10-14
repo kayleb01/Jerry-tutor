@@ -17,7 +17,7 @@ type NavItem = {
     icon: IconName;
     href: () => { url: string; method: 'get' };
     /** A count from the shared `badges` prop, shown as a pill when above zero. */
-    badge?: 'classReports';
+    badge?: 'classReports' | 'lateness';
 };
 
 const navItems: Record<Role, NavItem[]> = {
@@ -25,7 +25,12 @@ const navItems: Record<Role, NavItem[]> = {
         { label: 'Dashboard', icon: 'dashboard', href: dashboard },
         { label: 'Users', icon: 'users', href: adminUsersIndex },
         { label: 'Classes', icon: 'classes', href: adminClassesIndex },
-        { label: 'Lateness', icon: 'alarm', href: adminLatenessIndex },
+        {
+            label: 'Lateness reports',
+            icon: 'alarm',
+            href: adminLatenessIndex,
+            badge: 'lateness',
+        },
         {
             label: 'Class reports',
             icon: 'report',
