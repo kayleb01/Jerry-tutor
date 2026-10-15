@@ -79,11 +79,11 @@ it('warns about repeat lateness: 3 or more in the last 30 days, students and tut
         $tutorLatest = ($this->lateOn)($date, $this->tutor);
     }
 
-    $this->actingAs($this->admin)->get(route('admin.lateness.index', ['report' => $avaLatest->id]))
-        ->assertInertia(fn (Assert $page) => $page->where('selected.id', $avaLatest->id)->where('selected.repeatCount', 3));
+    $this->actingAs($this->admin)->get(route('admin.lateness.show', $avaLatest))
+        ->assertInertia(fn (Assert $page) => $page->where('report.id', $avaLatest->id)->where('report.repeatCount', 3));
 
-    $this->actingAs($this->admin)->get(route('admin.lateness.index', ['report' => $tutorLatest->id]))
-        ->assertInertia(fn (Assert $page) => $page->where('selected.repeatCount', 2)->where('selected.roleLabel', 'Tutor'));
+    $this->actingAs($this->admin)->get(route('admin.lateness.show', $tutorLatest))
+        ->assertInertia(fn (Assert $page) => $page->where('report.repeatCount', 2)->where('report.roleLabel', 'Tutor'));
 });
 
 it('records a follow-up and marks the report reviewed', function () {
@@ -141,7 +141,7 @@ it('includes reports on the last day of the date range', function () {
         ->assertInertia(fn (Assert $page) => $page->has('reports.data', 1));
 });
 
-it('lists new reports by default, with counts, and selects the newest', function () {
+it('lists new reports by default, with counts', function () {
     $older = ($this->lateOn)('2025-10-20', $this->ava);
     $followed = ($this->lateOn)('2025-10-27', $this->ava);
     $followed->update(['reviewed_at' => now()]);
@@ -153,23 +153,49 @@ it('lists new reports by default, with counts, and selects the newest', function
             ->where('reports.data.0.status', 'new')
             ->where('counts', ['new' => 1, 'followed' => 1, 'all' => 2])
             ->where('filters.status', 'new')
-            ->where('filters.report', null)
-            ->where('selected.id', $older->id));
+            ->missing('selected'));
 
     $this->actingAs($this->admin)->get(route('admin.lateness.index', ['status' => 'all']))
-        ->assertInertia(fn (Assert $page) => $page->has('reports.data', 2)->where('selected.id', $followed->id));
+        ->assertInertia(fn (Assert $page) => $page->has('reports.data', 2));
 });
 
-it('follows up and moves to the next report with the same filters', function () {
+it('opens a report on its own page, with its place in the filtered list', function () {
+    $newest = ($this->lateOn)('2025-10-27', $this->ava);
+    $middle = ($this->lateOn)('2025-10-20', $this->ava);
+    $oldest = ($this->lateOn)('2025-10-13', $this->ava);
+    ($this->lateOn)('2025-10-21', $this->tutor);
+
+    $this->actingAs($this->admin)->get(route('admin.lateness.show', [$middle, 'role' => 'student', 'evil' => 1]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/lateness/show')
+            ->where('report.id', $middle->id)
+            ->where('report.name', 'Ava')
+            ->where('filters', ['status' => 'new', 'role' => 'student', 'class' => null, 'from' => null, 'to' => null, 'search' => ''])
+            ->where('neighbours', ['previous' => $newest->id, 'next' => $oldest->id, 'position' => 2, 'total' => 3]));
+
+    $this->actingAs($this->admin)->get(route('admin.lateness.show', [$newest, 'role' => 'student']))
+        ->assertInertia(fn (Assert $page) => $page->where('neighbours.previous', null)->where('neighbours.position', 1));
+
+    $this->actingAs(User::factory()->tutor()->create())->get(route('admin.lateness.show', $middle))->assertForbidden();
+});
+
+it('follows up and moves on to the next report with the same filters', function () {
     $report = ($this->lateOn)('2025-10-27', $this->ava);
     $next = ($this->lateOn)('2025-10-20', $this->ava);
 
     $this->actingAs($this->admin)
-        ->from(route('admin.lateness.index', ['status' => 'new', 'role' => 'student', 'report' => $report->id, 'page' => 2, 'evil' => 1]))
-        ->put(route('admin.lateness.update', $report), ['follow_up_notes' => 'Spoke to mum.', 'reviewed' => true, 'next' => $next->id])
-        ->assertRedirect(route('admin.lateness.index', ['status' => 'new', 'role' => 'student', 'report' => $next->id]));
+        ->from(route('admin.lateness.show', [$report, 'status' => 'new', 'role' => 'student', 'evil' => 1]))
+        ->put(route('admin.lateness.update', $report), ['follow_up_notes' => 'Spoke to mum.', 'reviewed' => true, 'advance' => true])
+        ->assertRedirect(route('admin.lateness.show', [$next, 'status' => 'new', 'role' => 'student']));
 
     expect($report->fresh()->reviewed_at)->not->toBeNull();
+
+    $this->actingAs($this->admin)
+        ->from(route('admin.lateness.show', [$next, 'role' => 'student']))
+        ->put(route('admin.lateness.update', $next), ['follow_up_notes' => null, 'reviewed' => true, 'advance' => true])
+        ->assertRedirect(route('admin.lateness.index', ['role' => 'student']))
+        ->assertInertiaFlash('toast.message', 'Marked as followed up. That was the last one in this list.');
 });
 
 it('notifies a student\'s guardians and counts it as the follow-up', function () {
@@ -184,9 +210,9 @@ it('notifies a student\'s guardians and counts it as the follow-up', function ()
         ->assertSessionHasErrors(['note']);
 
     $this->actingAs($this->admin)
-        ->from(route('admin.lateness.index', ['report' => $report->id]))
+        ->from(route('admin.lateness.show', [$report, 'status' => 'all']))
         ->post(route('admin.lateness.notify-parent', $report), ['note' => 'Ava arrived 7 minutes late.'])
-        ->assertRedirect(route('admin.lateness.index', ['report' => $report->id]))
+        ->assertRedirect(route('admin.lateness.show', [$report, 'status' => 'all']))
         ->assertInertiaFlash('toast.message', 'Sent to Mr Bello and Mrs Bello.');
 
     $notice = GuardianNotice::sole();

@@ -65,6 +65,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
     Route::get('lateness/export', [LatenessReportController::class, 'export'])->name('lateness.export');
     Route::get('lateness', [LatenessReportController::class, 'index'])->name('lateness.index');
+    Route::get('lateness/{latenessReport}', [LatenessReportController::class, 'show'])->name('lateness.show');
     Route::put('lateness/{latenessReport}', [LatenessReportController::class, 'update'])->name('lateness.update');
     Route::post('lateness/{latenessReport}/notify-parent', [LatenessReportController::class, 'notifyParent'])->name('lateness.notify-parent');
 

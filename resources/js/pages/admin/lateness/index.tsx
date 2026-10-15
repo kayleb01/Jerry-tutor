@@ -1,8 +1,6 @@
 import { Form, InfiniteScroll, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import Icon from '@/components/icon';
-import LatenessReportDetail from '@/components/lateness-report-detail';
-import type { LatenessDetail } from '@/components/lateness-report-detail';
 import PersonAvatar from '@/components/person-avatar';
 import { Button, buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,7 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import { exportMethod as exportCsv, index } from '@/routes/admin/lateness';
+import {
+    exportMethod as exportCsv,
+    index,
+    show,
+} from '@/routes/admin/lateness';
 import type { Option } from '@/types';
 
 type Row = {
@@ -34,7 +36,6 @@ type Filters = {
     from: string | null;
     to: string | null;
     search: string;
-    report: number | null;
 };
 
 type LatenessProps = {
@@ -43,7 +44,6 @@ type LatenessProps = {
     filters: Filters;
     statuses: Option[];
     classes: Option[];
-    selected: LatenessDetail | null;
 };
 
 const roles = [
@@ -84,17 +84,8 @@ export default function LatenessInbox({
     filters,
     statuses,
     classes,
-    selected,
 }: LatenessProps) {
     const rows = reports.data;
-    const position = selected
-        ? rows.findIndex((row) => row.id === selected.id)
-        : -1;
-    const nextReportId =
-        (position === -1
-            ? rows.find((row) => row.id !== selected?.id)?.id
-            : (rows[position + 1]?.id ?? rows[position - 1]?.id)) ?? null;
-    const showingDetail = filters.report !== null;
     const isFiltered =
         filters.search !== '' ||
         filters.class !== null ||
@@ -116,16 +107,16 @@ export default function LatenessInbox({
                         className="min-w-0 flex-1 sm:w-64 sm:flex-none"
                         aria-label="Search lateness reports"
                     >
-                        {Object.entries(
-                            query(filters, { search: '', report: null }),
-                        ).map(([name, value]) => (
-                            <input
-                                key={name}
-                                type="hidden"
-                                name={name}
-                                value={String(value)}
-                            />
-                        ))}
+                        {Object.entries(query(filters, { search: '' })).map(
+                            ([name, value]) => (
+                                <input
+                                    key={name}
+                                    type="hidden"
+                                    name={name}
+                                    value={String(value)}
+                                />
+                            ),
+                        )}
                         <label className="relative block">
                             <span className="sr-only">Search by name</span>
                             <Icon
@@ -144,7 +135,7 @@ export default function LatenessInbox({
                     <a
                         href={exportCsv.url({
                             query: {
-                                ...query(filters, { report: null }),
+                                ...query(filters),
                                 status: filters.status,
                             },
                         })}
@@ -168,7 +159,6 @@ export default function LatenessInbox({
                             href={index({
                                 query: query(filters, {
                                     status: String(status.value),
-                                    report: null,
                                 }),
                             })}
                             preserveScroll
@@ -199,7 +189,6 @@ export default function LatenessInbox({
                             href={index({
                                 query: query(filters, {
                                     role: role.value,
-                                    report: null,
                                 }),
                             })}
                             preserveScroll
@@ -218,10 +207,7 @@ export default function LatenessInbox({
                     onClick={() => setShowFilters((shown) => !shown)}
                     aria-expanded={showFilters}
                     aria-controls="lateness-filters"
-                    className={cn(
-                        'ml-auto shrink-0',
-                        showingDetail && 'hidden lg:inline-flex',
-                    )}
+                    className="ml-auto shrink-0"
                 >
                     <Icon name="filter" className="size-4" />
                     Filters
@@ -237,10 +223,7 @@ export default function LatenessInbox({
                 <Form
                     {...index.form()}
                     id="lateness-filters"
-                    className={cn(
-                        'grid grid-cols-2 items-end gap-3 rounded-lg border bg-surface p-3 sm:grid-cols-4 lg:flex lg:flex-wrap',
-                        showingDetail && 'hidden lg:flex',
-                    )}
+                    className="grid grid-cols-2 items-end gap-3 rounded-lg border bg-surface p-3 sm:grid-cols-4 lg:flex lg:flex-wrap"
                     aria-label="Filter lateness reports"
                 >
                     <input type="hidden" name="status" value={filters.status} />
@@ -300,7 +283,6 @@ export default function LatenessInbox({
                                         class: null,
                                         from: null,
                                         to: null,
-                                        report: null,
                                     }),
                                 })}
                                 className="text-sm font-semibold text-link hover:underline"
@@ -312,112 +294,57 @@ export default function LatenessInbox({
                 </Form>
             )}
 
-            <div className="grid items-start gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
-                <Card
-                    className={cn(
-                        'overflow-hidden lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto',
-                        showingDetail && 'hidden lg:block',
-                    )}
-                >
-                    {rows.length === 0 ? (
-                        <p className="p-card text-sm text-muted-foreground">
-                            {isFiltered || filters.role
-                                ? 'No lateness reports match these filters.'
-                                : emptyMessages[filters.status]}
-                        </p>
-                    ) : (
-                        <InfiniteScroll
-                            data="reports"
-                            manual
-                            preserveUrl
-                            next={({ loading, fetch, hasMore }) =>
-                                hasMore && (
-                                    <div className="px-5 pt-2 pb-5">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full"
-                                            onClick={fetch}
-                                            disabled={loading}
-                                        >
-                                            {loading
-                                                ? 'Loading…'
-                                                : 'Load more reports'}
-                                        </Button>
-                                    </div>
-                                )
-                            }
-                        >
-                            {rows.map((row) => (
-                                <ReportRow
-                                    key={row.id}
-                                    row={row}
-                                    active={row.id === selected?.id}
-                                    href={index({
-                                        query: query(filters, {
-                                            report: row.id,
-                                        }),
-                                    })}
-                                />
-                            ))}
-                        </InfiniteScroll>
-                    )}
-                </Card>
-
-                <div className={cn(!showingDetail && 'hidden lg:block')}>
-                    {showingDetail && (
-                        <Link
-                            href={index({
-                                query: query(filters, { report: null }),
-                            })}
-                            className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-link lg:hidden"
-                        >
-                            <Icon name="arrow-left" className="size-4" />
-                            All reports
-                        </Link>
-                    )}
-                    {selected ? (
-                        <LatenessReportDetail
-                            key={selected.id}
-                            report={selected}
-                            nextReportId={nextReportId}
-                        />
-                    ) : (
-                        <Card className="p-card text-sm text-muted-foreground">
-                            Choose a report to follow it up.
-                        </Card>
-                    )}
-                </div>
-            </div>
+            <Card className="overflow-hidden">
+                {rows.length === 0 ? (
+                    <p className="p-card text-sm text-muted-foreground">
+                        {isFiltered || filters.role
+                            ? 'No lateness reports match these filters.'
+                            : emptyMessages[filters.status]}
+                    </p>
+                ) : (
+                    <InfiniteScroll
+                        data="reports"
+                        manual
+                        preserveUrl
+                        next={({ loading, fetch, hasMore }) =>
+                            hasMore && (
+                                <div className="px-5 pt-2 pb-5">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full"
+                                        onClick={fetch}
+                                        disabled={loading}
+                                    >
+                                        {loading
+                                            ? 'Loading…'
+                                            : 'Load more reports'}
+                                    </Button>
+                                </div>
+                            )
+                        }
+                    >
+                        {rows.map((row) => (
+                            <ReportRow
+                                key={row.id}
+                                row={row}
+                                href={show(row.id, {
+                                    query: query(filters),
+                                })}
+                            />
+                        ))}
+                    </InfiniteScroll>
+                )}
+            </Card>
         </AppLayout>
     );
 }
 
-function ReportRow({
-    row,
-    active,
-    href,
-}: {
-    row: Row;
-    active: boolean;
-    href: ReturnType<typeof index>;
-}) {
+function ReportRow({ row, href }: { row: Row; href: ReturnType<typeof show> }) {
     return (
         <Link
             href={href}
-            only={['selected', 'filters']}
-            // Below lg the list is replaced by the detail, so start it at the top.
-            preserveScroll={() =>
-                window.matchMedia('(min-width: 64rem)').matches
-            }
-            preserveState
-            aria-current={active ? 'true' : undefined}
-            className={cn(
-                'flex items-center gap-3 border-b border-l-4 px-4 py-3 transition-colors last:border-b-0 sm:px-5',
-                active
-                    ? 'border-l-primary bg-primary-95 dark:bg-primary-20/50'
-                    : 'border-l-transparent hover:bg-surface-muted',
-            )}
+            className="flex items-center gap-3 border-b px-4 py-3 transition-colors last:border-b-0 hover:bg-surface-muted focus-visible:-outline-offset-2 sm:px-5"
         >
             <PersonAvatar name={row.name} role={row.role} />
             <span className="min-w-0 flex-1">

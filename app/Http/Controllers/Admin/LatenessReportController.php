@@ -22,12 +22,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class LatenessReportController extends Controller
 {
     /**
-     * The lateness inbox: reports in the chosen status on the left, one report's detail on the right.
+     * The lateness inbox: reports in the chosen status. Each one opens on its own page.
      */
     public function index(Request $request, LatenessReportQuery $query, LatenessInbox $inbox): Response
     {
         $filters = $query->filters($request->query());
-        $selectedId = filter_var($request->query('report'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: null;
 
         return Inertia::render('admin/lateness/index', [
             'reports' => Inertia::scroll(fn () => $query->filtered($filters)
@@ -35,35 +34,42 @@ class LatenessReportController extends Controller
                 ->withQueryString()
                 ->through(fn (LatenessReport $report): array => $inbox->row($report))),
             'counts' => fn () => $inbox->counts($filters),
-            'filters' => [
-                'status' => $filters['status'],
-                'role' => $filters['role']?->value,
-                'class' => $filters['class'],
-                'from' => $filters['from']?->toDateString(),
-                'to' => $filters['to']?->toDateString(),
-                'search' => $filters['search'],
-                'report' => $selectedId,
-            ],
+            'filters' => $this->filterProps($filters),
             'statuses' => collect(LatenessReportQuery::STATUSES)
                 ->map(fn (string $label, string $value): array => ['value' => $value, 'label' => $label])
                 ->values(),
             'classes' => fn () => ClassGroup::query()->orderBy('name')->get(['id', 'name'])
                 ->map(fn (ClassGroup $group): array => ['value' => $group->id, 'label' => $group->name])
                 ->all(),
-            'selected' => function () use ($query, $filters, $inbox, $selectedId): ?array {
-                $report = $selectedId ? LatenessReport::find($selectedId) : $query->filtered($filters)->first();
-
-                return $report ? $inbox->detail($report) : null;
-            },
         ]);
     }
 
     /**
-     * Save the follow-up. With `next`, open that report afterwards (the "Mark as followed up" flow).
+     * One report on its own page. The list's filters ride along in the query string, so the page
+     * knows the report's place in that list for Previous/Next and "Mark as followed up".
      */
-    public function update(ReviewLatenessReportRequest $request, LatenessReport $latenessReport): RedirectResponse
+    public function show(Request $request, LatenessReport $latenessReport, LatenessReportQuery $query, LatenessInbox $inbox): Response
+    {
+        $filters = $query->filters($request->query());
+
+        return Inertia::render('admin/lateness/show', [
+            'report' => $inbox->detail($latenessReport),
+            'filters' => $this->filterProps($filters),
+            'neighbours' => $this->neighbours($query->filtered($filters)->pluck('lateness_reports.id')->all(), $latenessReport->id),
+        ]);
+    }
+
+    /**
+     * Save the follow-up. With `advance`, open the next report in the list the admin came from.
+     */
+    public function update(ReviewLatenessReportRequest $request, LatenessReport $latenessReport, LatenessReportQuery $query): RedirectResponse
     {
         $reviewed = $request->boolean('reviewed');
+        $listQuery = $this->referrerFilters();
+        // Work out the next report before saving, while this one still holds its place in the list.
+        $next = $request->boolean('advance')
+            ? $this->neighbours($query->filtered($query->filters($listQuery))->pluck('lateness_reports.id')->all(), $latenessReport->id)['next']
+            : null;
 
         $latenessReport->update([
             'follow_up_notes' => $request->validated('follow_up_notes'),
@@ -71,11 +77,21 @@ class LatenessReportController extends Controller
             'reviewed_at' => $reviewed ? ($latenessReport->reviewed_at ?? CarbonImmutable::now()) : null,
         ]);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => $reviewed ? 'Marked as followed up.' : 'Follow-up saved.']);
+        if (! $request->boolean('advance')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => $reviewed ? 'Marked as followed up.' : 'Follow-up saved.']);
 
-        $next = $request->validated('next');
+            return back();
+        }
 
-        return $next ? redirect($this->inboxUrl((int) $next)) : back();
+        if ($next === null) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => 'Marked as followed up. That was the last one in this list.']);
+
+            return to_route('admin.lateness.index', $listQuery);
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Marked as followed up.']);
+
+        return to_route('admin.lateness.show', [$next, ...$listQuery]);
     }
 
     /**
@@ -106,7 +122,7 @@ class LatenessReportController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Sent to '.$guardians->join(', ', ' and ').'.']);
 
-        return redirect($this->inboxUrl($latenessReport->id));
+        return back();
     }
 
     public function export(Request $request, LatenessReportQuery $query): StreamedResponse
@@ -138,13 +154,54 @@ class LatenessReportController extends Controller
     }
 
     /**
-     * The inbox with the filters the admin came from (and nothing else from that URL), opened on a report.
+     * @param  array{status: string, role: AttendeeRole|null, class: int|null, from: CarbonImmutable|null, to: CarbonImmutable|null, search: string}  $filters
+     * @return array{status: string, role: string|null, class: int|null, from: string|null, to: string|null, search: string}
      */
-    private function inboxUrl(int $reportId): string
+    private function filterProps(array $filters): array
+    {
+        return [
+            'status' => $filters['status'],
+            'role' => $filters['role']?->value,
+            'class' => $filters['class'],
+            'from' => $filters['from']?->toDateString(),
+            'to' => $filters['to']?->toDateString(),
+            'search' => $filters['search'],
+        ];
+    }
+
+    /**
+     * The list filters from the page the admin came from, and nothing else from that URL.
+     *
+     * @return array<string, mixed>
+     */
+    private function referrerFilters(): array
     {
         parse_str((string) parse_url(url()->previous(), PHP_URL_QUERY), $query);
 
-        return route('admin.lateness.index', [...Arr::only($query, ['status', 'role', 'class', 'from', 'to', 'search']), 'report' => $reportId]);
+        return Arr::only($query, ['status', 'role', 'class', 'from', 'to', 'search']);
+    }
+
+    /**
+     * The report's place in a list of ids. A report no longer in the list (e.g. just followed up) has no
+     * position, and "next" is the top of the list.
+     *
+     * @param  array<int, int>  $ids
+     * @return array{previous: int|null, next: int|null, position: int|null, total: int}
+     */
+    private function neighbours(array $ids, int $currentId): array
+    {
+        $index = array_search($currentId, $ids, true);
+
+        if ($index === false) {
+            return ['previous' => null, 'next' => $ids[0] ?? null, 'position' => null, 'total' => count($ids)];
+        }
+
+        return [
+            'previous' => $ids[$index - 1] ?? null,
+            'next' => $ids[$index + 1] ?? null,
+            'position' => $index + 1,
+            'total' => count($ids),
+        ];
     }
 
     /**
