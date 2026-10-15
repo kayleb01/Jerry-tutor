@@ -195,6 +195,21 @@ class PaystackGateway implements PaymentGateway
     }
 
     /**
+     * A one-off link to Paystack's own page where the payer can change the card on a subscription.
+     *
+     * @throws GatewayException
+     */
+    public function manageLink(Subscription $subscription): string
+    {
+        $code = $subscription->gateway_subscription_code
+            ?? throw new GatewayException("Paystack hasn't confirmed this subscription yet. Please try again in a few minutes.");
+
+        $link = $this->send(fn (PendingRequest $http) => $http->get('/subscription/'.rawurlencode($code).'/manage/link'))->json('data.link');
+
+        return (string) ($link ?? throw new GatewayException('Paystack did not return a link for changing the card.'));
+    }
+
+    /**
      * Paystack signs the whole body with our secret key, so a verified webhook needs no second look.
      */
     public function confirm(GatewayEvent $event): GatewayEvent

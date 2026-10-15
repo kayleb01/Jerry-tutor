@@ -25,6 +25,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\RaisedIssueController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\TutorCheckInController;
+use App\Http\Controllers\UpdateCardController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -58,6 +59,7 @@ Route::middleware(['auth', 'verified', 'role:guardian,student'])->prefix('billin
     Route::post('checkout', [BillingCheckoutController::class, 'store'])->name('checkout');
     Route::get('callback/{gateway}', BillingCallbackController::class)->whereIn('gateway', ['paystack', 'flutterwave'])->name('callback');
     Route::post('subscriptions/{subscription}/cancel', CancelSubscriptionController::class)->name('subscriptions.cancel');
+    Route::get('subscriptions/{subscription}/card', UpdateCardController::class)->name('subscriptions.card');
 });
 
 Route::middleware(['auth', 'verified', 'role:guardian'])->group(function () {
