@@ -37,6 +37,7 @@ class CancelSubscriptionController extends Controller
 
         $subscription->update([
             'cancel_at_period_end' => true,
+            'cancel_requested_at' => now(),
             'cancellation_reason' => filled($validated['reason'] ?? null) ? trim($validated['reason']) : null,
         ]);
 

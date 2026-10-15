@@ -35,8 +35,8 @@ class ApplyGatewayEvent
             GatewayEventType::PaymentSucceeded => $this->paymentSucceeded($gateway, $event),
             GatewayEventType::PaymentFailed => $this->paymentFailed($gateway, $event),
             GatewayEventType::SubscriptionCreated => $this->subscriptionCreated($gateway, $event),
-            GatewayEventType::SubscriptionNotRenewing => $this->update($gateway, $event, ['cancel_at_period_end' => true]),
-            GatewayEventType::SubscriptionCancelled => $this->update($gateway, $event, ['status' => SubscriptionStatus::Cancelled, 'cancelled_at' => CarbonImmutable::now()]),
+            GatewayEventType::SubscriptionNotRenewing => $this->update($gateway, $event, ['cancel_at_period_end' => true, 'cancel_requested_at' => CarbonImmutable::now()]),
+            GatewayEventType::SubscriptionCancelled => $this->update($gateway, $event, ['status' => SubscriptionStatus::Cancelled, 'cancelled_at' => CarbonImmutable::now(), 'cancel_requested_at' => CarbonImmutable::now()]),
         });
 
         if ($subscription && $event->type === GatewayEventType::PaymentSucceeded) {

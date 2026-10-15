@@ -33,8 +33,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $cancel_at_period_end
  * @property CarbonImmutable|null $cancelled_at
  * @property string|null $cancellation_reason
+ * @property CarbonImmutable|null $cancel_requested_at when the payer (or gateway) stopped renewals
+ * @property CarbonImmutable|null $payment_reminder_sent_at
  */
-#[Fillable(['payer_id', 'plan_id', 'gateway', 'gateway_customer_code', 'gateway_subscription_code', 'gateway_email_token', 'gateway_authorization', 'card_brand', 'card_last4', 'status', 'current_period_ends_at', 'cancel_at_period_end', 'cancelled_at', 'cancellation_reason'])]
+#[Fillable(['payer_id', 'plan_id', 'gateway', 'gateway_customer_code', 'gateway_subscription_code', 'gateway_email_token', 'gateway_authorization', 'card_brand', 'card_last4', 'status', 'current_period_ends_at', 'cancel_at_period_end', 'cancelled_at', 'cancellation_reason', 'cancel_requested_at', 'payment_reminder_sent_at'])]
 class Subscription extends Model
 {
     /** @use HasFactory<SubscriptionFactory> */
@@ -55,6 +57,8 @@ class Subscription extends Model
             'current_period_ends_at' => 'immutable_datetime',
             'cancel_at_period_end' => 'boolean',
             'cancelled_at' => 'immutable_datetime',
+            'cancel_requested_at' => 'immutable_datetime',
+            'payment_reminder_sent_at' => 'immutable_datetime',
         ];
     }
 
