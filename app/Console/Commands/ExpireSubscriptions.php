@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
+use App\Models\Payment;
 use App\Models\Subscription;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Attributes\Description;
@@ -28,10 +30,13 @@ class ExpireSubscriptions extends Command
             ->where('current_period_ends_at', '<=', $now)
             ->update(['status' => SubscriptionStatus::Expired]);
 
-        $abandoned = Subscription::query()
+        $abandonedIds = Subscription::query()
             ->where('status', SubscriptionStatus::Pending)
             ->where('created_at', '<=', $now->subDay())
-            ->update(['status' => SubscriptionStatus::Cancelled, 'cancelled_at' => $now]);
+            ->pluck('id');
+        $abandoned = Subscription::query()->whereKey($abandonedIds)->update(['status' => SubscriptionStatus::Cancelled, 'cancelled_at' => $now]);
+        Payment::query()->whereIn('subscription_id', $abandonedIds)->where('status', PaymentStatus::Pending)
+            ->update(['status' => PaymentStatus::Failed, 'failure_reason' => 'Checkout not completed']);
 
         $this->info("Expired {$lapsed} lapsed and {$ended} cancelled subscriptions; closed {$abandoned} unfinished checkouts.");
 

@@ -14,6 +14,7 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             badges: { classReports?: number; lateness?: number };
+            billing?: { selfPay: boolean };
             [key: string]: unknown;
         };
         flashDataType: {

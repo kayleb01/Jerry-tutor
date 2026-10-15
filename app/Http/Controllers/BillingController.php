@@ -45,7 +45,7 @@ class BillingController extends Controller
                 ->orWhere(fn (Builder $query) => $query->where('status', SubscriptionStatus::Cancelled)->where('current_period_ends_at', '>', $now))
                 ->orWhere(fn (Builder $query) => $query->where('status', SubscriptionStatus::Pending)->where('created_at', '>', $now->subDay())))
             ->get()
-            ->sortBy(fn (Subscription $subscription): string => array_search($subscription->status, [SubscriptionStatus::Active, SubscriptionStatus::PastDue, SubscriptionStatus::Cancelled, SubscriptionStatus::Pending], true).'-'.str_pad((string) $subscription->id, 10, '0', STR_PAD_LEFT))
+            ->sortBy(fn (Subscription $subscription): string => array_search($subscription->status, [SubscriptionStatus::PastDue, SubscriptionStatus::Active, SubscriptionStatus::Cancelled, SubscriptionStatus::Pending], true).'-'.str_pad((string) $subscription->id, 10, '0', STR_PAD_LEFT))
             ->values();
 
         return Inertia::render('billing/index', [

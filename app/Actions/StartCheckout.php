@@ -47,10 +47,13 @@ class StartCheckout
             $studentIds = $students->pluck('id')->all();
 
             // An earlier checkout for any of these children that was never paid gives way to this one.
-            Subscription::query()
+            $superseded = Subscription::query()
                 ->where('status', SubscriptionStatus::Pending)
                 ->whereHas('students', fn ($query) => $query->whereIn('users.id', $studentIds))
-                ->update(['status' => SubscriptionStatus::Cancelled, 'cancelled_at' => now()]);
+                ->pluck('id');
+            Subscription::query()->whereKey($superseded)->update(['status' => SubscriptionStatus::Cancelled, 'cancelled_at' => now()]);
+            Payment::query()->whereIn('subscription_id', $superseded)->where('status', PaymentStatus::Pending)
+                ->update(['status' => PaymentStatus::Failed, 'failure_reason' => 'Checkout not completed']);
 
             $subscription = Subscription::create([
                 'payer_id' => $payer->id,

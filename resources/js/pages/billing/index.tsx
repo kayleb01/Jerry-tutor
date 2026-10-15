@@ -107,7 +107,7 @@ export default function Billing({
     payments,
     cancelReasons,
 }: BillingProps) {
-    const uncovered = children.filter((child) => child.state === 'none');
+    const uncovered = children.filter((child) => child.state !== 'covered');
 
     return (
         <AppLayout title="Billing" subtitle="Quiz access">
@@ -396,7 +396,7 @@ function SubscribeCard({
                             </legend>
                             <div className="flex flex-col gap-2">
                                 {childList.map((child) => {
-                                    const covered = child.state !== 'none';
+                                    const covered = child.state === 'covered';
                                     const checked = chosen.includes(child.id);
                                     const full =
                                         !checked &&
@@ -433,9 +433,13 @@ function SubscribeCard({
                                             </span>
                                             {covered && (
                                                 <span className="text-[0.8125rem] text-muted-foreground">
-                                                    {child.state === 'pending'
-                                                        ? 'payment pending'
-                                                        : 'already has access'}
+                                                    already has access
+                                                </span>
+                                            )}
+                                            {child.state === 'pending' && (
+                                                <span className="text-[0.8125rem] text-muted-foreground">
+                                                    replaces the payment you
+                                                    didn’t finish
                                                 </span>
                                             )}
                                         </label>
@@ -568,7 +572,7 @@ function SubscriptionCard({
                                         <label
                                             key={option}
                                             className={cn(
-                                                'cursor-pointer rounded-full border px-3 py-1.5 text-[0.8125rem] transition-colors',
+                                                'cursor-pointer rounded-full border px-3 py-1.5 text-[0.8125rem] transition-colors has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/30',
                                                 reason === option
                                                     ? 'border-primary bg-primary text-primary-foreground'
                                                     : 'hover:bg-surface-muted',
@@ -576,6 +580,7 @@ function SubscriptionCard({
                                         >
                                             <input
                                                 type="radio"
+                                                name={`reason-choice-${subscription.id}`}
                                                 className="sr-only"
                                                 checked={reason === option}
                                                 onChange={() =>
@@ -616,12 +621,9 @@ function SubscriptionCard({
                                 message={errors.reason}
                             />
                             <p className="text-[0.8125rem] text-muted-foreground">
-                                {list(subscription.students)} keep
-                                {subscription.students.length === 1
-                                    ? 's'
-                                    : ''}{' '}
-                                access until the end of the month you’ve paid
-                                for. It won’t renew after that.
+                                {subscription.status === 'past_due'
+                                    ? 'The last payment didn’t go through, so access ends when the short grace period does. It won’t renew.'
+                                    : `${list(subscription.students)} keep${subscription.students.length === 1 ? 's' : ''} access until the end of the month you’ve paid for. It won’t renew after that.`}
                             </p>
                             <div className="flex flex-wrap gap-2">
                                 <Button

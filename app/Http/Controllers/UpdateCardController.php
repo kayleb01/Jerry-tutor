@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SubscriptionStatus;
 use App\Models\Subscription;
 use App\Payments\Exceptions\GatewayException;
 use App\Payments\PaymentGatewayManager;
@@ -20,10 +21,16 @@ class UpdateCardController extends Controller
     {
         abort_unless($subscription->payer_id === $request->user()->id, 403);
 
+        if (! in_array($subscription->status, [SubscriptionStatus::Active, SubscriptionStatus::PastDue], true) || $subscription->cancel_at_period_end) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => "This subscription isn't renewing, so there's no card to update."]);
+
+            return back();
+        }
+
         $gateway = $gateways->for($subscription);
 
         if (! $gateway instanceof PaystackGateway) {
-            Inertia::flash('toast', ['type' => 'error', 'message' => 'Flutterwave doesn’t let you swap the card on a subscription. Cancel it here, then subscribe again with the new card once this month ends.']);
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Flutterwave doesn’t let you swap the card on a subscription. Cancel it here, then subscribe again with the new card.']);
 
             return back();
         }

@@ -83,10 +83,10 @@ it('explains what a past-due or cancelling subscription means', function () {
     $this->actingAs($this->parent)->get(route('billing.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->has('subscriptions', 2)
-            ->where('subscriptions.0.note', 'Ends on 1 November. It won’t renew.')
-            ->where('subscriptions.0.canCancel', false)
-            ->where('subscriptions.1.statusLabel', 'Past due')
-            ->where('subscriptions.1.note', 'The last payment failed. Update your card to keep access.')
+            ->where('subscriptions.0.statusLabel', 'Past due')
+            ->where('subscriptions.0.note', 'The last payment failed. Update your card to keep access.')
+            ->where('subscriptions.1.note', 'Ends on 1 November. It won’t renew.')
+            ->where('subscriptions.1.canCancel', false)
             ->where('children.0.state', 'covered')
             ->where('children.1.state', 'none')
             ->where('children.2.state', 'covered'));

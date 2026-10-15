@@ -44,6 +44,10 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user()?->only(['id', 'name', 'email', 'username', 'role']),
             ],
+            'billing' => fn (): array => [
+                // Students with no parent account pay for themselves, so they get a Billing menu item.
+                'selfPay' => $request->user()?->role === Role::Student && ! $request->user()->guardians()->exists(),
+            ],
             'badges' => fn (): array => $request->user()?->role === Role::Admin
                 ? ['classReports' => $this->classReportsToReview(), 'lateness' => LatenessReport::whereNull('reviewed_at')->count()]
                 : [],

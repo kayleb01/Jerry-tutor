@@ -26,7 +26,7 @@ it('explains how to change a Flutterwave card', function () {
     $this->actingAs($this->parent)
         ->get(route('billing.subscriptions.card', $subscription))
         ->assertRedirect()
-        ->assertInertiaFlash('toast.message', 'Flutterwave doesn’t let you swap the card on a subscription. Cancel it here, then subscribe again with the new card once this month ends.');
+        ->assertInertiaFlash('toast.message', 'Flutterwave doesn’t let you swap the card on a subscription. Cancel it here, then subscribe again with the new card.');
 
     Http::assertNothingSent();
 });

@@ -79,7 +79,7 @@ function initials(name: string): string {
 }
 
 export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
-    const { auth, badges } = usePage().props;
+    const { auth, badges, billing } = usePage().props;
     const currentPath = usePage().url.split('?')[0];
 
     if (!auth.user) {
@@ -108,7 +108,19 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
                 </p>
             )}
             <nav aria-label="Main" className="flex flex-1 flex-col gap-1">
-                {navItems[auth.user.role].map((item) => {
+                {[
+                    ...navItems[auth.user.role],
+                    // Students without a parent account pay for themselves.
+                    ...(auth.user.role === 'student' && billing?.selfPay
+                        ? [
+                              {
+                                  label: 'Billing',
+                                  icon: 'card' as const,
+                                  href: billingIndex,
+                              },
+                          ]
+                        : []),
+                ].map((item: NavItem) => {
                     const active = isActive(item.href().url);
                     const count = item.badge ? (badges?.[item.badge] ?? 0) : 0;
 
