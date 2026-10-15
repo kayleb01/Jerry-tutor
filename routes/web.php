@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\QuestionStatusController;
 use App\Http\Controllers\Admin\RestoreUserController;
+use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
 use App\Http\Controllers\BillingCallbackController;
@@ -79,6 +80,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('classes/{classGroup}/students', [ClassEnrolmentController::class, 'store'])->name('classes.students.store');
     Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
 
+    Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::get('billing', [BillingSettingsController::class, 'index'])->name('billing.index');
     Route::put('billing/plans/{plan}', [BillingSettingsController::class, 'update'])->name('billing.plans.update');
 

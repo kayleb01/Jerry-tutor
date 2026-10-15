@@ -3,7 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Role;
+use App\Enums\SubscriptionStatus;
 use App\Models\LatenessReport;
+use App\Models\Subscription;
 use App\Services\ClassReportInbox;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -49,7 +51,7 @@ class HandleInertiaRequests extends Middleware
                 'selfPay' => $request->user()?->role === Role::Student && ! $request->user()->guardians()->exists(),
             ],
             'badges' => fn (): array => $request->user()?->role === Role::Admin
-                ? ['classReports' => $this->classReportsToReview(), 'lateness' => LatenessReport::whereNull('reviewed_at')->count()]
+                ? ['classReports' => $this->classReportsToReview(), 'lateness' => LatenessReport::whereNull('reviewed_at')->count(), 'subscriptions' => Subscription::where('status', SubscriptionStatus::PastDue)->count()]
                 : [],
         ];
     }
