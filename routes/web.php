@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\QuestionStatusController;
 use App\Http\Controllers\Admin\RestoreUserController;
+use App\Http\Controllers\Admin\SubscriptionActionsController;
 use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
@@ -81,6 +82,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
 
     Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::post('subscriptions/{subscription}/remind', [SubscriptionActionsController::class, 'remind'])->name('subscriptions.remind');
+    Route::post('subscriptions/{subscription}/pause', [SubscriptionActionsController::class, 'pause'])->name('subscriptions.pause');
+    Route::post('subscriptions/{subscription}/retry', [SubscriptionActionsController::class, 'retry'])->name('subscriptions.retry');
     Route::get('billing', [BillingSettingsController::class, 'index'])->name('billing.index');
     Route::put('billing/plans/{plan}', [BillingSettingsController::class, 'update'])->name('billing.plans.update');
 

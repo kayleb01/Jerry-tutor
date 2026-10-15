@@ -69,16 +69,36 @@ class FlutterwaveGateway implements PaymentGateway
 
     public function verify(string $reference): VerifiedPayment
     {
-        $data = $this->send(fn (PendingRequest $http) => $http->get('/transactions/verify_by_reference', ['tx_ref' => $reference]))->json('data');
+        return $this->toVerifiedPayment($this->send(fn (PendingRequest $http) => $http->get('/transactions/verify_by_reference', ['tx_ref' => $reference]))->json('data'), $reference);
+    }
 
+    public function chargeSavedCard(Subscription $subscription, Payment $payment): VerifiedPayment
+    {
+        $data = $this->send(fn (PendingRequest $http) => $http->post('/tokenized-charges', [
+            'token' => $subscription->gateway_authorization,
+            'email' => $subscription->payer->email,
+            'currency' => $payment->currency,
+            'amount' => self::toNaira($payment->amount),
+            'tx_ref' => $payment->reference,
+            'narration' => 'Jerry Great Academy subscription',
+        ]))->json('data');
+
+        return $this->toVerifiedPayment($data, $payment->reference, keepReference: true);
+    }
+
+    /**
+     * @param  mixed  $data  the transaction object Flutterwave returned
+     */
+    private function toVerifiedPayment(mixed $data, string $reference, bool $keepReference = false): VerifiedPayment
+    {
         if (! is_array($data)) {
-            throw new GatewayException('Flutterwave returned an unexpected verification response.');
+            throw new GatewayException('Flutterwave returned an unexpected payment response.');
         }
 
         $succeeded = ($data['status'] ?? null) === 'successful';
 
         return new VerifiedPayment(
-            reference: (string) ($data['tx_ref'] ?? $reference),
+            reference: $keepReference ? $reference : (string) ($data['tx_ref'] ?? $reference),
             succeeded: $succeeded,
             amount: self::toKobo($data['amount'] ?? 0),
             currency: strtoupper((string) ($data['currency'] ?? '')),

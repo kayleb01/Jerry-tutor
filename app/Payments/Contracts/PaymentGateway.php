@@ -42,6 +42,14 @@ interface PaymentGateway
     public function verify(string $reference): VerifiedPayment;
 
     /**
+     * Charge the subscription's saved card for its plan, outside the provider's own renewal schedule
+     * (an admin's "Retry now"). The result carries our payment's reference.
+     *
+     * @throws GatewayException
+     */
+    public function chargeSavedCard(Subscription $subscription, Payment $payment): VerifiedPayment;
+
+    /**
      * Stop future renewals at the provider.
      *
      * @throws GatewayException

@@ -67,17 +67,37 @@ class PaystackGateway implements PaymentGateway
 
     public function verify(string $reference): VerifiedPayment
     {
-        $data = $this->send(fn (PendingRequest $http) => $http->get('/transaction/verify/'.rawurlencode($reference)))->json('data');
+        return $this->toVerifiedPayment($this->send(fn (PendingRequest $http) => $http->get('/transaction/verify/'.rawurlencode($reference)))->json('data'), $reference);
+    }
 
+    public function chargeSavedCard(Subscription $subscription, Payment $payment): VerifiedPayment
+    {
+        $data = $this->send(fn (PendingRequest $http) => $http->post('/transaction/charge_authorization', [
+            'authorization_code' => $subscription->gateway_authorization,
+            'email' => $subscription->payer->email,
+            'amount' => $payment->amount,
+            'currency' => $payment->currency,
+            'reference' => $payment->reference,
+            'metadata' => ['subscription_id' => $subscription->id, 'retry' => true],
+        ]))->json('data');
+
+        return $this->toVerifiedPayment($data, $payment->reference, keepReference: true);
+    }
+
+    /**
+     * @param  mixed  $data  the transaction object Paystack returned
+     */
+    private function toVerifiedPayment(mixed $data, string $reference, bool $keepReference = false): VerifiedPayment
+    {
         if (! is_array($data)) {
-            throw new GatewayException('Paystack returned an unexpected verification response.');
+            throw new GatewayException('Paystack returned an unexpected payment response.');
         }
 
         $succeeded = ($data['status'] ?? null) === 'success';
-        $pending = in_array($data['status'] ?? null, ['ongoing', 'pending', 'processing', 'queued'], true);
+        $pending = in_array($data['status'] ?? null, ['ongoing', 'pending', 'processing', 'queued', 'send_otp'], true);
 
         return new VerifiedPayment(
-            reference: (string) ($data['reference'] ?? $reference),
+            reference: $keepReference ? $reference : (string) ($data['reference'] ?? $reference),
             succeeded: $succeeded,
             amount: (int) ($data['amount'] ?? 0),
             currency: strtoupper((string) ($data['currency'] ?? '')),
@@ -86,7 +106,7 @@ class PaystackGateway implements PaymentGateway
             authorization: $succeeded && ($data['authorization']['reusable'] ?? false) ? $data['authorization']['authorization_code'] : null,
             cardBrand: $this->cardBrand($data['authorization'] ?? []),
             cardLast4: $data['authorization']['last4'] ?? null,
-            paidAt: filled($data['paid_at'] ?? null) ? CarbonImmutable::parse($data['paid_at']) : null,
+            paidAt: filled($data['paid_at'] ?? $data['transaction_date'] ?? null) && $succeeded ? CarbonImmutable::parse($data['paid_at'] ?? $data['transaction_date']) : null,
             failureReason: $succeeded ? null : ($data['gateway_response'] ?? 'Payment was not completed'),
             raw: $data,
             pending: $pending,
