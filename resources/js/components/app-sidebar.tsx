@@ -12,6 +12,7 @@ import { index as adminSubscriptionsIndex } from '@/routes/admin/subscriptions';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as billingIndex } from '@/routes/billing';
 import { index as childrenIndex } from '@/routes/children';
+import { index as quizzesIndex } from '@/routes/quizzes';
 import type { Role } from '@/types';
 
 type NavItem = {
@@ -52,7 +53,10 @@ const navItems: Record<Role, NavItem[]> = {
         },
     ],
     tutor: [{ label: 'Today', icon: 'today', href: dashboard }],
-    student: [{ label: 'Dashboard', icon: 'dashboard', href: dashboard }],
+    student: [
+        { label: 'Dashboard', icon: 'dashboard', href: dashboard },
+        { label: 'Quizzes', icon: 'calculator', href: quizzesIndex },
+    ],
     guardian: [
         { label: 'Dashboard', icon: 'dashboard', href: dashboard },
         { label: 'Children', icon: 'children', href: childrenIndex },

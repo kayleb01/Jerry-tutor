@@ -23,6 +23,7 @@ type StudentDashboardProps = {
     week: DashboardDay[];
     nextWeek: boolean;
     reportsDue: ReportDue[];
+    quizAccess: boolean;
 };
 
 const percent = (value: number | null) => (value === null ? '—' : `${value}%`);
@@ -36,6 +37,7 @@ export default function StudentDashboard({
     week,
     nextWeek,
     reportsDue,
+    quizAccess,
 }: StudentDashboardProps) {
     return (
         <AppLayout
@@ -89,6 +91,7 @@ export default function StudentDashboard({
                         key={strand.key}
                         strand={strand}
                         yearGroup={header.yearGroup}
+                        quizAccess={quizAccess}
                     />
                 ))}
             </section>

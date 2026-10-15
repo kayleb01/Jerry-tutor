@@ -37,6 +37,8 @@ export type Strand = {
     key: 'number' | 'algebra' | 'statistics' | 'geometry';
     name: string;
     summary: string;
+    quizSlug: string | null;
+    lastScore: string | null;
 };
 
 export type StudentStats = {

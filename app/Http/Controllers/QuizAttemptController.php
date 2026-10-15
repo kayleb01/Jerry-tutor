@@ -8,6 +8,7 @@ use App\Enums\QuizAttemptStatus;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizAttemptQuestion;
+use App\Services\QuizCatalogue;
 use App\Support\AnswerChecker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,9 +21,10 @@ class QuizAttemptController extends Controller
     /**
      * Start (or resume) a quiz and open the first question still to answer.
      */
-    public function store(Request $request, Quiz $quiz, StartQuizAttempt $startQuizAttempt): RedirectResponse
+    public function store(Request $request, Quiz $quiz, StartQuizAttempt $startQuizAttempt, QuizCatalogue $catalogue): RedirectResponse
     {
         abort_unless($quiz->is_published, 404);
+        abort_unless($catalogue->isAvailableTo($quiz, $request->user()), 403);
 
         $attempt = $startQuizAttempt->handle($quiz, $request->user());
 

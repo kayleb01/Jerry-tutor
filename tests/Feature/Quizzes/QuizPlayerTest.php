@@ -52,7 +52,7 @@ it('picks up where the student left off instead of starting again', function () 
 });
 
 it('says so when a quiz has no questions yet', function () {
-    $empty = Quiz::factory()->create(['key_stage' => KeyStage::Ks3]);
+    $empty = Quiz::factory()->create(['key_stage' => KeyStage::Ks2, 'year_group' => YearGroup::Year5, 'difficulty' => Difficulty::Challenging]);
 
     startQuiz($this->student, $empty)->assertRedirect()->assertInertiaFlash('toast.message', "This quiz doesn't have any questions yet.");
     expect(QuizAttempt::count())->toBe(0);

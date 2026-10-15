@@ -68,6 +68,36 @@ class QuizCatalogue
     }
 
     /**
+     * Whether the student may start this quiz: the same rules as the sections they see.
+     */
+    public function isAvailableTo(Quiz $quiz, User $student): bool
+    {
+        $year = $student->studentProfile?->year_group;
+
+        if (! $quiz->is_published || $year === null) {
+            return false;
+        }
+
+        if ($year->keyStage() === KeyStage::Ks4) {
+            return $quiz->exam_track === ExamTrack::Gcse;
+        }
+
+        if ($quiz->year_group === $year) {
+            return true;
+        }
+
+        if (in_array($year, [YearGroup::Year5, YearGroup::Year6], true) && in_array($quiz->exam_track, [ExamTrack::ElevenPlus, ExamTrack::Sats], true)) {
+            return true;
+        }
+
+        return $year->keyStage() === KeyStage::Ks3
+            && $quiz->key_stage === KeyStage::Ks3
+            && $quiz->difficulty === Difficulty::Challenging
+            && $quiz->year_group === null
+            && $this->strongScores($student, $year) >= self::CHALLENGE_QUIZZES_NEEDED;
+    }
+
+    /**
      * The student's latest finished quizzes.
      *
      * @return Collection<int, array{id: int, title: string, score: string, date: string}>

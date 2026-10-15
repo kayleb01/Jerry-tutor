@@ -111,3 +111,22 @@ it('links the dashboard strand cards to the student\'s quizzes', function () {
             ->where('strands.0.lastScore', null)
             ->where('quizAccess', true));
 });
+
+it('refuses to start a quiz outside the student\'s catalogue', function () {
+    $student = subscribedStudent(YearGroup::Year5);
+
+    $this->actingAs($student)->post(route('quizzes.attempts.store', 'gcse-mixed'))->assertForbidden();
+    $this->actingAs($student)->post(route('quizzes.attempts.store', 'year-7-mixed'))->assertForbidden();
+    expect(QuizAttempt::count())->toBe(0);
+});
+
+it('refuses the Challenge tier until it is unlocked', function () {
+    $student = subscribedStudent(YearGroup::Year7);
+    $challenge = Quiz::where('slug', 'like', 'ks3-challenge%')->orderBy('sort_order')->firstOrFail();
+
+    $this->actingAs($student)->post(route('quizzes.attempts.store', $challenge->slug))->assertForbidden();
+
+    QuizAttempt::factory()->count(3)->submitted(9)->create(['user_id' => $student->id, 'quiz_id' => Quiz::firstWhere('slug', 'year-7-mixed')->id]);
+
+    $this->actingAs($student)->post(route('quizzes.attempts.store', $challenge->slug))->assertRedirect();
+});

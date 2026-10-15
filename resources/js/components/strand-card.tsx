@@ -1,7 +1,11 @@
+import { Form, Link } from '@inertiajs/react';
 import Icon from '@/components/icon';
 import { Badge } from '@/components/ui/badge';
+import { Button, buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { index as quizzesIndex } from '@/routes/quizzes';
+import { store as startQuiz } from '@/routes/quizzes/attempts';
 import type { Strand } from '@/types';
 
 const accents: Record<Strand['key'], string> = {
@@ -14,9 +18,14 @@ const accents: Record<Strand['key'], string> = {
 type StrandCardProps = {
     strand: Strand;
     yearGroup: string | null;
+    quizAccess: boolean;
 };
 
-export default function StrandCard({ strand, yearGroup }: StrandCardProps) {
+export default function StrandCard({
+    strand,
+    yearGroup,
+    quizAccess,
+}: StrandCardProps) {
     return (
         <Card className="flex flex-col">
             <div className="flex items-start justify-between gap-3 border-b px-4 py-3.5 sm:px-5 sm:py-4">
@@ -38,21 +47,42 @@ export default function StrandCard({ strand, yearGroup }: StrandCardProps) {
             <div className="flex flex-1 flex-col gap-3 px-4 py-3.5 sm:gap-4 sm:px-5 sm:py-4">
                 <p className="text-sm leading-relaxed">{strand.summary}</p>
                 <div className="mt-auto flex items-center gap-3">
-                    <div
-                        className="relative h-6 flex-1 overflow-hidden rounded-full bg-surface-muted"
-                        role="img"
-                        aria-label={`${strand.name} quizzes are coming soon`}
-                    >
-                        <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-muted-foreground">
-                            Quizzes coming soon
-                        </span>
-                    </div>
-                    <span
-                        className="flex size-10 items-center justify-center rounded-full bg-secondary-95 text-secondary-40 dark:bg-secondary-20 dark:text-secondary-90"
-                        aria-hidden="true"
-                    >
-                        <Icon name="trophy" />
-                    </span>
+                    <p className="min-w-0 flex-1 text-sm text-muted-foreground">
+                        {strand.lastScore ? (
+                            <>
+                                Last quiz{' '}
+                                <span className="font-semibold text-foreground tabular-nums">
+                                    {strand.lastScore}
+                                </span>
+                            </>
+                        ) : (
+                            'No quizzes yet'
+                        )}
+                    </p>
+                    {quizAccess && strand.quizSlug ? (
+                        <Form {...startQuiz.form(strand.quizSlug)}>
+                            {({ processing }) => (
+                                <Button
+                                    type="submit"
+                                    variant="outline"
+                                    disabled={processing}
+                                >
+                                    <Icon name="trophy" className="size-4" />
+                                    {strand.lastScore
+                                        ? 'Practise again'
+                                        : 'Start quiz'}
+                                </Button>
+                            )}
+                        </Form>
+                    ) : (
+                        <Link
+                            href={quizzesIndex()}
+                            className={buttonClasses('outline')}
+                        >
+                            <Icon name="trophy" className="size-4" />
+                            Quizzes
+                        </Link>
+                    )}
                 </div>
             </div>
         </Card>
