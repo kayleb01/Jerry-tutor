@@ -9,6 +9,7 @@ import { index as adminLatenessIndex } from '@/routes/admin/lateness';
 import { index as adminLessonReportsIndex } from '@/routes/admin/lesson-reports';
 import { index as adminQuestionsIndex } from '@/routes/admin/questions';
 import { index as adminUsersIndex } from '@/routes/admin/users';
+import { index as billingIndex } from '@/routes/billing';
 import { index as childrenIndex } from '@/routes/children';
 import type { Role } from '@/types';
 
@@ -48,6 +49,7 @@ const navItems: Record<Role, NavItem[]> = {
     guardian: [
         { label: 'Dashboard', icon: 'dashboard', href: dashboard },
         { label: 'Children', icon: 'children', href: childrenIndex },
+        { label: 'Billing', icon: 'card', href: billingIndex },
     ],
 };
 

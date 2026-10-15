@@ -34,7 +34,9 @@ export type IconName =
     | 'filter'
     | 'question'
     | 'download'
-    | 'bulb';
+    | 'bulb'
+    | 'card'
+    | 'lock';
 
 const paths: Record<IconName, ReactNode> = {
     dashboard: (
@@ -170,6 +172,18 @@ const paths: Record<IconName, ReactNode> = {
     ),
     plus: <path d="M12 5v14M5 12h14" />,
     filter: <path d="M4 5h16l-6 7.5V19l-4 1.5v-8L4 5Z" />,
+    card: (
+        <>
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <path d="M3 10h18M7 15h3" />
+        </>
+    ),
+    lock: (
+        <>
+            <rect x="5" y="11" width="14" height="10" rx="2" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+        </>
+    ),
     bulb: (
         <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z" />
     ),
