@@ -122,6 +122,38 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Subscriptions this user pays for.
+     *
+     * @return HasMany<Subscription, $this>
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class, 'payer_id');
+    }
+
+    /**
+     * Subscriptions that cover this student (whoever pays).
+     *
+     * @return BelongsToMany<Subscription, $this>
+     */
+    public function coveringSubscriptions(): BelongsToMany
+    {
+        return $this->belongsToMany(Subscription::class, 'subscription_student', 'student_id', 'subscription_id')->withTimestamps();
+    }
+
+    /**
+     * Staff always have quiz access; a student needs a subscription that is paid up (or within grace).
+     */
+    public function hasQuizAccess(): bool
+    {
+        if ($this->hasRole(Role::Admin, Role::Tutor)) {
+            return true;
+        }
+
+        return $this->hasRole(Role::Student) && $this->coveringSubscriptions()->grantingAccess()->exists();
+    }
+
+    /**
      * @throws InvalidArgumentException
      */
     public function linkChild(User $student, ?string $relationship = null): void

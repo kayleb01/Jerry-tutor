@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([CurriculumSeeder::class, DemoQuestionSeeder::class]);
+        $this->call([CurriculumSeeder::class, PlanSeeder::class, DemoQuestionSeeder::class]);
 
         if (User::where('email', 'admin@academy.test')->exists()) {
             return;
