@@ -1,1 +1,9 @@
-{"status": true, "message": "Authorization URL created", "data": {"authorization_url": "https://checkout.paystack.com/0peioxfhpn", "access_code": "0peioxfhpn", "reference": "JGA-01JTESTREFERENCE"}}
+{
+    "status": true,
+    "message": "Authorization URL created",
+    "data": {
+        "authorization_url": "https://checkout.paystack.com/0peioxfhpn",
+        "access_code": "0peioxfhpn",
+        "reference": "JGA-01JTESTREFERENCE"
+    }
+}

@@ -1,1 +1,33 @@
-{"event": "invoice.update", "data": {"domain": "test", "invoice_code": "INV_thy2vkmirn2urwv", "amount": 500000, "period_start": "2026-11-15T12:00:00.000Z", "period_end": "2026-12-15T12:00:00.000Z", "status": "success", "paid": true, "paid_at": "2026-11-15T12:00:02.000Z", "subscription": {"status": "active", "subscription_code": "SUB_vsyqdmlzble3uii", "email_token": "d7gofp6yppn3qz7", "amount": 500000, "next_payment_date": "2026-12-15T12:00:00.000Z"}, "customer": {"customer_code": "CUS_xnxdt6s1zg1f4nx"}, "transaction": {"reference": "T2489023ab", "status": "success", "amount": 500000, "currency": "NGN"}, "authorization": {"authorization_code": "AUTH_8dfhjjdt", "card_type": "visa ", "last4": "4421", "reusable": true}}}
+{
+    "event": "invoice.update",
+    "data": {
+        "domain": "test",
+        "invoice_code": "INV_thy2vkmirn2urwv",
+        "amount": 500000,
+        "period_start": "2026-11-15T12:00:00.000Z",
+        "period_end": "2026-12-15T12:00:00.000Z",
+        "status": "success",
+        "paid": true,
+        "paid_at": "2026-11-15T12:00:02.000Z",
+        "subscription": {
+            "status": "active",
+            "subscription_code": "SUB_vsyqdmlzble3uii",
+            "email_token": "d7gofp6yppn3qz7",
+            "amount": 500000,
+            "next_payment_date": "2026-12-15T12:00:00.000Z"
+        },
+        "customer": { "customer_code": "CUS_xnxdt6s1zg1f4nx" },
+        "transaction": {
+            "reference": "T2489023ab",
+            "status": "success",
+            "amount": 500000,
+            "currency": "NGN"
+        },
+        "authorization": {
+            "authorization_code": "AUTH_8dfhjjdt",
+            "card_type": "visa ",
+            "last4": "4421",
+            "reusable": true
+        }
+    }
+}

@@ -1,1 +1,13 @@
-{"status": true, "message": "Plan retrieved", "data": {"plan_code": "PLN_standard", "name": "Standard membership", "amount": 500000, "interval": "monthly", "currency": "NGN", "is_archived": false, "is_deleted": false}}
+{
+    "status": true,
+    "message": "Plan retrieved",
+    "data": {
+        "plan_code": "PLN_standard",
+        "name": "Standard membership",
+        "amount": 500000,
+        "interval": "monthly",
+        "currency": "NGN",
+        "is_archived": false,
+        "is_deleted": false
+    }
+}

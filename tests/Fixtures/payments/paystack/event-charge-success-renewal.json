@@ -1,1 +1,13 @@
-{"event": "charge.success", "data": {"id": 4099300000, "status": "success", "reference": "T2489023ab", "amount": 500000, "currency": "NGN", "paid_at": "2026-11-15T12:00:02.000Z", "customer": {"customer_code": "CUS_xnxdt6s1zg1f4nx"}, "plan": {"plan_code": "PLN_standard"}}}
+{
+    "event": "charge.success",
+    "data": {
+        "id": 4099300000,
+        "status": "success",
+        "reference": "T2489023ab",
+        "amount": 500000,
+        "currency": "NGN",
+        "paid_at": "2026-11-15T12:00:02.000Z",
+        "customer": { "customer_code": "CUS_xnxdt6s1zg1f4nx" },
+        "plan": { "plan_code": "PLN_standard" }
+    }
+}

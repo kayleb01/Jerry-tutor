@@ -1,1 +1,14 @@
-{"event": "charge.completed", "data": {"id": 288300556, "tx_ref": "rave-sub-a8c1e3", "amount": 5000, "currency": "NGN", "processor_response": "Insufficient funds", "status": "failed", "created_at": "2026-11-15T12:00:02.000Z", "card": {"last_4digits": "0907", "type": "MASTERCARD"}, "customer": {"id": 215604089, "email": "ngozi@example.com"}}}
+{
+    "event": "charge.completed",
+    "data": {
+        "id": 288300556,
+        "tx_ref": "rave-sub-a8c1e3",
+        "amount": 5000,
+        "currency": "NGN",
+        "processor_response": "Insufficient funds",
+        "status": "failed",
+        "created_at": "2026-11-15T12:00:02.000Z",
+        "card": { "last_4digits": "0907", "type": "MASTERCARD" },
+        "customer": { "id": 215604089, "email": "ngozi@example.com" }
+    }
+}

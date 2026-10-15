@@ -1,1 +1,28 @@
-{"status": "success", "message": "Plan subscriptions fetched", "data": [{"id": 4147, "amount": 5000, "customer": {"id": 215604089, "customer_email": "ngozi@example.com"}, "plan": 61427, "status": "active", "created_at": "2026-10-15T12:00:06.000Z"}, {"id": 3999, "amount": 5000, "customer": {"id": 215604089, "customer_email": "ngozi@example.com"}, "plan": 61000, "status": "cancelled", "created_at": "2026-01-01T12:00:00.000Z"}]}
+{
+    "status": "success",
+    "message": "Plan subscriptions fetched",
+    "data": [
+        {
+            "id": 4147,
+            "amount": 5000,
+            "customer": {
+                "id": 215604089,
+                "customer_email": "ngozi@example.com"
+            },
+            "plan": 61427,
+            "status": "active",
+            "created_at": "2026-10-15T12:00:06.000Z"
+        },
+        {
+            "id": 3999,
+            "amount": 5000,
+            "customer": {
+                "id": 215604089,
+                "customer_email": "ngozi@example.com"
+            },
+            "plan": 61000,
+            "status": "cancelled",
+            "created_at": "2026-01-01T12:00:00.000Z"
+        }
+    ]
+}
