@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ClassEnrolmentController;
 use App\Http\Controllers\Admin\ClassGroupController;
 use App\Http\Controllers\Admin\LatenessReportController;
 use App\Http\Controllers\Admin\LessonReportController as AdminLessonReportController;
+use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\QuestionStatusController;
@@ -81,6 +82,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('classes/{classGroup}/students', [ClassEnrolmentController::class, 'store'])->name('classes.students.store');
     Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
 
+    Route::get('payments/export', [AdminPaymentController::class, 'export'])->name('payments.export');
+    Route::get('payments', [AdminPaymentController::class, 'index'])->name('payments.index');
     Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
     Route::post('subscriptions/{subscription}/remind', [SubscriptionActionsController::class, 'remind'])->name('subscriptions.remind');
     Route::post('subscriptions/{subscription}/pause', [SubscriptionActionsController::class, 'pause'])->name('subscriptions.pause');
