@@ -10,7 +10,6 @@ use App\Payments\Exceptions\CheckoutUnavailable;
 use App\Payments\Exceptions\GatewayException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,9 +25,12 @@ class BillingCheckoutController extends Controller
             'students' => ['present', 'array', 'max:20'],
             'students.*' => ['integer', 'distinct'],
             // Most students have no email on their account; the gateway needs one for receipts.
-            'email' => [Rule::requiredIf($request->user()->email === null), 'nullable', 'string', 'email', 'max:255'],
+            'email' => $request->user()->email === null
+                ? ['required', 'string', 'email', 'max:255']
+                : ['prohibited'],
         ], [
             'email.required' => 'Enter an email address for your receipts.',
+            'email.prohibited' => 'Receipts go to the email on your account.',
             'email.*' => 'Enter a real email address, like name@example.com.',
         ]);
 

@@ -29,6 +29,8 @@ type Child = {
     yearGroup: string | null;
     state: 'covered' | 'pending' | 'none';
     note: string;
+    /** Someone else (a parent, or the student themselves) is part-way through paying. */
+    pendingOther: boolean;
 };
 
 type SubscriptionRow = {
@@ -115,7 +117,9 @@ export default function Billing({
     payments,
     cancelReasons,
 }: BillingProps) {
-    const uncovered = children.filter((child) => child.state !== 'covered');
+    const uncovered = children.filter(
+        (child) => child.state !== 'covered' && !child.pendingOther,
+    );
 
     return (
         <AppLayout title="Billing" subtitle="Quiz access">
@@ -440,13 +444,15 @@ function SubscribeCard({
                                             !checked &&
                                             limit > 1 &&
                                             chosen.length >= limit;
+                                        const blocked =
+                                            covered || child.pendingOther;
 
                                         return (
                                             <label
                                                 key={child.id}
                                                 className={cn(
                                                     'flex items-center gap-3 rounded-md border px-3.5 py-2.5 text-sm',
-                                                    covered || full
+                                                    blocked || full
                                                         ? 'cursor-not-allowed opacity-60'
                                                         : 'cursor-pointer hover:bg-surface-muted',
                                                 )}
@@ -460,7 +466,7 @@ function SubscribeCard({
                                                     name="students[]"
                                                     value={child.id}
                                                     checked={checked}
-                                                    disabled={covered || full}
+                                                    disabled={blocked || full}
                                                     onChange={() =>
                                                         toggle(child.id)
                                                     }
@@ -474,12 +480,18 @@ function SubscribeCard({
                                                         already has access
                                                     </span>
                                                 )}
-                                                {child.state === 'pending' && (
+                                                {child.pendingOther && (
                                                     <span className="text-[0.8125rem] text-muted-foreground">
-                                                        replaces the payment you
-                                                        didn’t finish
+                                                        {child.note}
                                                     </span>
                                                 )}
+                                                {child.state === 'pending' &&
+                                                    !child.pendingOther && (
+                                                        <span className="text-[0.8125rem] text-muted-foreground">
+                                                            replaces the payment
+                                                            you didn’t finish
+                                                        </span>
+                                                    )}
                                             </label>
                                         );
                                     })}
@@ -514,8 +526,9 @@ function SubscribeCard({
                                     className="text-[0.8125rem] text-muted-foreground"
                                 >
                                     Your account doesn’t have an email address.
-                                    The payment provider sends receipts here; a
-                                    parent’s email is fine.
+                                    The payment provider sends receipts here.
+                                    Use an email that doesn’t already pay for
+                                    someone else’s subscription.
                                 </p>
                                 <FieldError
                                     id="billing-email-error"

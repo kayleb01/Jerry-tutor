@@ -24,6 +24,9 @@ use Illuminate\Validation\ValidationException;
  */
 class StartCheckout
 {
+    /** How long someone else's unfinished checkout for a child holds off a new one. */
+    public const OTHER_CHECKOUT_MINUTES = 30;
+
     public function __construct(private PaymentGatewayManager $gateways) {}
 
     /**
@@ -42,13 +45,17 @@ class StartCheckout
             throw new CheckoutUnavailable('Payments are unavailable right now. Please try again later.');
         }
 
-        $this->ensureCanCover($payer, $plan, $students);
+        // The gateway knows the payer by this address, so it is fixed on the subscription now.
+        $email = Str::lower(trim((string) ($billingEmail ?? $payer->email)));
 
-        [$subscription, $payment] = DB::transaction(function () use ($payer, $plan, $students, $gateway, $billingEmail): array {
+        $this->ensureCanCover($payer, $plan, $students, $email, emailField: $payer->email === null ? 'email' : 'students');
+
+        [$subscription, $payment] = DB::transaction(function () use ($payer, $plan, $students, $gateway, $email): array {
             $studentIds = $students->pluck('id')->all();
 
-            // An earlier checkout for any of these children that was never paid gives way to this one.
+            // This payer's earlier checkout for any of these children that was never paid gives way to this one.
             $superseded = Subscription::query()
+                ->where('payer_id', $payer->id)
                 ->where('status', SubscriptionStatus::Pending)
                 ->whereHas('students', fn ($query) => $query->whereIn('users.id', $studentIds))
                 ->pluck('id');
@@ -60,7 +67,7 @@ class StartCheckout
                 'payer_id' => $payer->id,
                 'plan_id' => $plan->id,
                 'gateway' => $gateway,
-                'billing_email' => $billingEmail === null ? null : Str::lower(trim($billingEmail)),
+                'billing_email' => $email,
                 'status' => SubscriptionStatus::Pending,
             ]);
             $subscription->students()->attach($studentIds);
@@ -97,9 +104,9 @@ class StartCheckout
      *
      * @throws ValidationException
      */
-    private function ensureCanCover(User $payer, Plan $plan, Collection $students): void
+    private function ensureCanCover(User $payer, Plan $plan, Collection $students, string $email, string $emailField): void
     {
-        $fail = fn (string $message) => throw ValidationException::withMessages(['students' => $message]);
+        $fail = fn (string $message, string $field = 'students') => throw ValidationException::withMessages([$field => $message]);
 
         if ($students->isEmpty()) {
             $fail('Choose at least one child.');
@@ -114,6 +121,10 @@ class StartCheckout
         if ($payer->hasRole(Role::Student)) {
             if ($students->contains(fn (User $student): bool => ! $student->is($payer))) {
                 $fail('You can only subscribe for yourself.');
+            }
+
+            if ($plan->max_students !== 1) {
+                $fail("The {$plan->name} is for parents. Choose a plan for one student.");
             }
         } else {
             $ownChildren = $payer->children()->pluck('users.id');
@@ -139,6 +150,38 @@ class StartCheckout
 
         if ($covered) {
             $fail("{$covered->name} already has a subscription.");
+        }
+
+        // Someone else is part-way through paying for one of these children: don't cancel their checkout.
+        $othersCheckout = Subscription::query()
+            ->with('payer')
+            ->where('payer_id', '!=', $payer->id)
+            ->where('status', SubscriptionStatus::Pending)
+            ->where('created_at', '>', now()->subMinutes(self::OTHER_CHECKOUT_MINUTES))
+            ->whereHas('students', fn ($query) => $query->whereKey($students->pluck('id')))
+            ->latest('id')
+            ->first();
+
+        if ($othersCheckout) {
+            $child = $othersCheckout->students()->whereKey($students->pluck('id'))->orderBy('name')->first();
+            $who = $child?->is($payer) ? 'you' : Str::before((string) $child?->name, ' ');
+            $fail(Str::before($othersCheckout->payer->name, ' ')." is paying for {$who} right now. If that payment doesn’t go through, try again in ".self::OTHER_CHECKOUT_MINUTES.' minutes.');
+        }
+
+        // Gateways know customers by email, so two payers sharing one would get their subscriptions mixed up.
+        $emailTaken = Subscription::query()
+            ->where('payer_id', '!=', $payer->id)
+            ->where('billing_email', $email)
+            ->where(fn ($query) => $query
+                ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::PastDue])
+                ->orWhere(fn ($query) => $query->where('status', SubscriptionStatus::Cancelled)->where('current_period_ends_at', '>', now()))
+                ->orWhere(fn ($query) => $query->where('status', SubscriptionStatus::Pending)->where('created_at', '>', now()->subDay())))
+            ->exists();
+
+        if ($emailTaken) {
+            $fail($emailField === 'email'
+                ? 'This email already pays for a subscription on another account. Use a different email for your receipts.'
+                : 'Your email already pays for a subscription on another account, so the payment provider can’t tell them apart. Please contact the academy.', $emailField);
         }
     }
 }

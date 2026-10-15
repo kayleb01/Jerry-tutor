@@ -89,19 +89,23 @@ class BillingController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string, yearGroup: string|null, state: string, note: string}
+     * @return array{id: int, name: string, yearGroup: string|null, state: string, note: string, pendingOther: bool}
      */
     private function child(User $child, User $viewer, CarbonImmutable $now): array
     {
         $covering = $child->coveringSubscriptions()->grantingAccess($now)->with(['plan', 'payer'])->latest('current_period_ends_at')->first();
-        $pending = $covering === null && $child->coveringSubscriptions()
+        $pending = $covering === null ? $child->coveringSubscriptions()
+            ->with('payer')
             ->where('status', SubscriptionStatus::Pending)
             ->where('subscriptions.created_at', '>', $now->subDay())
-            ->exists();
+            ->latest('subscriptions.id')
+            ->first() : null;
+        $pendingOther = $pending !== null && $pending->payer_id !== $viewer->id;
 
         [$state, $note] = match (true) {
             $covering !== null => ['covered', $covering->plan->name.' · '.$this->shortStatus($covering).$this->paidBy($covering, $viewer)],
-            $pending => ['pending', 'Waiting for the payment to be confirmed'],
+            $pendingOther => ['pending', Str::before($pending->payer->name, ' ').' started paying'.($child->is($viewer) ? ' for you' : '')],
+            $pending !== null => ['pending', 'Waiting for the payment to be confirmed'],
             default => ['none', 'No quiz access yet'],
         };
 
@@ -111,6 +115,7 @@ class BillingController extends Controller
             'yearGroup' => $child->studentProfile?->year_group->label(),
             'state' => $state,
             'note' => $note,
+            'pendingOther' => $pendingOther,
         ];
     }
 

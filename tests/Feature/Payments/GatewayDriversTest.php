@@ -193,6 +193,17 @@ it('ignores Flutterwave events other than charges', function () {
     expect($event)->toBeNull();
 });
 
+it('never links a Flutterwave subscription that already belongs to another of ours', function () {
+    Http::fake(['api.flutterwave.com/v3/subscriptions*' => Http::response(paymentFixture('flutterwave', 'subscriptions'))]);
+    Subscription::factory()->active()->create(['payer_id' => $this->payer->id, 'plan_id' => $this->plan->id, 'gateway' => PaymentGatewayName::Flutterwave, 'gateway_subscription_code' => '4147', 'billing_email' => 'ngozi@example.com']);
+    $newer = Subscription::factory()->active()->create(['payer_id' => User::factory()->student()->create()->id, 'plan_id' => $this->plan->id, 'gateway' => PaymentGatewayName::Flutterwave, 'billing_email' => 'ngozi@example.com']);
+
+    /** @var FlutterwaveGateway $driver */
+    $driver = gatewayDriver('flutterwave');
+
+    expect($driver->subscriptionIdFor($newer))->toBeNull();
+});
+
 it('finds the Flutterwave subscription created by a first payment', function () {
     Http::fake(['api.flutterwave.com/v3/subscriptions*' => Http::response(paymentFixture('flutterwave', 'subscriptions'))]);
 

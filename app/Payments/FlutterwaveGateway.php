@@ -118,7 +118,7 @@ class FlutterwaveGateway implements PaymentGateway
     public function cancel(Subscription $subscription): void
     {
         if (blank($subscription->gateway_subscription_code)) {
-            $id = $this->findSubscriptionId($subscription->billingEmail(), (string) $subscription->plan->flutterwave_plan_id)
+            $id = $this->subscriptionIdFor($subscription)
                 ?? throw new GatewayException("Flutterwave hasn't confirmed this subscription yet. Please try again in a few minutes.");
             $subscription->update(['gateway_subscription_code' => $id]);
         }
@@ -189,14 +189,39 @@ class FlutterwaveGateway implements PaymentGateway
     }
 
     /**
-     * Flutterwave creates the subscription itself after the first plan payment; this finds its id.
+     * The Flutterwave id for one of our subscriptions, never one already linked to another of ours.
      */
-    public function findSubscriptionId(string $email, string $planId): ?string
+    public function subscriptionIdFor(Subscription $subscription): ?string
+    {
+        $email = $subscription->billingEmail();
+
+        if (blank($email)) {
+            return null;
+        }
+
+        $linked = Subscription::query()
+            ->where('gateway', PaymentGatewayName::Flutterwave)
+            ->whereKeyNot($subscription->id)
+            ->whereNotNull('gateway_subscription_code')
+            ->pluck('gateway_subscription_code')
+            ->map(fn ($code): string => (string) $code)
+            ->all();
+
+        return $this->findSubscriptionId($email, (string) $subscription->plan->flutterwave_plan_id, $linked);
+    }
+
+    /**
+     * Flutterwave creates the subscription itself after the first plan payment; this finds its id.
+     *
+     * @param  array<int, string>  $exclude  ids already linked to other subscriptions
+     */
+    public function findSubscriptionId(string $email, string $planId, array $exclude = []): ?string
     {
         $subscriptions = $this->send(fn (PendingRequest $http) => $http->get('/subscriptions', ['email' => $email]))->json('data') ?? [];
 
         $match = collect($subscriptions)
             ->filter(fn (array $subscription): bool => (string) ($subscription['plan'] ?? '') === $planId && ($subscription['status'] ?? null) === 'active')
+            ->reject(fn (array $subscription): bool => in_array((string) ($subscription['id'] ?? ''), $exclude, true))
             ->sortByDesc('created_at')
             ->first();
 
