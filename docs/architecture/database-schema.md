@@ -302,21 +302,27 @@ Both gateways are supported through one `PaymentGateway` contract. The active on
 
 **API versions are pinned:** the Paystack REST API (`https://api.paystack.co`, which has a single stable version) and **Flutterwave v3** (`https://api.flutterwave.com/v3`), the stable, generally available version. Newer Flutterwave API versions are out of scope until they're stable and we choose to migrate.
 
-Neither gateway does per-seat quantities on a recurring plan. So the model is **one subscription per covered student**: a guardian with two children has two subscriptions, both paid by the same payer. No Cashier, and no gateway SDKs: the drivers call the REST APIs with Laravel's `Http` client.
+Neither gateway does per-seat quantities on a recurring plan, so seats are expressed as **plans**:
+
+- **Standard** covers one child.
+- **Family** covers up to `max_students` children (default 4, editable in Billing settings) at a flat monthly price.
+
+A subscription covers its children through the `subscription_student` pivot. A child can be on at most one live (Pending, Active or PastDue) subscription. This was the user's decision on 2026-10-15; it replaces the earlier one-subscription-per-child model. No Cashier, and no gateway SDKs: the drivers call the REST APIs with Laravel's `Http` client.
 
 ### `plans`
 
-| Column              | Type                | Notes                                                  |
-| ------------------- | ------------------- | ------------------------------------------------------ |
-| id                  | PK                  |                                                        |
-| name, slug          | string              | "Quiz Access – Monthly"                                |
-| amount              | unsignedInteger     | **kobo**; must equal the dashboard plan's amount       |
-| currency            | string(3)           | always `NGN`                                           |
-| interval            | string              | `monthly`                                              |
-| paystack_plan_code  | string null, unique | `PLN_xxx`, copied from the Paystack dashboard          |
-| flutterwave_plan_id | string null, unique | payment plan id, copied from the Flutterwave dashboard |
-| is_active           | boolean             |                                                        |
-| timestamps          |                     |                                                        |
+| Column              | Type                | Notes                                                      |
+| ------------------- | ------------------- | ---------------------------------------------------------- |
+| id                  | PK                  |                                                            |
+| name, slug          | string              | "Quiz Access – Monthly"                                    |
+| amount              | unsignedInteger     | **kobo**; must equal the dashboard plan's amount           |
+| currency            | string(3)           | always `NGN`                                               |
+| interval            | string              | `monthly`                                                  |
+| max_students        | tinyint default 1   | children one subscription can cover (Standard 1, Family N) |
+| paystack_plan_code  | string null, unique | `PLN_xxx`, copied from the Paystack dashboard              |
+| flutterwave_plan_id | string null, unique | payment plan id, copied from the Flutterwave dashboard     |
+| is_active           | boolean             |                                                            |
+| timestamps          |                     |                                                            |
 
 **Plans are created in the gateway dashboards, never by our code.** For each gateway, the admin creates a monthly NGN plan in its dashboard (Paystack → _Plans_; Flutterwave → _Payment plans_), then pastes the code or id into **Admin → Billing settings**.
 
@@ -331,18 +337,24 @@ Neither gateway does per-seat quantities on a recurring plan. So the model is **
 | ------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
 | id                        | PK                     |                                                                                                         |
 | payer_id                  | FK users               | guardian, or the student paying for themselves                                                          |
-| student_id                | FK users, indexed      | who gets access                                                                                         |
 | plan_id                   | FK plans               |                                                                                                         |
 | gateway                   | string                 | `PaymentGatewayName` enum: `Paystack`, `Flutterwave`                                                    |
 | gateway_customer_code     | string null            | Paystack `CUS_xxx` / Flutterwave customer id                                                            |
 | gateway_subscription_code | string null, indexed   | Paystack `SUB_xxx` / Flutterwave subscription id                                                        |
 | gateway_email_token       | string null, encrypted | Paystack only: required to disable a subscription                                                       |
+| gateway_authorization     | text null, encrypted   | reusable card (Paystack `authorization_code`, Flutterwave card `token`) for retries                     |
+| card_brand, card_last4    | string null            | for the admin payments table                                                                            |
 | status                    | string, indexed        | `SubscriptionStatus`: `Pending`, `Active`, `PastDue`, `Cancelled`, `Expired`                            |
 | current_period_ends_at    | datetime null          | access runs until this date (+ grace)                                                                   |
 | cancel_at_period_end      | boolean default false  | the user cancelled; keep access until the period ends                                                   |
 | cancelled_at              | datetime null          |                                                                                                         |
+| cancellation_reason       | string null            | what the payer gave when cancelling                                                                     |
 | timestamps                |                        |                                                                                                         |
 |                           |                        | index (student_id, status); at most one non-final subscription per student, enforced in `StartCheckout` |
+
+### `subscription_student`
+
+`subscription_id` FK cascade, `student_id` FK users (indexed), timestamps, unique on (subscription_id, student_id). These are the children a subscription gives quiz access to.
 
 ### `payments` (every charge, initial and renewal)
 
@@ -358,6 +370,8 @@ Neither gateway does per-seat quantities on a recurring plan. So the model is **
 | currency               | string(3)             |                                                                             |
 | status                 | string                | `PaymentStatus`: `Pending`, `Succeeded`, `Failed`, `Refunded`               |
 | paid_at                | datetime null         |                                                                             |
+| failure_reason         | string null           | the gateway's reason when a charge fails                                    |
+| card_brand, card_last4 | string null           |                                                                             |
 | gateway_response       | json null             | the verified payload, for support and disputes                              |
 | timestamps             |                       |                                                                             |
 
@@ -412,7 +426,7 @@ The Flutterwave column is the **v3** API throughout; don't mix in endpoints from
 The callback and the webhook can arrive in either order, or both at once. Every update is keyed on the unique `reference`, so applying it twice is harmless.
 
 **Access rule** (`User::hasQuizAccess()`, enforced by the `EnsureQuizAccess` middleware):
-`role = Admin|Tutor` **or** the student has a subscription with status `Active|PastDue` and `current_period_ends_at + config('payments.grace_days') > now()`. Access is only ever granted from server-verified payments.
+`role = Admin|Tutor` **or** the student is covered (via `subscription_student`) by a subscription that is `Active|PastDue` with `current_period_ends_at + config('payments.grace_days') > now()`, or `Cancelled` with `current_period_ends_at > now()`. Access is only ever granted from server-verified payments.
 
 ## 7. Config
 

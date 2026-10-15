@@ -16,3 +16,7 @@ Schedule::command('lessons:generate')
 Schedule::command('attendance:mark-no-shows')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+Schedule::command('subscriptions:expire')
+    ->hourly()
+    ->withoutOverlapping();
