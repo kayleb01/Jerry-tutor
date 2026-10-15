@@ -204,3 +204,33 @@ it('finds the Flutterwave subscription created by a first payment', function () 
 
     Http::assertSent(fn (ClientRequest $request) => str_contains($request->url(), 'email=ngozi%40example.com'));
 });
+
+it('looks up what it needs to cancel when the webhook has not filled it in yet', function () {
+    Http::fake([
+        'api.paystack.co/subscription/SUB_vsyqdmlzble3uii' => Http::response(['status' => true, 'data' => ['subscription_code' => 'SUB_vsyqdmlzble3uii', 'email_token' => 'fetched_token']]),
+        'api.flutterwave.com/v3/subscriptions?*' => Http::response(paymentFixture('flutterwave', 'subscriptions')),
+        '*' => Http::response(['status' => true, 'message' => 'ok']),
+    ]);
+    $paystack = Subscription::factory()->active()->create(['gateway' => PaymentGatewayName::Paystack, 'gateway_subscription_code' => 'SUB_vsyqdmlzble3uii', 'gateway_email_token' => null]);
+    $flutterwave = Subscription::factory()->active()->create([
+        'payer_id' => $this->payer->id,
+        'plan_id' => $this->plan->id,
+        'gateway' => PaymentGatewayName::Flutterwave,
+        'gateway_subscription_code' => null,
+    ]);
+
+    gatewayDriver('paystack')->cancel($paystack);
+    gatewayDriver('flutterwave')->cancel($flutterwave);
+
+    Http::assertSent(fn (ClientRequest $request) => str_ends_with($request->url(), '/subscription/disable') && $request['token'] === 'fetched_token');
+    Http::assertSent(fn (ClientRequest $request) => $request->method() === 'PUT' && str_ends_with($request->url(), '/subscriptions/4147/cancel'));
+    expect($flutterwave->fresh()->gateway_subscription_code)->toBe('4147')
+        ->and($paystack->fresh()->gateway_email_token)->toBe('fetched_token');
+});
+
+it('says when a subscription is not set up at the gateway yet', function () {
+    Http::fake();
+    $subscription = Subscription::factory()->active()->create(['gateway' => PaymentGatewayName::Paystack, 'gateway_subscription_code' => null]);
+
+    expect(fn () => gatewayDriver('paystack')->cancel($subscription))->toThrow(GatewayException::class, "Paystack hasn't confirmed this subscription yet. Please try again in a few minutes.");
+});

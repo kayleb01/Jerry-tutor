@@ -13,12 +13,14 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
 use App\Http\Controllers\BillingCallbackController;
 use App\Http\Controllers\BillingCheckoutController;
+use App\Http\Controllers\CancelSubscriptionController;
 use App\Http\Controllers\ChildAttendanceController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ChildPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuardianNoticeController;
 use App\Http\Controllers\LessonReportController;
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\RaisedIssueController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\TutorCheckInController;
@@ -45,9 +47,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/lessons/{lesson}/report', [LessonReportController::class, 'update'])->name('lessons.report.update');
 });
 
+Route::post('webhooks/{gateway}', PaymentWebhookController::class)
+    ->whereIn('gateway', ['paystack', 'flutterwave'])
+    ->middleware('throttle:120,1')
+    ->name('webhooks.payments');
+
 Route::middleware(['auth', 'verified', 'role:guardian,student'])->prefix('billing')->name('billing.')->group(function () {
     Route::post('checkout', [BillingCheckoutController::class, 'store'])->name('checkout');
     Route::get('callback/{gateway}', BillingCallbackController::class)->whereIn('gateway', ['paystack', 'flutterwave'])->name('callback');
+    Route::post('subscriptions/{subscription}/cancel', CancelSubscriptionController::class)->name('subscriptions.cancel');
 });
 
 Route::middleware(['auth', 'verified', 'role:guardian'])->group(function () {

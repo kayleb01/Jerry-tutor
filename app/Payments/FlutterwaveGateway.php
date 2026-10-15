@@ -95,6 +95,12 @@ class FlutterwaveGateway implements PaymentGateway
 
     public function cancel(Subscription $subscription): void
     {
+        if (blank($subscription->gateway_subscription_code)) {
+            $id = $this->findSubscriptionId($subscription->payer->email, (string) $subscription->plan->flutterwave_plan_id)
+                ?? throw new GatewayException("Flutterwave hasn't confirmed this subscription yet. Please try again in a few minutes.");
+            $subscription->update(['gateway_subscription_code' => $id]);
+        }
+
         $this->send(fn (PendingRequest $http) => $http->put('/subscriptions/'.rawurlencode((string) $subscription->gateway_subscription_code).'/cancel'));
     }
 

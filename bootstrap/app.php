@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        // Gateways post webhooks without a CSRF token; the signature check takes its place.
+        $middleware->validateCsrfTokens(except: ['webhooks/*']);
+
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
         ]);

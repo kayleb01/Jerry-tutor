@@ -93,8 +93,17 @@ class PaystackGateway implements PaymentGateway
 
     public function cancel(Subscription $subscription): void
     {
+        $code = $subscription->gateway_subscription_code
+            ?? throw new GatewayException("Paystack hasn't confirmed this subscription yet. Please try again in a few minutes.");
+
+        // The email token normally arrives with subscription.create; fetch it if that webhook hasn't landed.
+        if (blank($subscription->gateway_email_token)) {
+            $token = $this->send(fn (PendingRequest $http) => $http->get('/subscription/'.rawurlencode($code)))->json('data.email_token');
+            $subscription->update(['gateway_email_token' => $token ?? throw new GatewayException('Paystack did not return the subscription token.')]);
+        }
+
         $this->send(fn (PendingRequest $http) => $http->post('/subscription/disable', [
-            'code' => $subscription->gateway_subscription_code,
+            'code' => $code,
             'token' => $subscription->gateway_email_token,
         ]));
     }
