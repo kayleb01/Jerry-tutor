@@ -8,6 +8,7 @@ import { index as adminClassesIndex } from '@/routes/admin/classes';
 import { index as adminLatenessIndex } from '@/routes/admin/lateness';
 import { index as adminLessonReportsIndex } from '@/routes/admin/lesson-reports';
 import { index as adminQuestionsIndex } from '@/routes/admin/questions';
+import { index as adminSubscriptionsIndex } from '@/routes/admin/subscriptions';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as billingIndex } from '@/routes/billing';
 import { index as childrenIndex } from '@/routes/children';
@@ -18,7 +19,7 @@ type NavItem = {
     icon: IconName;
     href: () => { url: string; method: 'get' };
     /** A count from the shared `badges` prop, shown as a pill when above zero. */
-    badge?: 'classReports' | 'lateness';
+    badge?: 'classReports' | 'lateness' | 'subscriptions';
 };
 
 const navItems: Record<Role, NavItem[]> = {
@@ -42,6 +43,12 @@ const navItems: Record<Role, NavItem[]> = {
             label: 'Question bank',
             icon: 'question',
             href: adminQuestionsIndex,
+        },
+        {
+            label: 'Subscriptions',
+            icon: 'card',
+            href: adminSubscriptionsIndex,
+            badge: 'subscriptions',
         },
     ],
     tutor: [{ label: 'Today', icon: 'today', href: dashboard }],

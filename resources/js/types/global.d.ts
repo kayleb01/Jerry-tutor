@@ -13,7 +13,11 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
-            badges: { classReports?: number; lateness?: number };
+            badges: {
+                classReports?: number;
+                lateness?: number;
+                subscriptions?: number;
+            };
             billing?: { selfPay: boolean };
             [key: string]: unknown;
         };

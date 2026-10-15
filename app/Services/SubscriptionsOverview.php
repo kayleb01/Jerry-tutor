@@ -97,6 +97,7 @@ class SubscriptionsOverview
                     'problem' => $lastFailure
                         ? Str::lower($lastFailure->failure_reason ?? 'payment failed').' on '.$lastFailure->created_at->setTimezone($timezone)->format('j M').' · attempt '.$attempts
                         : 'renewal overdue since '.$subscription->current_period_ends_at?->setTimezone($timezone)->format('j M'),
+                    'attempts' => $attempts,
                     'remindedAt' => $subscription->payment_reminder_sent_at?->setTimezone($timezone)->format('j M'),
                     'canRetry' => filled($subscription->gateway_authorization),
                     'canRemind' => filled($subscription->payer->email)
