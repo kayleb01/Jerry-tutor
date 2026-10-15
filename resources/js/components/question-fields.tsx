@@ -61,7 +61,7 @@ export const emptyQuestion: QuestionFormValues = {
 
 const letters = 'ABCDEF';
 
-const hintClass = 'text-[13px] text-muted-foreground';
+const hintClass = 'text-[0.8125rem] text-muted-foreground';
 
 type QuestionFieldsProps = {
     initial: QuestionFormValues;
@@ -600,7 +600,7 @@ export default function QuestionFields({
                 className="flex flex-col gap-3 p-card lg:sticky lg:top-6"
                 aria-label="Student preview"
             >
-                <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
+                <p className="text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
                     Student preview
                 </p>
                 <p className="text-base font-semibold break-words sm:text-lg">

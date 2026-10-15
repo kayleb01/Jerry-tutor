@@ -53,7 +53,7 @@ export default function ImportQuestions({
                             <li>Fill in one row per question.</li>
                             <li>Upload the file here.</li>
                         </ol>
-                        <p className="mt-2 text-[13px] text-muted-foreground">
+                        <p className="mt-2 text-[0.8125rem] text-muted-foreground">
                             Every question is imported as a draft for review. If
                             any row has a problem, nothing is imported and
                             you’ll see which rows to fix. Up to {maxRows}{' '}
@@ -93,7 +93,7 @@ export default function ImportQuestions({
                                         key={column}
                                         className="border-b align-top last:border-0"
                                     >
-                                        <td className="py-2 pr-4 font-mono text-[13px] whitespace-nowrap">
+                                        <td className="py-2 pr-4 font-mono text-[0.8125rem] whitespace-nowrap">
                                             {column === 'option_a'
                                                 ? 'option_a … option_f'
                                                 : column}
@@ -142,7 +142,7 @@ export default function ImportQuestions({
                                     flash.importErrors.length > 0 && (
                                         <div
                                             role="alert"
-                                            className="rounded-md border border-danger/30 bg-danger/5 p-3 text-[13px]"
+                                            className="rounded-md border border-danger/30 bg-danger/5 p-3 text-[0.8125rem]"
                                         >
                                             <ul className="flex flex-col gap-1">
                                                 {flash.importErrors.map(

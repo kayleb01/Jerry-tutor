@@ -59,7 +59,7 @@ export default function AuthLayout({
                         ))}
                     </ul>
                 </div>
-                <p className="relative text-[13px] text-primary-80">
+                <p className="relative text-[0.8125rem] text-primary-80">
                     Need help signing in? Contact the academy office.
                 </p>
             </aside>

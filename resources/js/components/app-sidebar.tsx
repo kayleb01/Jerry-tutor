@@ -97,7 +97,7 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
             >
                 <AppLogoImage
                     crest={collapsed}
-                    className={collapsed ? 'w-9' : 'w-40'}
+                    className={collapsed ? 'w-9' : 'w-28'}
                 />
             </Link>
             {!collapsed && (
@@ -132,9 +132,9 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
                             {count > 0 && (
                                 <span
                                     className={cn(
-                                        'ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary-80 px-1.5 text-[11px] font-bold text-secondary-10 tabular-nums',
+                                        'ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary-80 px-1.5 text-[0.6875rem] font-bold text-secondary-10 tabular-nums',
                                         collapsed &&
-                                            'absolute top-1 right-1 ml-0 h-4 min-w-4 px-1 text-[10px]',
+                                            'absolute top-1 right-1 ml-0 h-4 min-w-4 px-1 text-[0.625rem]',
                                     )}
                                 >
                                     {count > 99 ? '99+' : count}
@@ -155,7 +155,7 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
                 >
                     <span
                         aria-hidden="true"
-                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-90 text-[13px] font-semibold text-primary-10 dark:bg-primary-20 dark:text-primary-90"
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-90 text-[0.8125rem] font-semibold text-primary-10 dark:bg-primary-20 dark:text-primary-90"
                     >
                         {initials(auth.user.name)}
                     </span>
@@ -163,7 +163,7 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
                         <p className="truncate text-sm font-semibold">
                             {auth.user.name}
                         </p>
-                        <p className="truncate text-[13px] text-muted-foreground">
+                        <p className="truncate text-[0.8125rem] text-muted-foreground">
                             {roleLabels[auth.user.role]}
                         </p>
                     </div>

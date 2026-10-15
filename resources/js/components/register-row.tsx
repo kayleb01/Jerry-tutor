@@ -70,7 +70,7 @@ export default function RegisterRow({
                     <label
                         key={option.value}
                         className={cn(
-                            'inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-neutral-80 bg-surface px-3 text-[13px] font-semibold text-muted-foreground has-focus-visible:outline-2 has-focus-visible:outline-ring dark:border-neutral-30',
+                            'inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-neutral-80 bg-surface px-3 text-[0.8125rem] font-semibold text-muted-foreground has-focus-visible:outline-2 has-focus-visible:outline-ring dark:border-neutral-30',
                             checkedTone[String(option.value)],
                         )}
                     >

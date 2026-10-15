@@ -163,7 +163,7 @@ export default function DashboardFilters({
                     message={filters.error ?? undefined}
                 />
                 <p
-                    className="text-xs text-muted-foreground sm:text-[13px]"
+                    className="text-xs text-muted-foreground sm:text-[0.8125rem]"
                     aria-live="polite"
                 >
                     Showing{' '}

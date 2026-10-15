@@ -161,7 +161,7 @@ export default function AppLayout({
             )}
 
             <div className="min-w-0 flex-1">
-                <header className="mx-auto flex max-w-7xl flex-wrap items-end justify-between gap-4 px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-7">
+                <header className="mx-auto flex max-w-[96rem] flex-wrap items-end justify-between gap-4 px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-7">
                     <div className="flex min-w-0 items-start gap-3">
                         <button
                             type="button"
@@ -196,7 +196,7 @@ export default function AppLayout({
                         </div>
                     )}
                 </header>
-                <main className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-4 pb-10 sm:gap-5 sm:px-6 sm:pt-6 sm:pb-12 lg:gap-6 lg:px-8">
+                <main className="mx-auto flex max-w-[96rem] flex-col gap-4 px-4 pt-4 pb-10 sm:gap-5 sm:px-6 sm:pt-6 sm:pb-12 lg:gap-6 lg:px-8">
                     <Toast />
                     {children}
                 </main>

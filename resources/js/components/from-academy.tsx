@@ -57,7 +57,7 @@ export default function FromAcademy({
                                 <p className="font-semibold">{note.heading}</p>
                                 <p className="mt-1 break-words">{note.note}</p>
                                 {note.from && (
-                                    <p className="mt-1 text-[13px] text-muted-foreground">
+                                    <p className="mt-1 text-[0.8125rem] text-muted-foreground">
                                         From {note.from}
                                     </p>
                                 )}

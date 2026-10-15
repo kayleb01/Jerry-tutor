@@ -45,7 +45,7 @@ export type LatenessDetail = {
 const REPEAT_THRESHOLD = 3;
 
 const smallCaps =
-    'text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs';
+    'text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs';
 
 type LatenessReportDetailProps = {
     report: LatenessDetail;
@@ -82,7 +82,7 @@ export default function LatenessReportDetail({
                     <h2 className="truncate text-lg font-bold sm:text-xl">
                         {report.name}
                     </h2>
-                    <p className="text-[13px] text-muted-foreground sm:text-sm">
+                    <p className="text-[0.8125rem] text-muted-foreground sm:text-sm">
                         {[report.roleLabel, report.yearGroup, report.className]
                             .filter(Boolean)
                             .join(' · ')}
@@ -143,7 +143,7 @@ export default function LatenessReportDetail({
                             </li>
                         ))}
                         {earlier > 0 && (
-                            <li className="text-[13px] text-muted-foreground">
+                            <li className="text-[0.8125rem] text-muted-foreground">
                                 and {earlier} more
                             </li>
                         )}
@@ -199,7 +199,7 @@ export default function LatenessReportDetail({
                             />
                         </div>
                         {report.followedUp && (
-                            <p className="text-[13px] text-muted-foreground">
+                            <p className="text-[0.8125rem] text-muted-foreground">
                                 Followed up by{' '}
                                 {report.followedUp.by ?? 'an admin'},{' '}
                                 {report.followedUp.at}
@@ -207,7 +207,6 @@ export default function LatenessReportDetail({
                         )}
                         <Button
                             type="submit"
-                            size="lg"
                             className="w-full"
                             disabled={processing}
                         >
@@ -272,7 +271,7 @@ export default function LatenessReportDetail({
                                         />
                                         <p
                                             id="parent_note-hint"
-                                            className="text-[13px] text-muted-foreground"
+                                            className="text-[0.8125rem] text-muted-foreground"
                                         >
                                             Shown on their dashboard until they
                                             mark it as read. Sending it also
@@ -303,7 +302,6 @@ export default function LatenessReportDetail({
                     ) : (
                         <Button
                             variant="outline"
-                            size="lg"
                             className="w-full"
                             onClick={() => setNotifying(true)}
                         >
@@ -311,7 +309,7 @@ export default function LatenessReportDetail({
                         </Button>
                     )
                 ) : (
-                    <p className="text-[13px] text-muted-foreground">
+                    <p className="text-[0.8125rem] text-muted-foreground">
                         No parent or guardian is linked to {report.name} yet, so
                         they can’t be notified here.
                     </p>
@@ -329,7 +327,7 @@ export default function LatenessReportDetail({
                                 className="rounded-md bg-surface-muted px-3.5 py-3 text-sm"
                             >
                                 <p className="break-words">{notice.note}</p>
-                                <p className="mt-1 text-[13px] text-muted-foreground">
+                                <p className="mt-1 text-[0.8125rem] text-muted-foreground">
                                     {notice.sentBy ?? 'An admin'},{' '}
                                     {notice.sentAt} ·{' '}
                                     {notice.acknowledgedAt

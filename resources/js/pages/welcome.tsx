@@ -223,7 +223,7 @@ function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
                 <span className="size-2.5 rounded-full bg-neutral-80" />
                 <span className="size-2.5 rounded-full bg-neutral-80" />
                 <span className="size-2.5 rounded-full bg-neutral-80" />
-                <span className="ml-3 truncate text-[13px] text-muted-foreground">
+                <span className="ml-3 truncate text-[0.8125rem] text-muted-foreground">
                     {url}
                 </span>
             </div>
@@ -235,7 +235,7 @@ function BrowserFrame({ url, children }: { url: string; children: ReactNode }) {
 function MiniStat({ label, value }: { label: string; value: string }) {
     return (
         <div className="rounded-md border bg-surface p-3">
-            <p className="text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+            <p className="text-[0.625rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
                 {label}
             </p>
             <p className="text-xl font-bold">{value}</p>
@@ -245,7 +245,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 
 function MiniBar({ label, value }: { label: string; value: number }) {
     return (
-        <div className="grid grid-cols-[88px_1fr_40px] items-center gap-3 text-[13px]">
+        <div className="grid grid-cols-[88px_1fr_40px] items-center gap-3 text-[0.8125rem]">
             <span>{label}</span>
             <span className="h-1.5 overflow-hidden rounded-full bg-surface-muted">
                 <span
@@ -297,7 +297,7 @@ function Showcase() {
                                     <MiniStat label="Late today" value="6" />
                                     <MiniStat label="Reports due" value="3" />
                                 </div>
-                                <div className="flex flex-col gap-2.5 rounded-md border bg-surface p-4 text-[13px]">
+                                <div className="flex flex-col gap-2.5 rounded-md border bg-surface p-4 text-[0.8125rem]">
                                     <div className="flex items-center justify-between gap-2">
                                         <span>Tutor · Year 8 Algebra</span>
                                         <AttendanceStatusBadge
@@ -370,7 +370,7 @@ function Showcase() {
                                     <MiniBar label="Statistics" value={71} />
                                     <MiniBar label="Geometry" value={58} />
                                 </div>
-                                <p className="rounded-md bg-primary-95 p-3.5 text-[13px] text-primary-10 dark:bg-primary-20 dark:text-primary-95">
+                                <p className="rounded-md bg-primary-95 p-3.5 text-[0.8125rem] text-primary-10 dark:bg-primary-20 dark:text-primary-95">
                                     Tutor’s note: confident with equivalent
                                     fractions — next, practise converting to
                                     decimals.
@@ -407,7 +407,7 @@ function StageMatrix() {
                             <h3 className="text-xl font-bold">{card.title}</h3>
                             <DifficultyBadge difficulty={card.level} />
                         </div>
-                        <p className="text-[13px] text-muted-foreground">
+                        <p className="text-[0.8125rem] text-muted-foreground">
                             {card.sub}
                         </p>
                         <p className="text-sm leading-relaxed">{card.body}</p>
@@ -506,7 +506,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                 <main>
                     <section className="mx-auto grid max-w-[1240px] items-center gap-8 px-4 pt-10 pb-10 sm:px-6 sm:pt-14 sm:pb-14 lg:grid-cols-2 lg:gap-12 lg:pt-20">
                         <div className="flex flex-col gap-6">
-                            <span className="inline-flex items-center gap-2 self-start rounded-full bg-secondary-95 px-3 py-1.5 text-[13px] font-semibold text-secondary-30 dark:bg-secondary-20 dark:text-secondary-90">
+                            <span className="inline-flex items-center gap-2 self-start rounded-full bg-secondary-95 px-3 py-1.5 text-[0.8125rem] font-semibold text-secondary-30 dark:bg-secondary-20 dark:text-secondary-90">
                                 <Icon name="school" className="size-4" />
                                 KS2 · KS3 · 11+ · SATs · GCSE
                             </span>
@@ -529,7 +529,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                     See the platform
                                 </a>
                             </div>
-                            <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
+                            <p className="flex items-center gap-2 text-[0.8125rem] text-muted-foreground">
                                 <Icon
                                     name="shield"
                                     className="size-4.5 text-primary-40 dark:text-primary-80"
@@ -605,7 +605,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                                     className="flex items-center justify-between gap-3 border-b py-2.5 last:border-0"
                                                 >
                                                     <span className="flex items-center gap-3">
-                                                        <span className="flex size-9 items-center justify-center rounded-full bg-primary-90 text-[13px] font-semibold text-primary-10 dark:bg-primary-20 dark:text-primary-90">
+                                                        <span className="flex size-9 items-center justify-center rounded-full bg-primary-90 text-[0.8125rem] font-semibold text-primary-10 dark:bg-primary-20 dark:text-primary-90">
                                                             {initials}
                                                         </span>
                                                         <span className="font-medium">
@@ -630,7 +630,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                     <p className="text-sm font-semibold">
                                         Lateness report created
                                     </p>
-                                    <p className="text-[13px] text-muted-foreground">
+                                    <p className="text-[0.8125rem] text-muted-foreground">
                                         Student B · arrived 16:07
                                     </p>
                                 </div>
@@ -651,7 +651,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                     <p className="text-stat font-extrabold text-brand dark:text-primary-90">
                                         {fact.value}
                                     </p>
-                                    <p className="mt-1 text-[13px] text-muted-foreground">
+                                    <p className="mt-1 text-[0.8125rem] text-muted-foreground">
                                         {fact.label}
                                     </p>
                                 </div>
@@ -780,7 +780,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                         students need more practice converting
                                         to decimals.”
                                     </p>
-                                    <p className="text-[13px] font-semibold text-primary-30 dark:text-primary-80">
+                                    <p className="text-[0.8125rem] font-semibold text-primary-30 dark:text-primary-80">
                                         Recommends: a decimals quiz
                                     </p>
                                 </article>
@@ -792,7 +792,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                         “The worked examples helped. I’d like
                                         more time on word problems.”
                                     </p>
-                                    <p className="text-[13px] font-semibold text-secondary-30 dark:text-secondary-80">
+                                    <p className="text-[0.8125rem] font-semibold text-secondary-30 dark:text-secondary-80">
                                         Recommends: more word problems
                                     </p>
                                 </article>
@@ -815,7 +815,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                                 <p className="text-xl font-bold">
                                     Monthly membership
                                 </p>
-                                <p className="mt-1 text-[13px] text-muted-foreground">
+                                <p className="mt-1 text-[0.8125rem] text-muted-foreground">
                                     Per child
                                 </p>
                             </div>
@@ -902,7 +902,7 @@ export default function Welcome({ canRegister }: { canRegister: boolean }) {
                 <footer className="border-t bg-surface">
                     <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-4 px-4 py-8 sm:gap-6 sm:px-6 sm:py-10">
                         <AppLogoImage className="w-28" />
-                        <p className="text-[13px] text-muted-foreground">
+                        <p className="text-[0.8125rem] text-muted-foreground">
                             © {new Date().getFullYear()} Jerry Great Academy
                         </p>
                     </div>

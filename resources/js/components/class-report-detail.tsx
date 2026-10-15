@@ -51,7 +51,7 @@ export type ClassReportLesson = {
 const STUDENTS_SHOWN = 3;
 
 const smallCaps =
-    'text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs';
+    'text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs';
 
 type ClassReportDetailProps = {
     lesson: ClassReportLesson;
@@ -79,13 +79,13 @@ export default function ClassReportDetail({
                     <h2 className="text-section font-bold">
                         {lesson.className}
                     </h2>
-                    <p className="text-[13px] text-muted-foreground sm:text-sm">
+                    <p className="text-[0.8125rem] text-muted-foreground sm:text-sm">
                         {[lesson.when, lesson.tutor, lesson.attendance]
                             .filter(Boolean)
                             .join(' · ')}
                     </p>
                     {lesson.reviewed && (
-                        <p className="mt-1 flex items-center gap-1.5 text-[13px] text-muted-foreground">
+                        <p className="mt-1 flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
                             <Icon name="check" className="size-4" />
                             Reviewed by {lesson.reviewed.by ?? 'an admin'},{' '}
                             {lesson.reviewed.at}
@@ -135,7 +135,7 @@ export default function ClassReportDetail({
                     <h3 className="text-base font-semibold sm:text-lg">
                         Student reports
                     </h3>
-                    <span className="text-[13px] text-muted-foreground">
+                    <span className="text-[0.8125rem] text-muted-foreground">
                         Shown to admin only
                     </span>
                 </div>
@@ -145,7 +145,7 @@ export default function ClassReportDetail({
                     </p>
                 ) : (
                     <>
-                        <p className="pt-3 text-[13px] text-muted-foreground sm:text-sm">
+                        <p className="pt-3 text-[0.8125rem] text-muted-foreground sm:text-sm">
                             {summary.count}{' '}
                             {summary.count === 1 ? 'report' : 'reports'}
                             {summary.averageRating !== null &&
@@ -200,7 +200,7 @@ export default function ClassReportDetail({
                                 className="rounded-md border-l-4 border-danger/60 bg-surface-muted px-3.5 py-3 text-sm"
                             >
                                 <p>{issue.note}</p>
-                                <p className="mt-1 text-[13px] text-muted-foreground">
+                                <p className="mt-1 text-[0.8125rem] text-muted-foreground">
                                     {issue.raisedBy ?? 'An admin'},{' '}
                                     {issue.raisedAt} ·{' '}
                                     {issue.acknowledgedAt
@@ -247,7 +247,7 @@ export default function ClassReportDetail({
                                     />
                                     <p
                                         id="note-hint"
-                                        className="text-[13px] text-muted-foreground"
+                                        className="text-[0.8125rem] text-muted-foreground"
                                     >
                                         Shown on their dashboard until they mark
                                         it as read.
@@ -276,11 +276,7 @@ export default function ClassReportDetail({
 
             <div className="flex flex-wrap justify-end gap-2 sm:gap-3">
                 {!raising && (
-                    <Button
-                        variant="outline"
-                        size="lg"
-                        onClick={() => setRaising(true)}
-                    >
+                    <Button variant="outline" onClick={() => setRaising(true)}>
                         Raise with tutor
                     </Button>
                 )}
@@ -305,11 +301,7 @@ export default function ClassReportDetail({
                                         value={nextLessonId}
                                     />
                                 )}
-                                <Button
-                                    type="submit"
-                                    size="lg"
-                                    disabled={processing}
-                                >
+                                <Button type="submit" disabled={processing}>
                                     Mark as reviewed
                                 </Button>
                             </>
@@ -329,7 +321,7 @@ function TutorReportCard({
     tutor: string | null;
 }) {
     return (
-        <Card className="flex flex-col gap-4 p-card">
+        <Card className="flex flex-col gap-4 border-primary-90 p-card dark:border-primary-20">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                     <PersonAvatar
@@ -341,7 +333,7 @@ function TutorReportCard({
                         <p className="font-semibold">
                             Tutor report · {report.author}
                         </p>
-                        <p className="text-[13px] text-muted-foreground">
+                        <p className="text-[0.8125rem] text-muted-foreground">
                             Submitted {report.submittedAt}
                         </p>
                     </div>
@@ -369,7 +361,7 @@ function TutorReportCard({
             {report.recommendations && (
                 <div className="flex gap-3 rounded-md bg-primary-95 px-4 py-3.5 text-sm dark:bg-primary-20/50">
                     <Icon
-                        name="sparkle"
+                        name="bulb"
                         className="mt-0.5 size-4 shrink-0 text-primary-30 dark:text-primary-80"
                     />
                     <p>
@@ -393,7 +385,7 @@ function StudentReportRow({ report }: { report: ClassReport }) {
                     <p className="flex flex-wrap items-center gap-2 font-semibold">
                         {report.author}
                         {report.needsAttention && (
-                            <span className="inline-flex h-5 items-center gap-1 rounded-md bg-absent-soft px-1.5 text-[11px] font-semibold text-absent">
+                            <span className="inline-flex h-5 items-center gap-1 rounded-md bg-absent-soft px-1.5 text-[0.6875rem] font-semibold text-absent">
                                 <Icon name="flag" className="size-3" />
                                 Needs attention
                             </span>
@@ -402,7 +394,7 @@ function StudentReportRow({ report }: { report: ClassReport }) {
                     {report.rating !== null && (
                         <span
                             className={cn(
-                                'text-[13px]',
+                                'text-[0.8125rem]',
                                 report.rating <= 2
                                     ? 'font-semibold text-danger'
                                     : 'text-muted-foreground',
@@ -421,7 +413,7 @@ function StudentReportRow({ report }: { report: ClassReport }) {
                     </p>
                 ))}
                 {report.recommendations && (
-                    <p className="mt-1 text-[13px] font-semibold text-secondary-30 dark:text-secondary-80">
+                    <p className="mt-1 text-[0.8125rem] font-semibold text-secondary-30 dark:text-secondary-80">
                         Recommends: {report.recommendations}
                     </p>
                 )}

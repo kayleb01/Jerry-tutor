@@ -120,7 +120,7 @@ function Kpi({
     return (
         <Card className="flex flex-col gap-1 p-card sm:gap-1.5">
             <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
+                <p className="text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
                     {label}
                 </p>
                 <span
@@ -135,7 +135,7 @@ function Kpi({
                 </span>
             </div>
             <p className="text-stat tabular-nums">{value}</p>
-            <p className="text-xs text-muted-foreground sm:text-[13px]">
+            <p className="text-xs text-muted-foreground sm:text-[0.8125rem]">
                 {note}
             </p>
         </Card>
@@ -156,7 +156,7 @@ function SectionHead({
             <div>
                 <h2 className="text-base font-bold sm:text-lg">{title}</h2>
                 {hint && (
-                    <p className="text-xs text-muted-foreground sm:text-[13px]">
+                    <p className="text-xs text-muted-foreground sm:text-[0.8125rem]">
                         {hint}
                     </p>
                 )}
@@ -181,7 +181,7 @@ function TutorPunctuality({ lesson }: { lesson: TodayLesson }) {
     }
 
     return (
-        <span className="text-[13px] text-muted-foreground">
+        <span className="text-[0.8125rem] text-muted-foreground">
             {lesson.state === 'upcoming' ? 'Not started' : 'Not checked in'}
         </span>
     );
@@ -189,12 +189,14 @@ function TutorPunctuality({ lesson }: { lesson: TodayLesson }) {
 
 function ReportState({ lesson }: { lesson: TodayLesson }) {
     if (lesson.state === 'upcoming' || lesson.state === 'cancelled') {
-        return <span className="text-[13px] text-muted-foreground">—</span>;
+        return (
+            <span className="text-[0.8125rem] text-muted-foreground">—</span>
+        );
     }
 
     if (lesson.state === 'in_progress') {
         return (
-            <span className="text-[13px] text-muted-foreground">
+            <span className="text-[0.8125rem] text-muted-foreground">
                 In progress
             </span>
         );
@@ -202,7 +204,7 @@ function ReportState({ lesson }: { lesson: TodayLesson }) {
 
     if (lesson.tutorReported) {
         return (
-            <span className="text-[13px] font-semibold text-primary-30 dark:text-primary-80">
+            <span className="text-[0.8125rem] font-semibold text-primary-30 dark:text-primary-80">
                 {lesson.studentReports > 0
                     ? 'Both submitted'
                     : 'Tutor submitted'}
@@ -211,7 +213,9 @@ function ReportState({ lesson }: { lesson: TodayLesson }) {
     }
 
     return (
-        <span className="text-[13px] text-muted-foreground">Tutor pending</span>
+        <span className="text-[0.8125rem] text-muted-foreground">
+            Tutor pending
+        </span>
     );
 }
 
@@ -262,7 +266,7 @@ function OnTimeChart({
     const bar = (value: number | null, tone: string) => (
         <div className="flex h-full flex-col items-center justify-end gap-1">
             {!dense && (
-                <span className="text-[11px] text-muted-foreground tabular-nums">
+                <span className="text-[0.6875rem] text-muted-foreground tabular-nums">
                     {value === null ? '—' : value}
                 </span>
             )}
@@ -300,7 +304,7 @@ function OnTimeChart({
                 ))}
             </div>
             <div
-                className="mt-2 grid gap-1 text-center text-[11px] text-muted-foreground sm:gap-3 sm:text-[13px]"
+                className="mt-2 grid gap-1 text-center text-[0.6875rem] text-muted-foreground sm:gap-3 sm:text-[0.8125rem]"
                 style={columns}
             >
                 {weeks.map((week, index) => (
@@ -525,7 +529,7 @@ export default function AdminDashboard({
                                                     · {roleLabel(report.role)}
                                                 </span>
                                             </p>
-                                            <p className="truncate text-[13px] text-muted-foreground">
+                                            <p className="truncate text-[0.8125rem] text-muted-foreground">
                                                 {report.className} ·{' '}
                                                 {report.date}, arrived{' '}
                                                 {report.arrived}
@@ -574,7 +578,7 @@ export default function AdminDashboard({
                         }
                         hint="Share of class arrivals that were on time"
                         action={
-                            <div className="flex gap-3.5 text-[13px] text-muted-foreground">
+                            <div className="flex gap-3.5 text-[0.8125rem] text-muted-foreground">
                                 <span className="flex items-center gap-1.5">
                                     <span className="size-2.5 rounded-[2px] bg-brand dark:bg-primary-70" />
                                     Students
@@ -632,7 +636,7 @@ export default function AdminDashboard({
                                             {report.author} ·{' '}
                                             {roleLabel(report.role)}
                                         </p>
-                                        <span className="text-[13px] text-muted-foreground">
+                                        <span className="text-[0.8125rem] text-muted-foreground">
                                             {report.className} ·{' '}
                                             {report.submittedAt}
                                         </span>
@@ -645,7 +649,7 @@ export default function AdminDashboard({
                                     {report.recommendations && (
                                         <p
                                             className={cn(
-                                                'text-[13px] font-semibold',
+                                                'text-[0.8125rem] font-semibold',
                                                 report.role === 'tutor'
                                                     ? 'text-primary-30 dark:text-primary-80'
                                                     : 'text-secondary-30 dark:text-secondary-80',
@@ -690,7 +694,7 @@ export default function AdminDashboard({
                                     }}
                                 />
                             </span>
-                            <span className="text-right text-[13px] tabular-nums">
+                            <span className="text-right text-[0.8125rem] tabular-nums">
                                 {category.count.toLocaleString('en-GB')}
                             </span>
                         </li>
@@ -699,7 +703,7 @@ export default function AdminDashboard({
                 <hr className="my-4 border-0 border-t" />
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
+                        <p className="text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
                             Question bank
                         </p>
                         <p className="text-base font-bold sm:text-lg">

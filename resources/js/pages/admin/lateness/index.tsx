@@ -1,4 +1,5 @@
 import { Form, InfiniteScroll, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import Icon from '@/components/icon';
 import LatenessReportDetail from '@/components/lateness-report-detail';
 import type { LatenessDetail } from '@/components/lateness-report-detail';
@@ -59,7 +60,7 @@ const emptyMessages: Record<string, string> = {
 
 const chipClass = (active: boolean) =>
     cn(
-        'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold whitespace-nowrap transition-colors',
+        'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[0.8125rem] font-semibold whitespace-nowrap transition-colors',
         active
             ? 'border-primary bg-primary text-primary-foreground'
             : 'bg-surface text-foreground hover:bg-surface-muted',
@@ -99,6 +100,10 @@ export default function LatenessInbox({
         filters.class !== null ||
         filters.from !== null ||
         filters.to !== null;
+    const activeFilters = [filters.class, filters.from, filters.to].filter(
+        (value) => value !== null,
+    ).length;
+    const [showFilters, setShowFilters] = useState(activeFilters > 0);
 
     return (
         <AppLayout
@@ -207,79 +212,105 @@ export default function LatenessInbox({
                         </Link>
                     ))}
                 </nav>
+                <Button
+                    variant={showFilters ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setShowFilters((shown) => !shown)}
+                    aria-expanded={showFilters}
+                    aria-controls="lateness-filters"
+                    className={cn(
+                        'ml-auto shrink-0',
+                        showingDetail && 'hidden lg:inline-flex',
+                    )}
+                >
+                    <Icon name="filter" className="size-4" />
+                    Filters
+                    {activeFilters > 0 && (
+                        <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] text-primary-foreground tabular-nums">
+                            {activeFilters}
+                        </span>
+                    )}
+                </Button>
             </div>
 
-            <Form
-                {...index.form()}
-                className={cn(
-                    'grid grid-cols-2 items-end gap-3 sm:grid-cols-4 lg:flex lg:flex-wrap',
-                    showingDetail && 'hidden lg:flex',
-                )}
-                aria-label="Filter lateness reports"
-            >
-                <input type="hidden" name="status" value={filters.status} />
-                {filters.role && (
-                    <input type="hidden" name="role" value={filters.role} />
-                )}
-                {filters.search && (
-                    <input type="hidden" name="search" value={filters.search} />
-                )}
-                <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-2 lg:w-52">
-                    <Label htmlFor="class">Class</Label>
-                    <Select
-                        id="class"
-                        name="class"
-                        defaultValue={filters.class ?? ''}
-                    >
-                        <option value="">All classes</option>
-                        {classes.map((option) => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </Select>
-                </div>
-                <div className="flex flex-col gap-1.5 lg:w-40">
-                    <Label htmlFor="from">From</Label>
-                    <Input
-                        id="from"
-                        name="from"
-                        type="date"
-                        defaultValue={filters.from ?? ''}
-                    />
-                </div>
-                <div className="flex flex-col gap-1.5 lg:w-40">
-                    <Label htmlFor="to">To</Label>
-                    <Input
-                        id="to"
-                        name="to"
-                        type="date"
-                        defaultValue={filters.to ?? ''}
-                    />
-                </div>
-                <div className="col-span-2 flex items-center gap-3 sm:col-span-4 lg:col-span-1">
-                    <Button type="submit" variant="outline">
-                        <Icon name="filter" className="size-4" />
-                        Apply
-                    </Button>
-                    {isFiltered && (
-                        <Link
-                            href={index({
-                                query: query(filters, {
-                                    search: '',
-                                    class: null,
-                                    from: null,
-                                    to: null,
-                                    report: null,
-                                }),
-                            })}
-                            className="text-sm font-semibold text-link hover:underline"
-                        >
-                            Reset
-                        </Link>
+            {showFilters && (
+                <Form
+                    {...index.form()}
+                    id="lateness-filters"
+                    className={cn(
+                        'grid grid-cols-2 items-end gap-3 rounded-lg border bg-surface p-3 sm:grid-cols-4 lg:flex lg:flex-wrap',
+                        showingDetail && 'hidden lg:flex',
                     )}
-                </div>
-            </Form>
+                    aria-label="Filter lateness reports"
+                >
+                    <input type="hidden" name="status" value={filters.status} />
+                    {filters.role && (
+                        <input type="hidden" name="role" value={filters.role} />
+                    )}
+                    {filters.search && (
+                        <input
+                            type="hidden"
+                            name="search"
+                            value={filters.search}
+                        />
+                    )}
+                    <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-2 lg:w-52">
+                        <Label htmlFor="class">Class</Label>
+                        <Select
+                            id="class"
+                            name="class"
+                            defaultValue={filters.class ?? ''}
+                        >
+                            <option value="">All classes</option>
+                            {classes.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
+                    <div className="flex flex-col gap-1.5 lg:w-40">
+                        <Label htmlFor="from">From</Label>
+                        <Input
+                            id="from"
+                            name="from"
+                            type="date"
+                            defaultValue={filters.from ?? ''}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1.5 lg:w-40">
+                        <Label htmlFor="to">To</Label>
+                        <Input
+                            id="to"
+                            name="to"
+                            type="date"
+                            defaultValue={filters.to ?? ''}
+                        />
+                    </div>
+                    <div className="col-span-2 flex items-center gap-3 sm:col-span-4 lg:col-span-1">
+                        <Button type="submit" variant="outline">
+                            <Icon name="filter" className="size-4" />
+                            Apply
+                        </Button>
+                        {isFiltered && (
+                            <Link
+                                href={index({
+                                    query: query(filters, {
+                                        search: '',
+                                        class: null,
+                                        from: null,
+                                        to: null,
+                                        report: null,
+                                    }),
+                                })}
+                                className="text-sm font-semibold text-link hover:underline"
+                            >
+                                Reset
+                            </Link>
+                        )}
+                    </div>
+                </Form>
+            )}
 
             <div className="grid items-start gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
                 <Card
@@ -382,7 +413,7 @@ function ReportRow({
             preserveState
             aria-current={active ? 'true' : undefined}
             className={cn(
-                'flex items-center gap-3 border-b border-l-4 px-4 py-3.5 transition-colors last:border-b-0 sm:px-5',
+                'flex items-center gap-3 border-b border-l-4 px-4 py-3 transition-colors last:border-b-0 sm:px-5',
                 active
                     ? 'border-l-primary bg-primary-95 dark:bg-primary-20/50'
                     : 'border-l-transparent hover:bg-surface-muted',
@@ -397,14 +428,14 @@ function ReportRow({
                         · {row.role === 'tutor' ? 'Tutor' : 'Student'}
                     </span>
                 </span>
-                <span className="block truncate text-[13px] text-muted-foreground">
+                <span className="block truncate text-[0.8125rem] text-muted-foreground">
                     {row.className} · {row.date}
                 </span>
-                <span className="block text-[13px] text-muted-foreground 2xl:hidden">
+                <span className="block text-[0.8125rem] text-muted-foreground xl:hidden">
                     Due {row.scheduled} · in {row.arrived}
                 </span>
             </span>
-            <span className="hidden shrink-0 text-[13px] text-muted-foreground tabular-nums 2xl:block">
+            <span className="hidden shrink-0 text-[0.8125rem] text-muted-foreground tabular-nums xl:block">
                 Due {row.scheduled} · in {row.arrived}
             </span>
             <span className="inline-flex h-7 shrink-0 items-center rounded-md bg-late-soft px-2 text-xs font-semibold text-late tabular-nums">

@@ -248,6 +248,17 @@
         border-color: var(--border);
     }
 
+    /*
+     * Desktop density: from lg up the whole interface (text, spacing, controls) is set on a
+     * 14px rem instead of 16px, matching the design at laptop widths. A percentage keeps the
+     * reader's own browser font-size setting in play; media queries still use the 16px default.
+     */
+    html {
+        @variant lg {
+            font-size: 87.5%;
+        }
+    }
+
     body {
         background-color: var(--background);
         color: var(--foreground);

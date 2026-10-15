@@ -33,7 +33,8 @@ export type IconName =
     | 'plus'
     | 'filter'
     | 'question'
-    | 'download';
+    | 'download'
+    | 'bulb';
 
 const paths: Record<IconName, ReactNode> = {
     dashboard: (
@@ -169,6 +170,9 @@ const paths: Record<IconName, ReactNode> = {
     ),
     plus: <path d="M12 5v14M5 12h14" />,
     filter: <path d="M4 5h16l-6 7.5V19l-4 1.5v-8L4 5Z" />,
+    bulb: (
+        <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z" />
+    ),
     download: <path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" />,
     question: (
         <>

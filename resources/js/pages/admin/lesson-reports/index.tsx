@@ -1,4 +1,5 @@
 import { Form, InfiniteScroll, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import ClassReportDetail from '@/components/class-report-detail';
 import type { ClassReportLesson } from '@/components/class-report-detail';
 import Icon from '@/components/icon';
@@ -97,6 +98,13 @@ export default function LessonReportsInbox({
         filters.tutor !== null ||
         filters.from !== null ||
         filters.to !== null;
+    const activeFilters = [
+        filters.class,
+        filters.tutor,
+        filters.from,
+        filters.to,
+    ].filter((value) => value !== null).length;
+    const [showFilters, setShowFilters] = useState(activeFilters > 0);
 
     return (
         <AppLayout
@@ -152,121 +160,146 @@ export default function LessonReportsInbox({
                 Feedback and recommendations from both sides of every class.
             </p>
 
-            <nav
-                aria-label="Report queues"
-                className="-mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0"
-            >
-                {queues.map((queue) => {
-                    const active = filters.queue === queue.value;
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <nav
+                    aria-label="Report queues"
+                    className="-mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+                >
+                    {queues.map((queue) => {
+                        const active = filters.queue === queue.value;
 
-                    return (
-                        <Link
-                            key={queue.value}
-                            href={inboxUrl(filters, {
-                                queue: String(queue.value),
-                                lesson: null,
-                            })}
-                            preserveScroll
-                            aria-current={active ? 'page' : undefined}
-                            className={cn(
-                                'inline-flex h-9 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-semibold whitespace-nowrap',
-                                active
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-muted-foreground hover:bg-surface-muted hover:text-foreground',
-                            )}
-                        >
-                            {queue.label}
-                            <span className="tabular-nums opacity-75">
-                                {counts[queue.value] ?? 0}
-                            </span>
-                        </Link>
-                    );
-                })}
-            </nav>
-
-            <Form
-                {...index.form()}
-                className={cn(
-                    'grid grid-cols-2 items-end gap-3 sm:grid-cols-4 lg:flex lg:flex-wrap',
-                    showingDetail && 'hidden lg:flex',
-                )}
-                aria-label="Filter class reports"
-            >
-                <input type="hidden" name="queue" value={filters.queue} />
-                {filters.search && (
-                    <input type="hidden" name="search" value={filters.search} />
-                )}
-                <div className="flex flex-col gap-1.5 lg:w-48">
-                    <Label htmlFor="class">Class</Label>
-                    <Select
-                        id="class"
-                        name="class"
-                        defaultValue={filters.class ?? ''}
-                    >
-                        <option value="">All classes</option>
-                        {classes.map((option) => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </Select>
-                </div>
-                <div className="flex flex-col gap-1.5 lg:w-44">
-                    <Label htmlFor="tutor">Tutor</Label>
-                    <Select
-                        id="tutor"
-                        name="tutor"
-                        defaultValue={filters.tutor ?? ''}
-                    >
-                        <option value="">All tutors</option>
-                        {tutors.map((option) => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </Select>
-                </div>
-                <div className="flex flex-col gap-1.5 lg:w-40">
-                    <Label htmlFor="from">From</Label>
-                    <Input
-                        id="from"
-                        name="from"
-                        type="date"
-                        defaultValue={filters.from ?? ''}
-                    />
-                </div>
-                <div className="flex flex-col gap-1.5 lg:w-40">
-                    <Label htmlFor="to">To</Label>
-                    <Input
-                        id="to"
-                        name="to"
-                        type="date"
-                        defaultValue={filters.to ?? ''}
-                    />
-                </div>
-                <div className="col-span-2 flex items-center gap-3 sm:col-span-4 lg:col-span-1">
-                    <Button type="submit" variant="outline">
-                        <Icon name="filter" className="size-4" />
-                        Apply
-                    </Button>
-                    {isFiltered && (
-                        <Link
-                            href={inboxUrl({
-                                ...filters,
-                                search: '',
-                                class: null,
-                                tutor: null,
-                                from: null,
-                                to: null,
-                                lesson: null,
-                            })}
-                            className="text-sm font-semibold text-link hover:underline"
-                        >
-                            Reset
-                        </Link>
+                        return (
+                            <Link
+                                key={queue.value}
+                                href={inboxUrl(filters, {
+                                    queue: String(queue.value),
+                                    lesson: null,
+                                })}
+                                preserveScroll
+                                aria-current={active ? 'page' : undefined}
+                                className={cn(
+                                    'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-[0.8125rem] font-semibold whitespace-nowrap',
+                                    active
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-muted-foreground hover:bg-surface-muted hover:text-foreground',
+                                )}
+                            >
+                                {queue.label}
+                                <span className="tabular-nums opacity-75">
+                                    {counts[queue.value] ?? 0}
+                                </span>
+                            </Link>
+                        );
+                    })}
+                </nav>
+                <Button
+                    variant={showFilters ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => setShowFilters((shown) => !shown)}
+                    aria-expanded={showFilters}
+                    aria-controls="report-filters"
+                    className={cn(showingDetail && 'hidden lg:inline-flex')}
+                >
+                    <Icon name="filter" className="size-4" />
+                    Filters
+                    {activeFilters > 0 && (
+                        <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] text-primary-foreground tabular-nums">
+                            {activeFilters}
+                        </span>
                     )}
-                </div>
-            </Form>
+                </Button>
+            </div>
+
+            {showFilters && (
+                <Form
+                    {...index.form()}
+                    id="report-filters"
+                    className={cn(
+                        'grid grid-cols-2 items-end gap-3 rounded-lg border bg-surface p-3 sm:grid-cols-4 lg:flex lg:flex-wrap',
+                        showingDetail && 'hidden lg:flex',
+                    )}
+                    aria-label="Filter class reports"
+                >
+                    <input type="hidden" name="queue" value={filters.queue} />
+                    {filters.search && (
+                        <input
+                            type="hidden"
+                            name="search"
+                            value={filters.search}
+                        />
+                    )}
+                    <div className="flex flex-col gap-1.5 lg:w-48">
+                        <Label htmlFor="class">Class</Label>
+                        <Select
+                            id="class"
+                            name="class"
+                            defaultValue={filters.class ?? ''}
+                        >
+                            <option value="">All classes</option>
+                            {classes.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
+                    <div className="flex flex-col gap-1.5 lg:w-44">
+                        <Label htmlFor="tutor">Tutor</Label>
+                        <Select
+                            id="tutor"
+                            name="tutor"
+                            defaultValue={filters.tutor ?? ''}
+                        >
+                            <option value="">All tutors</option>
+                            {tutors.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
+                    <div className="flex flex-col gap-1.5 lg:w-40">
+                        <Label htmlFor="from">From</Label>
+                        <Input
+                            id="from"
+                            name="from"
+                            type="date"
+                            defaultValue={filters.from ?? ''}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1.5 lg:w-40">
+                        <Label htmlFor="to">To</Label>
+                        <Input
+                            id="to"
+                            name="to"
+                            type="date"
+                            defaultValue={filters.to ?? ''}
+                        />
+                    </div>
+                    <div className="col-span-2 flex items-center gap-3 sm:col-span-4 lg:col-span-1">
+                        <Button type="submit" variant="outline">
+                            <Icon name="filter" className="size-4" />
+                            Apply
+                        </Button>
+                        {isFiltered && (
+                            <Link
+                                href={inboxUrl({
+                                    ...filters,
+                                    search: '',
+                                    class: null,
+                                    tutor: null,
+                                    from: null,
+                                    to: null,
+                                    lesson: null,
+                                })}
+                                className="text-sm font-semibold text-link hover:underline"
+                            >
+                                Reset
+                            </Link>
+                        )}
+                    </div>
+                </Form>
+            )}
 
             <div className="grid items-start gap-3 sm:gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
                 <Card
@@ -275,7 +308,7 @@ export default function LessonReportsInbox({
                         showingDetail && 'hidden lg:block',
                     )}
                 >
-                    <p className="px-5 pt-5 pb-2 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
+                    <p className="px-5 pt-5 pb-2 text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
                         Recent classes
                     </p>
                     {rows.length === 0 ? (
@@ -310,7 +343,7 @@ export default function LessonReportsInbox({
                             {rows.map((row, i) => (
                                 <div key={row.id}>
                                     {row.day !== rows[i - 1]?.day && (
-                                        <p className="bg-surface-muted/60 px-5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                                        <p className="px-5 pt-3 pb-1 text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
                                             {row.day}
                                         </p>
                                     )}
@@ -379,7 +412,7 @@ function InboxRow({
             preserveState
             aria-current={active ? 'true' : undefined}
             className={cn(
-                'block border-l-4 px-4 py-3.5 transition-colors sm:px-5',
+                'block border-l-4 px-4 py-3 transition-colors sm:px-5',
                 active
                     ? 'border-primary bg-primary-95 dark:bg-primary-20/50'
                     : 'border-transparent hover:bg-surface-muted',
@@ -387,18 +420,18 @@ function InboxRow({
         >
             <span className="flex items-baseline justify-between gap-3">
                 <span className="truncate font-semibold">{row.className}</span>
-                <span className="shrink-0 text-[13px] text-muted-foreground tabular-nums">
+                <span className="shrink-0 text-[0.8125rem] text-muted-foreground tabular-nums">
                     {row.time}
                 </span>
             </span>
             {row.tutor && (
-                <span className="block truncate text-[13px] text-muted-foreground sm:text-sm">
+                <span className="block truncate text-[0.8125rem] text-muted-foreground sm:text-sm">
                     {row.tutor}
                 </span>
             )}
             <span
                 className={cn(
-                    'mt-1 flex items-center gap-1.5 text-[13px] font-semibold',
+                    'mt-1 flex items-center gap-1.5 text-[0.8125rem] font-semibold',
                     state.className,
                 )}
             >

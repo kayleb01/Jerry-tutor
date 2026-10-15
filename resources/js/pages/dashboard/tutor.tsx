@@ -164,7 +164,7 @@ export default function TutorDashboard({
                                         </Link>
                                     )}
                                 </div>
-                                <p className="relative text-[13px] text-primary-80">
+                                <p className="relative text-[0.8125rem] text-primary-80">
                                     Your check-in time is recorded for
                                     punctuality.
                                 </p>

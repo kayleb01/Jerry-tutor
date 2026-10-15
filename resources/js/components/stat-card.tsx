@@ -28,7 +28,7 @@ export default function StatCard({
     return (
         <Card className="flex flex-col gap-1 p-card sm:gap-1.5">
             <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
+                <p className="text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs">
                     {label}
                 </p>
                 <span
@@ -42,7 +42,7 @@ export default function StatCard({
             </div>
             <p className="text-stat tabular-nums">{value}</p>
             {hint && (
-                <p className="text-xs text-muted-foreground sm:text-[13px]">
+                <p className="text-xs text-muted-foreground sm:text-[0.8125rem]">
                     {hint}
                 </p>
             )}
