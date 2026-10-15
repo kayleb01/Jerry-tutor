@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BillingSettingsController;
 use App\Http\Controllers\Admin\ClassEnrolmentController;
 use App\Http\Controllers\Admin\ClassGroupController;
 use App\Http\Controllers\Admin\LatenessReportController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\Admin\QuestionStatusController;
 use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
+use App\Http\Controllers\BillingCallbackController;
+use App\Http\Controllers\BillingCheckoutController;
 use App\Http\Controllers\ChildAttendanceController;
 use App\Http\Controllers\ChildController;
 use App\Http\Controllers\ChildPasswordController;
@@ -42,6 +45,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/lessons/{lesson}/report', [LessonReportController::class, 'update'])->name('lessons.report.update');
 });
 
+Route::middleware(['auth', 'verified', 'role:guardian,student'])->prefix('billing')->name('billing.')->group(function () {
+    Route::post('checkout', [BillingCheckoutController::class, 'store'])->name('checkout');
+    Route::get('callback/{gateway}', BillingCallbackController::class)->whereIn('gateway', ['paystack', 'flutterwave'])->name('callback');
+});
+
 Route::middleware(['auth', 'verified', 'role:guardian'])->group(function () {
     Route::resource('children', ChildController::class)->except(['show', 'destroy']);
     Route::put('children/{child}/password', ChildPasswordController::class)->name('children.password.update');
@@ -58,6 +66,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
         ->parameters(['classes' => 'classGroup']);
     Route::post('classes/{classGroup}/students', [ClassEnrolmentController::class, 'store'])->name('classes.students.store');
     Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
+
+    Route::get('billing', [BillingSettingsController::class, 'index'])->name('billing.index');
+    Route::put('billing/plans/{plan}', [BillingSettingsController::class, 'update'])->name('billing.plans.update');
 
     Route::get('lesson-reports', [AdminLessonReportController::class, 'index'])->name('lesson-reports.index');
     Route::put('lesson-reports/{lesson}/review', [AdminLessonReportController::class, 'review'])->name('lesson-reports.review');
