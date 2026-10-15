@@ -13,10 +13,12 @@ use App\Models\Payment;
 use App\Models\Subscription;
 use App\Payments\Data\GatewayEvent;
 use App\Payments\Exceptions\GatewayException;
+use App\Payments\Exceptions\GatewayUnreachable;
 use App\Payments\PaymentGatewayManager;
 use App\Services\SubscriptionsOverview;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -46,6 +48,16 @@ class SubscriptionActionsController extends Controller
             return $this->toast('error', $problem);
         }
 
+        // Claim the reminder atomically so two clicks can't both send.
+        $claimed = Subscription::query()
+            ->whereKey($subscription->id)
+            ->where(fn ($query) => $query->whereNull('payment_reminder_sent_at')->orWhere('payment_reminder_sent_at', '<=', $cooldownEnded))
+            ->update(['payment_reminder_sent_at' => now()]);
+
+        if ($claimed === 0) {
+            return $this->toast('error', "{$payer->name} was emailed in the last day. Give them a little time.");
+        }
+
         Mail::to($payer->email)->send(new PaymentFailedMail($subscription));
 
         $child = $subscription->students->sortBy('name')->first();
@@ -58,8 +70,6 @@ class SubscriptionActionsController extends Controller
             ]);
         }
 
-        $subscription->update(['payment_reminder_sent_at' => now()]);
-
         return $this->toast('success', "Emailed {$payer->name}.");
     }
 
@@ -68,7 +78,11 @@ class SubscriptionActionsController extends Controller
      */
     public function pause(Subscription $subscription): RedirectResponse
     {
-        if (! in_array($subscription->status, [SubscriptionStatus::PastDue, SubscriptionStatus::Active], true)) {
+        if ($subscription->status === SubscriptionStatus::Active) {
+            return $this->toast('error', 'This payment has since gone through, so access stays on.');
+        }
+
+        if ($subscription->status !== SubscriptionStatus::PastDue) {
             return $this->toast('error', 'This subscription isn’t giving access, so there’s nothing to pause.');
         }
 
@@ -78,18 +92,36 @@ class SubscriptionActionsController extends Controller
     }
 
     /**
-     * Charge the saved card again through the subscription's own gateway.
+     * Charge the saved card again through the subscription's own gateway. Only one retry runs at a time,
+     * and none while an earlier payment is still processing, so a card is never charged twice by accident.
      */
     public function retry(Subscription $subscription, PaymentGatewayManager $gateways, ApplyGatewayEvent $applyGatewayEvent): RedirectResponse
     {
-        $subscription->load(['payer', 'plan', 'students']);
+        $lock = Cache::lock("subscription-retry:{$subscription->id}", 60);
 
+        if (! $lock->get()) {
+            return $this->toast('error', 'This subscription is already being retried. Give it a moment.');
+        }
+
+        try {
+            return $this->charge($subscription->fresh(['payer', 'plan', 'students']), $gateways, $applyGatewayEvent);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function charge(Subscription $subscription, PaymentGatewayManager $gateways, ApplyGatewayEvent $applyGatewayEvent): RedirectResponse
+    {
         if ($subscription->status !== SubscriptionStatus::PastDue) {
             return $this->toast('error', 'Only a subscription with a failed payment can be retried.');
         }
 
         if (blank($subscription->gateway_authorization)) {
             return $this->toast('error', 'There’s no saved card to charge. Ask the parent to update their card.');
+        }
+
+        if (SubscriptionsOverview::hasPaymentInFlight($subscription)) {
+            return $this->toast('error', 'A payment for this subscription is still processing. Wait for it to clear before trying again.');
         }
 
         $payment = Payment::create([
@@ -104,6 +136,9 @@ class SubscriptionActionsController extends Controller
 
         try {
             $result = $gateways->for($subscription)->chargeSavedCard($subscription, $payment);
+        } catch (GatewayUnreachable $exception) {
+            // The charge may still have gone through; leave it pending for the webhook to settle.
+            return $this->toast('error', $exception->getMessage().' If the card was charged, it will show here shortly.');
         } catch (GatewayException $exception) {
             $payment->update(['status' => PaymentStatus::Failed, 'failure_reason' => $exception->getMessage()]);
 

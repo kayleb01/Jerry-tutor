@@ -190,6 +190,11 @@ class ApplyGatewayEvent
         $subscription = $this->findSubscription($gateway, $event);
 
         if ($subscription->status !== SubscriptionStatus::Expired) {
+            // Keep the date renewals were first stopped, so a cancellation counts in one month only.
+            if ($subscription->cancel_requested_at !== null) {
+                unset($attributes['cancel_requested_at']);
+            }
+
             $subscription->update($attributes);
         }
 

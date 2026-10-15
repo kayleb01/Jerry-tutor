@@ -32,7 +32,9 @@ type PaymentsProps = {
 /** The filters as a query string, without empty values. */
 function query(filters: Filters) {
     return Object.fromEntries(
-        Object.entries(filters).filter(([, value]) => value !== null && value !== ''),
+        Object.entries(filters).filter(
+            ([, value]) => value !== null && value !== '',
+        ),
     );
 }
 
@@ -85,7 +87,11 @@ export default function Payments({
                     </div>
                     <div className="flex flex-col gap-1.5 lg:w-36">
                         <Label htmlFor="status">Status</Label>
-                        <Select id="status" name="status" defaultValue={filters.status ?? ''}>
+                        <Select
+                            id="status"
+                            name="status"
+                            defaultValue={filters.status ?? ''}
+                        >
                             <option value="">All</option>
                             {statuses.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -96,7 +102,11 @@ export default function Payments({
                     </div>
                     <div className="flex flex-col gap-1.5 lg:w-48">
                         <Label htmlFor="plan">Plan</Label>
-                        <Select id="plan" name="plan" defaultValue={filters.plan ?? ''}>
+                        <Select
+                            id="plan"
+                            name="plan"
+                            defaultValue={filters.plan ?? ''}
+                        >
                             <option value="">All plans</option>
                             {plans.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -107,7 +117,11 @@ export default function Payments({
                     </div>
                     <div className="flex flex-col gap-1.5 lg:w-40">
                         <Label htmlFor="gateway">Gateway</Label>
-                        <Select id="gateway" name="gateway" defaultValue={filters.gateway ?? ''}>
+                        <Select
+                            id="gateway"
+                            name="gateway"
+                            defaultValue={filters.gateway ?? ''}
+                        >
                             <option value="">Both</option>
                             {gateways.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -118,11 +132,21 @@ export default function Payments({
                     </div>
                     <div className="flex flex-col gap-1.5 lg:w-40">
                         <Label htmlFor="from">From</Label>
-                        <Input id="from" name="from" type="date" defaultValue={filters.from ?? ''} />
+                        <Input
+                            id="from"
+                            name="from"
+                            type="date"
+                            defaultValue={filters.from ?? ''}
+                        />
                     </div>
                     <div className="flex flex-col gap-1.5 lg:w-40">
                         <Label htmlFor="to">To</Label>
-                        <Input id="to" name="to" type="date" defaultValue={filters.to ?? ''} />
+                        <Input
+                            id="to"
+                            name="to"
+                            type="date"
+                            defaultValue={filters.to ?? ''}
+                        />
                     </div>
                     <div className="col-span-2 flex items-center gap-3 sm:col-span-1">
                         <Button type="submit" variant="outline">
@@ -164,12 +188,18 @@ export default function Payments({
                 </span>
                 <div className="flex gap-3">
                     {payments.prev_page_url && (
-                        <Link href={payments.prev_page_url} className="font-medium text-link">
+                        <Link
+                            href={payments.prev_page_url}
+                            className="font-medium text-link"
+                        >
                             Previous
                         </Link>
                     )}
                     {payments.next_page_url && (
-                        <Link href={payments.next_page_url} className="font-medium text-link">
+                        <Link
+                            href={payments.next_page_url}
+                            className="font-medium text-link"
+                        >
                             Next
                         </Link>
                     )}

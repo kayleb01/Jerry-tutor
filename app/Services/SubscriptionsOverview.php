@@ -20,6 +20,20 @@ class SubscriptionsOverview
     /** A payer gets at most one reminder email in this many hours. */
     public const REMINDER_COOLDOWN_HOURS = 24;
 
+    /** A payment still pending after this long is treated as stuck, and a new retry is allowed. */
+    public const IN_FLIGHT_MINUTES = 30;
+
+    /**
+     * Whether a recent payment for this subscription hasn't settled yet (a retry or renewal in progress).
+     */
+    public static function hasPaymentInFlight(Subscription $subscription): bool
+    {
+        return $subscription->payments()
+            ->where('status', PaymentStatus::Pending)
+            ->where('created_at', '>', CarbonImmutable::now()->subMinutes(self::IN_FLIGHT_MINUTES))
+            ->exists();
+    }
+
     /**
      * @return array{active: int, activeByPlan: string, mrr: string, failed: int, graceDays: int, cancelledThisMonth: int, topReason: string|null}
      */
@@ -35,7 +49,8 @@ class SubscriptionsOverview
 
         $monthStart = $now->setTimezone(config('academy.timezone'))->startOfMonth()->utc();
         $cancelled = Subscription::query()->where('cancel_requested_at', '>=', $monthStart)->get(['cancellation_reason']);
-        $topReason = $cancelled->pluck('cancellation_reason')->filter()->countBy()->sortDesc();
+        // Alphabetical first, then a stable sort by count, so ties always pick the same reason.
+        $topReason = $cancelled->pluck('cancellation_reason')->filter()->countBy()->sortKeys()->sortDesc();
 
         return [
             'active' => $running->count(),
@@ -98,6 +113,8 @@ class SubscriptionsOverview
                         ? Str::lower($lastFailure->failure_reason ?? 'payment failed').' on '.$lastFailure->created_at->setTimezone($timezone)->format('j M').' · attempt '.$attempts
                         : 'renewal overdue since '.$subscription->current_period_ends_at?->setTimezone($timezone)->format('j M'),
                     'attempts' => $attempts,
+                    'processing' => $subscription->payments->contains(fn (Payment $payment): bool => $payment->status === PaymentStatus::Pending
+                        && $payment->created_at->greaterThan($now->subMinutes(self::IN_FLIGHT_MINUTES))),
                     'remindedAt' => $subscription->payment_reminder_sent_at?->setTimezone($timezone)->format('j M'),
                     'canRetry' => filled($subscription->gateway_authorization),
                     'canRemind' => filled($subscription->payer->email)

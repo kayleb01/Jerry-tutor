@@ -11,6 +11,7 @@ use App\Payments\Data\GatewayEventType;
 use App\Payments\Data\GatewayPlan;
 use App\Payments\Data\VerifiedPayment;
 use App\Payments\Exceptions\GatewayException;
+use App\Payments\Exceptions\GatewayUnreachable;
 use App\Payments\Exceptions\InvalidWebhookSignature;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
@@ -255,7 +256,11 @@ class PaystackGateway implements PaymentGateway
         try {
             $response = $call(Http::baseUrl($this->baseUrl)->withToken($this->secretKey)->acceptJson()->asJson()->timeout(20));
         } catch (ConnectionException) {
-            throw new GatewayException("Paystack couldn't be reached. Please try again.");
+            throw new GatewayUnreachable("Paystack couldn't be reached. Please try again.");
+        }
+
+        if ($response->serverError()) {
+            throw new GatewayUnreachable("Paystack had a problem and couldn't confirm the request. Please try again shortly.");
         }
 
         if ($response->failed() && ! ($allowNotFound && $response->status() === 404)) {

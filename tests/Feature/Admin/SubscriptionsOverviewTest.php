@@ -65,6 +65,7 @@ it('lists failed and overdue subscriptions with what went wrong', function () {
                 'plan' => 'Standard',
                 'problem' => 'insufficient funds on 9 Oct · attempt 2',
                 'attempts' => 2,
+                'processing' => false,
                 'remindedAt' => '14 Oct',
                 'canRetry' => true,
                 'canRemind' => true,

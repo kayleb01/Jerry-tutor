@@ -38,6 +38,7 @@ type AttentionRow = {
     plan: string;
     problem: string;
     attempts: number;
+    processing: boolean;
     remindedAt: string | null;
     canRetry: boolean;
     canRemind: boolean;
@@ -262,7 +263,12 @@ function AttentionItem({ row }: { row: AttentionRow }) {
                         </Button>
                     )}
                 </Form>
-                {retriesLeft ? (
+                {row.processing ? (
+                    <span className="inline-flex h-8 items-center gap-1.5 px-2 text-[0.8125rem] text-muted-foreground">
+                        <Icon name="clock" className="size-4" />
+                        Payment processing
+                    </span>
+                ) : retriesLeft ? (
                     <Form
                         {...retry.form(row.id)}
                         options={{ preserveScroll: true }}

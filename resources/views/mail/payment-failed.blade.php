@@ -6,7 +6,7 @@ We couldn't take this month's payment for your **{{ $planName }}**{{ $reason ? '
 @if ($graceEnds)
 {{ $childNames }} can keep using the quizzes until **{{ $graceEnds }}**. Please update your card before then so nothing is interrupted.
 @else
-Please update your card to restore {{ $childNames }}'s quiz access.
+Please update your card to restore {{ $childNames ? $childNames."'s" : 'your' }} quiz access.
 @endif
 
 <x-mail::button :url="$billingUrl">

@@ -92,7 +92,7 @@ class DemoSubscriptionSeeder extends Seeder
 
             if ($state === 'past_due') {
                 foreach (range(1, mt_rand(1, 3)) as $attempt) {
-                    $this->payment($subscription, PaymentStatus::Failed, $periodEnd->addDays($attempt - 1)->setTime(9, 5), $gateway, $brand, $last4, ['Card declined', 'Insufficient funds', 'Card expired'][($index + $attempt) % 3]);
+                    $this->payment($subscription, PaymentStatus::Failed, $periodEnd->addDays($attempt - 1)->setTime(9, 5)->min($now->subMinutes(10)), $gateway, $brand, $last4, ['Card declined', 'Insufficient funds', 'Card expired'][($index + $attempt) % 3]);
                 }
             }
         }
