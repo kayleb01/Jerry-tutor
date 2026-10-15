@@ -10,6 +10,7 @@ use App\Payments\Exceptions\CheckoutUnavailable;
 use App\Payments\Exceptions\GatewayException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -24,6 +25,11 @@ class BillingCheckoutController extends Controller
             'plan' => ['required', 'integer'],
             'students' => ['present', 'array', 'max:20'],
             'students.*' => ['integer', 'distinct'],
+            // Most students have no email on their account; the gateway needs one for receipts.
+            'email' => [Rule::requiredIf($request->user()->email === null), 'nullable', 'string', 'email', 'max:255'],
+        ], [
+            'email.required' => 'Enter an email address for your receipts.',
+            'email.*' => 'Enter a real email address, like name@example.com.',
         ]);
 
         $plan = Plan::findOrFail($validated['plan']);
@@ -37,7 +43,7 @@ class BillingCheckoutController extends Controller
         }
 
         try {
-            return Inertia::location($startCheckout->handle($request->user(), $plan, $students));
+            return Inertia::location($startCheckout->handle($request->user(), $plan, $students, billingEmail: $validated['email'] ?? null));
         } catch (CheckoutUnavailable|GatewayException $exception) {
             Inertia::flash('toast', ['type' => 'error', 'message' => $exception->getMessage()]);
 

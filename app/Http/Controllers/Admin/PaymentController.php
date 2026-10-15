@@ -58,7 +58,7 @@ class PaymentController extends Controller
                 fputcsv($out, array_map($this->safeCell(...), [
                     ($payment->paid_at ?? $payment->created_at)->setTimezone($timezone)->toDateString(),
                     $payment->payer->name,
-                    (string) $payment->payer->email,
+                    (string) ($payment->subscription?->billingEmail() ?? $payment->payer->email),
                     $payment->subscription ? SubscriptionsOverview::shortName($payment->subscription->plan->name) : '',
                     number_format($payment->amount / 100, 2, '.', ''),
                     $payment->card_last4 ? trim(($payment->card_brand ?? 'Card').' '.$payment->card_last4) : '',

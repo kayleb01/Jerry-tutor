@@ -54,7 +54,7 @@ class PaystackGateway implements PaymentGateway
     public function startCheckout(Subscription $subscription, Payment $payment, string $callbackUrl): string
     {
         $response = $this->send(fn (PendingRequest $http) => $http->post('/transaction/initialize', [
-            'email' => $subscription->payer->email,
+            'email' => $subscription->billingEmail(),
             'amount' => $payment->amount,
             'currency' => $payment->currency,
             'plan' => $subscription->plan->paystack_plan_code,
@@ -75,7 +75,7 @@ class PaystackGateway implements PaymentGateway
     {
         $data = $this->send(fn (PendingRequest $http) => $http->post('/transaction/charge_authorization', [
             'authorization_code' => $subscription->gateway_authorization,
-            'email' => $subscription->payer->email,
+            'email' => $subscription->billingEmail(),
             'amount' => $payment->amount,
             'currency' => $payment->currency,
             'reference' => $payment->reference,

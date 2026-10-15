@@ -18,7 +18,7 @@ it('lets staff and students with access through', function () {
     $this->actingAs(User::factory()->admin()->create())->get('/__quiz-probe')->assertSee('quiz ok');
 });
 
-it('shows a student without access who to ask', function () {
+it('lets a student without access subscribe, or ask their parent', function () {
     $student = User::factory()->student()->create(['name' => 'Ada Okafor']);
     User::factory()->guardian()->create(['name' => 'Ngozi Okafor'])->linkChild($student, 'Mother');
 
@@ -27,7 +27,7 @@ it('shows a student without access who to ask', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('billing/paywall')
             ->where('guardians', ['Ngozi Okafor'])
-            ->where('canPay', false));
+            ->where('canPay', true));
 });
 
 it('lets a student with no parent account pay for themselves', function () {

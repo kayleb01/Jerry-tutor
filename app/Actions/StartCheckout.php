@@ -28,12 +28,13 @@ class StartCheckout
 
     /**
      * @param  Collection<int, User>  $students
+     * @param  string|null  $billingEmail  where receipts go when the payer's account has no email
      *
      * @throws CheckoutUnavailable when the plan can't be sold through the gateway
      * @throws ValidationException when the selection isn't allowed
      * @throws GatewayException when the gateway refuses (the payment is recorded as failed)
      */
-    public function handle(User $payer, Plan $plan, Collection $students, ?PaymentGatewayName $gateway = null): string
+    public function handle(User $payer, Plan $plan, Collection $students, ?PaymentGatewayName $gateway = null, ?string $billingEmail = null): string
     {
         $gateway ??= $this->gateways->defaultGateway();
 
@@ -43,7 +44,7 @@ class StartCheckout
 
         $this->ensureCanCover($payer, $plan, $students);
 
-        [$subscription, $payment] = DB::transaction(function () use ($payer, $plan, $students, $gateway): array {
+        [$subscription, $payment] = DB::transaction(function () use ($payer, $plan, $students, $gateway, $billingEmail): array {
             $studentIds = $students->pluck('id')->all();
 
             // An earlier checkout for any of these children that was never paid gives way to this one.
@@ -59,6 +60,7 @@ class StartCheckout
                 'payer_id' => $payer->id,
                 'plan_id' => $plan->id,
                 'gateway' => $gateway,
+                'billing_email' => $billingEmail === null ? null : Str::lower(trim($billingEmail)),
                 'status' => SubscriptionStatus::Pending,
             ]);
             $subscription->students()->attach($studentIds);

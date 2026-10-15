@@ -117,7 +117,7 @@ class SubscriptionsOverview
                         && $payment->created_at->greaterThan($now->subMinutes(self::IN_FLIGHT_MINUTES))),
                     'remindedAt' => $subscription->payment_reminder_sent_at?->setTimezone($timezone)->format('j M'),
                     'canRetry' => filled($subscription->gateway_authorization),
-                    'canRemind' => filled($subscription->payer->email)
+                    'canRemind' => filled($subscription->billingEmail())
                         && ($subscription->payment_reminder_sent_at === null || $subscription->payment_reminder_sent_at->lessThanOrEqualTo($now->subHours(self::REMINDER_COOLDOWN_HOURS))),
                 ];
             });
@@ -146,7 +146,7 @@ class SubscriptionsOverview
             'id' => $payment->id,
             'date' => ($payment->paid_at ?? $payment->created_at)->setTimezone(config('academy.timezone'))->format('j M Y'),
             'payer' => $payment->payer->name,
-            'payerEmail' => $payment->payer->email,
+            'payerEmail' => $payment->subscription?->billingEmail() ?? $payment->payer->email,
             'plan' => $payment->subscription ? self::shortName($payment->subscription->plan->name) : null,
             'amount' => Plan::naira($payment->amount),
             'method' => $payment->card_last4 ? trim(($payment->card_brand ?? 'Card').' ···· '.$payment->card_last4) : $payment->gateway->label(),

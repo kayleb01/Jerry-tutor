@@ -301,7 +301,7 @@ class ApplyGatewayEvent
         }
 
         try {
-            $id = $driver->findSubscriptionId($subscription->payer->email, (string) $subscription->plan->flutterwave_plan_id);
+            $id = $driver->findSubscriptionId($subscription->billingEmail(), (string) $subscription->plan->flutterwave_plan_id);
         } catch (GatewayException $exception) {
             Log::warning('Could not look up the Flutterwave subscription id.', ['subscription' => $subscription->id, 'error' => $exception->getMessage()]);
 

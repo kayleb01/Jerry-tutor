@@ -39,7 +39,7 @@ class SubscriptionActionsController extends Controller
 
         $problem = match (true) {
             $subscription->status !== SubscriptionStatus::PastDue => "This subscription isn't behind on payments.",
-            blank($payer->email) => "{$payer->name} has no email address on file.",
+            blank($subscription->billingEmail()) => "{$payer->name} has no email address on file.",
             $subscription->payment_reminder_sent_at?->greaterThan($cooldownEnded) ?? false => "{$payer->name} was emailed in the last day. Give them a little time.",
             default => null,
         };
@@ -58,7 +58,7 @@ class SubscriptionActionsController extends Controller
             return $this->toast('error', "{$payer->name} was emailed in the last day. Give them a little time.");
         }
 
-        Mail::to($payer->email)->send(new PaymentFailedMail($subscription));
+        Mail::to($subscription->billingEmail())->send(new PaymentFailedMail($subscription));
 
         $child = $subscription->students->sortBy('name')->first();
 

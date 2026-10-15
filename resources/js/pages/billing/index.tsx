@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import type { BadgeTone } from '@/components/ui/badge';
 import { Button, buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
@@ -54,8 +55,14 @@ type PaymentRow = {
     failureReason: string | null;
 };
 
+type Payer = {
+    isStudent: boolean;
+    needsEmail: boolean;
+};
+
 type BillingProps = {
     available: boolean;
+    payer: Payer;
     plans: PlanOption[];
     children: Child[];
     subscriptions: SubscriptionRow[];
@@ -101,6 +108,7 @@ function list(names: string[]): string {
 
 export default function Billing({
     available,
+    payer,
     plans,
     children,
     subscriptions,
@@ -161,7 +169,11 @@ export default function Billing({
             {children.length > 0 &&
                 (available ? (
                     uncovered.length > 0 ? (
-                        <SubscribeCard plans={plans} childList={children} />
+                        <SubscribeCard
+                            plans={plans}
+                            childList={children}
+                            payer={payer}
+                        />
                     ) : null
                 ) : (
                     <Card className="flex items-center gap-3 p-card text-sm text-muted-foreground">
@@ -277,12 +289,17 @@ export default function Billing({
 function SubscribeCard({
     plans,
     childList,
+    payer,
 }: {
     plans: PlanOption[];
     childList: Child[];
+    payer: Payer;
 }) {
     const [planId, setPlanId] = useState<number>(plans[0]?.id ?? 0);
-    const [chosen, setChosen] = useState<number[]>([]);
+    // A student only ever pays for themselves, so they're chosen from the start.
+    const [chosen, setChosen] = useState<number[]>(
+        payer.isStudent && childList[0] ? [childList[0].id] : [],
+    );
     const plan = plans.find((option) => option.id === planId) ?? plans[0];
     const limit = plan?.maxStudents ?? 1;
     const chosenNames = childList
@@ -364,10 +381,12 @@ function SubscribeCard({
                                                         {option.name}
                                                     </span>
                                                     <span className="block text-[0.8125rem] text-muted-foreground">
-                                                        {option.maxStudents ===
-                                                        1
-                                                            ? 'One child'
-                                                            : `Up to ${option.maxStudents} children`}
+                                                        {payer.isStudent
+                                                            ? 'Just you'
+                                                            : option.maxStudents ===
+                                                                1
+                                                              ? 'One child'
+                                                              : `Up to ${option.maxStudents} children`}
                                                         {option.description &&
                                                             ` · ${option.description}`}
                                                     </span>
@@ -387,70 +406,123 @@ function SubscribeCard({
                             </div>
                         </fieldset>
 
-                        <fieldset aria-describedby="students-error">
-                            <legend className={cn(smallCaps, 'mb-2')}>
-                                2.{' '}
-                                {limit === 1
-                                    ? 'Choose a child'
-                                    : `Choose up to ${limit} children`}
-                            </legend>
-                            <div className="flex flex-col gap-2">
-                                {childList.map((child) => {
-                                    const covered = child.state === 'covered';
-                                    const checked = chosen.includes(child.id);
-                                    const full =
-                                        !checked &&
-                                        limit > 1 &&
-                                        chosen.length >= limit;
+                        {payer.isStudent ? (
+                            <>
+                                {chosen.map((id) => (
+                                    <input
+                                        key={id}
+                                        type="hidden"
+                                        name="students[]"
+                                        value={id}
+                                    />
+                                ))}
+                                <FieldError
+                                    id="students-error"
+                                    message={errors.students}
+                                />
+                            </>
+                        ) : (
+                            <fieldset aria-describedby="students-error">
+                                <legend className={cn(smallCaps, 'mb-2')}>
+                                    2.{' '}
+                                    {limit === 1
+                                        ? 'Choose a child'
+                                        : `Choose up to ${limit} children`}
+                                </legend>
+                                <div className="flex flex-col gap-2">
+                                    {childList.map((child) => {
+                                        const covered =
+                                            child.state === 'covered';
+                                        const checked = chosen.includes(
+                                            child.id,
+                                        );
+                                        const full =
+                                            !checked &&
+                                            limit > 1 &&
+                                            chosen.length >= limit;
 
-                                    return (
-                                        <label
-                                            key={child.id}
-                                            className={cn(
-                                                'flex items-center gap-3 rounded-md border px-3.5 py-2.5 text-sm',
-                                                covered || full
-                                                    ? 'cursor-not-allowed opacity-60'
-                                                    : 'cursor-pointer hover:bg-surface-muted',
-                                            )}
-                                        >
-                                            <input
-                                                type={
-                                                    limit === 1
-                                                        ? 'radio'
-                                                        : 'checkbox'
-                                                }
-                                                name="students[]"
-                                                value={child.id}
-                                                checked={checked}
-                                                disabled={covered || full}
-                                                onChange={() =>
-                                                    toggle(child.id)
-                                                }
-                                                className="size-4 accent-primary"
-                                            />
-                                            <span className="font-medium">
-                                                {child.name}
-                                            </span>
-                                            {covered && (
-                                                <span className="text-[0.8125rem] text-muted-foreground">
-                                                    already has access
+                                        return (
+                                            <label
+                                                key={child.id}
+                                                className={cn(
+                                                    'flex items-center gap-3 rounded-md border px-3.5 py-2.5 text-sm',
+                                                    covered || full
+                                                        ? 'cursor-not-allowed opacity-60'
+                                                        : 'cursor-pointer hover:bg-surface-muted',
+                                                )}
+                                            >
+                                                <input
+                                                    type={
+                                                        limit === 1
+                                                            ? 'radio'
+                                                            : 'checkbox'
+                                                    }
+                                                    name="students[]"
+                                                    value={child.id}
+                                                    checked={checked}
+                                                    disabled={covered || full}
+                                                    onChange={() =>
+                                                        toggle(child.id)
+                                                    }
+                                                    className="size-4 accent-primary"
+                                                />
+                                                <span className="font-medium">
+                                                    {child.name}
                                                 </span>
-                                            )}
-                                            {child.state === 'pending' && (
-                                                <span className="text-[0.8125rem] text-muted-foreground">
-                                                    replaces the payment you
-                                                    didn’t finish
-                                                </span>
-                                            )}
-                                        </label>
-                                    );
-                                })}
+                                                {covered && (
+                                                    <span className="text-[0.8125rem] text-muted-foreground">
+                                                        already has access
+                                                    </span>
+                                                )}
+                                                {child.state === 'pending' && (
+                                                    <span className="text-[0.8125rem] text-muted-foreground">
+                                                        replaces the payment you
+                                                        didn’t finish
+                                                    </span>
+                                                )}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <FieldError
+                                    id="students-error"
+                                    message={errors.students}
+                                />
+                            </fieldset>
+                        )}
+
+                        {payer.needsEmail && (
+                            <div className="flex flex-col gap-1.5">
+                                <Label
+                                    htmlFor="billing-email"
+                                    className={cn(smallCaps, 'mb-0.5')}
+                                >
+                                    2. Email for your receipts
+                                </Label>
+                                <Input
+                                    id="billing-email"
+                                    name="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    placeholder="name@example.com"
+                                    aria-invalid={Boolean(errors.email)}
+                                    aria-describedby="billing-email-hint billing-email-error"
+                                    className="sm:max-w-sm"
+                                />
+                                <p
+                                    id="billing-email-hint"
+                                    className="text-[0.8125rem] text-muted-foreground"
+                                >
+                                    Your account doesn’t have an email address.
+                                    The payment provider sends receipts here; a
+                                    parent’s email is fine.
+                                </p>
+                                <FieldError
+                                    id="billing-email-error"
+                                    message={errors.email}
+                                />
                             </div>
-                            <FieldError
-                                id="students-error"
-                                message={errors.students}
-                            />
-                        </fieldset>
+                        )}
 
                         <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
                             <p className="text-sm">
@@ -463,7 +535,9 @@ function SubscribeCard({
                                         <span className="font-semibold">
                                             {plan?.amount} a month
                                         </span>{' '}
-                                        for {list(chosenNames)}
+                                        {payer.isStudent
+                                            ? 'for you'
+                                            : `for ${list(chosenNames)}`}
                                     </>
                                 )}
                             </p>

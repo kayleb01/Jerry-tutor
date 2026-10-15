@@ -13,6 +13,7 @@ use App\Payments\PaymentGatewayManager;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,11 +31,14 @@ class BillingController extends Controller
         $now = CarbonImmutable::now();
         $gateway = $gateways->defaultGateway();
 
+        $isStudent = $payer->hasRole(Role::Student);
+
+        // A student can only pay for themselves, so family plans aren't offered to them.
         $plans = Plan::query()->active()->orderBy('sort_order')->orderBy('id')->get()
-            ->filter(fn (Plan $plan): bool => $plan->isLinkedTo($gateway))
+            ->filter(fn (Plan $plan): bool => $plan->isLinkedTo($gateway) && (! $isStudent || $plan->max_students === 1))
             ->values();
 
-        $children = $payer->hasRole(Role::Student)
+        $children = $isStudent
             ? collect([$payer->load('studentProfile')])
             : $payer->children()->with('studentProfile')->orderBy('name')->get();
 
@@ -57,7 +61,11 @@ class BillingController extends Controller
                 'amount' => $plan->formattedAmount(),
                 'maxStudents' => $plan->max_students,
             ]),
-            'children' => $children->map(fn (User $child): array => $this->child($child, $now)),
+            'payer' => [
+                'isStudent' => $isStudent,
+                'needsEmail' => $payer->email === null,
+            ],
+            'children' => $children->map(fn (User $child): array => $this->child($child, $payer, $now)),
             'subscriptions' => $subscriptions->map(fn (Subscription $subscription): array => $this->subscription($subscription)),
             'payments' => Payment::query()
                 ->where('payer_id', $payer->id)
@@ -83,16 +91,16 @@ class BillingController extends Controller
     /**
      * @return array{id: int, name: string, yearGroup: string|null, state: string, note: string}
      */
-    private function child(User $child, CarbonImmutable $now): array
+    private function child(User $child, User $viewer, CarbonImmutable $now): array
     {
-        $covering = $child->coveringSubscriptions()->grantingAccess($now)->with('plan')->latest('current_period_ends_at')->first();
+        $covering = $child->coveringSubscriptions()->grantingAccess($now)->with(['plan', 'payer'])->latest('current_period_ends_at')->first();
         $pending = $covering === null && $child->coveringSubscriptions()
             ->where('status', SubscriptionStatus::Pending)
             ->where('subscriptions.created_at', '>', $now->subDay())
             ->exists();
 
         [$state, $note] = match (true) {
-            $covering !== null => ['covered', $covering->plan->name.' · '.$this->shortStatus($covering)],
+            $covering !== null => ['covered', $covering->plan->name.' · '.$this->shortStatus($covering).$this->paidBy($covering, $viewer)],
             $pending => ['pending', 'Waiting for the payment to be confirmed'],
             default => ['none', 'No quiz access yet'],
         };
@@ -131,6 +139,14 @@ class BillingController extends Controller
             'canCancel' => $running && ! $subscription->cancel_at_period_end,
             'canUpdateCard' => $running && ! $subscription->cancel_at_period_end,
         ];
+    }
+
+    /**
+     * A child can be paid for by a parent or pay for themselves; say so when it isn't the viewer.
+     */
+    private function paidBy(Subscription $subscription, User $viewer): string
+    {
+        return $subscription->payer_id === $viewer->id ? '' : ' · paid by '.Str::before($subscription->payer->name, ' ');
     }
 
     private function shortStatus(Subscription $subscription): string

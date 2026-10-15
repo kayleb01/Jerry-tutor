@@ -37,11 +37,11 @@ it('closes the payment of a checkout nobody finished', function () {
     expect($payment->fresh())->status->toBe(PaymentStatus::Failed)->failure_reason->toBe('Checkout not completed');
 });
 
-it('shows Billing in the menu for students who pay for themselves', function () {
+it('shows Billing in the menu for every student', function () {
     $selfPaying = User::factory()->student()->create();
 
     $this->actingAs($selfPaying)->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page->where('billing.selfPay', true));
-    $this->actingAs($this->ada)->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page->where('billing.selfPay', false));
+    $this->actingAs($this->ada)->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page->where('billing.selfPay', true));
     $this->actingAs($this->parent)->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page->where('billing.selfPay', false));
 });
 

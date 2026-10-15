@@ -60,7 +60,7 @@ class FlutterwaveGateway implements PaymentGateway
             'currency' => $payment->currency,
             'redirect_url' => $callbackUrl,
             'payment_plan' => $subscription->plan->flutterwave_plan_id,
-            'customer' => ['email' => $subscription->payer->email, 'name' => $subscription->payer->name],
+            'customer' => ['email' => $subscription->billingEmail(), 'name' => $subscription->payer->name],
             'meta' => ['subscription_id' => $subscription->id],
             'customizations' => ['title' => 'Jerry Great Academy'],
         ]));
@@ -77,7 +77,7 @@ class FlutterwaveGateway implements PaymentGateway
     {
         $data = $this->send(fn (PendingRequest $http) => $http->post('/tokenized-charges', [
             'token' => $subscription->gateway_authorization,
-            'email' => $subscription->payer->email,
+            'email' => $subscription->billingEmail(),
             'currency' => $payment->currency,
             'amount' => self::toNaira($payment->amount),
             'tx_ref' => $payment->reference,
@@ -118,7 +118,7 @@ class FlutterwaveGateway implements PaymentGateway
     public function cancel(Subscription $subscription): void
     {
         if (blank($subscription->gateway_subscription_code)) {
-            $id = $this->findSubscriptionId($subscription->payer->email, (string) $subscription->plan->flutterwave_plan_id)
+            $id = $this->findSubscriptionId($subscription->billingEmail(), (string) $subscription->plan->flutterwave_plan_id)
                 ?? throw new GatewayException("Flutterwave hasn't confirmed this subscription yet. Please try again in a few minutes.");
             $subscription->update(['gateway_subscription_code' => $id]);
         }

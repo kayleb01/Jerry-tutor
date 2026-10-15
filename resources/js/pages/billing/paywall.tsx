@@ -33,6 +33,9 @@ export default function Paywall({ guardians, canPay }: PaywallProps) {
                         {canPay
                             ? 'Subscribe to unlock quizzes and exam practice for your year group.'
                             : `Ask ${list(guardians)} to subscribe for you on their Billing page. Your quizzes unlock as soon as they do.`}
+                        {canPay &&
+                            guardians.length > 0 &&
+                            ` Or ask ${list(guardians)} to subscribe for you from their account.`}
                     </p>
                 </div>
                 {canPay ? (

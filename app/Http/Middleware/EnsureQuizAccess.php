@@ -25,11 +25,9 @@ class EnsureQuizAccess
 
         abort_unless($user?->hasRole(Role::Student), 403);
 
-        $guardians = $user->guardians()->orderBy('name')->pluck('name')->all();
-
         return Inertia::render('billing/paywall', [
-            'guardians' => $guardians,
-            'canPay' => $guardians === [],
+            'guardians' => $user->guardians()->orderBy('name')->pluck('name')->all(),
+            'canPay' => true,
         ])->toResponse($request);
     }
 }
