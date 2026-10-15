@@ -25,6 +25,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuardianNoticeController;
 use App\Http\Controllers\LessonReportController;
 use App\Http\Controllers\PaymentWebhookController;
+use App\Http\Controllers\QuizAttemptController;
+use App\Http\Controllers\QuizPlayerController;
 use App\Http\Controllers\RaisedIssueController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\TutorCheckInController;
@@ -56,6 +58,13 @@ Route::post('webhooks/{gateway}', PaymentWebhookController::class)
     ->whereIn('gateway', ['paystack', 'flutterwave'])
     ->middleware('throttle:120,1')
     ->name('webhooks.payments');
+
+Route::middleware(['auth', 'verified', 'role:student', 'quiz.access'])->group(function () {
+    Route::post('quizzes/{quiz:slug}/attempts', [QuizAttemptController::class, 'store'])->name('quizzes.attempts.store');
+    Route::get('quiz-attempts/{attempt}', [QuizAttemptController::class, 'show'])->name('quiz-attempts.show');
+    Route::get('quiz-attempts/{attempt}/questions/{position}', [QuizPlayerController::class, 'show'])->whereNumber('position')->name('quiz-attempts.questions.show');
+    Route::put('quiz-attempts/{attempt}/questions/{position}', [QuizPlayerController::class, 'update'])->whereNumber('position')->name('quiz-attempts.questions.update');
+});
 
 Route::middleware(['auth', 'verified', 'role:guardian,student'])->prefix('billing')->name('billing.')->group(function () {
     Route::get('/', [BillingController::class, 'index'])->name('index');
