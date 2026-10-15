@@ -54,4 +54,12 @@ interface PaymentGateway
      * @throws InvalidWebhookSignature
      */
     public function parseWebhook(Request $request): ?GatewayEvent;
+
+    /**
+     * Re-check a webhook's payment with the provider before acting on it, where the webhook itself
+     * can't be trusted on its own. Returns the event as the provider confirms it.
+     *
+     * @throws GatewayException
+     */
+    public function confirm(GatewayEvent $event): GatewayEvent;
 }

@@ -25,5 +25,7 @@ final readonly class VerifiedPayment
         public ?CarbonImmutable $paidAt = null,
         public ?string $failureReason = null,
         public array $raw = [],
+        /** Still processing at the gateway: neither paid nor failed yet. */
+        public bool $pending = false,
     ) {}
 }

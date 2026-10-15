@@ -17,6 +17,7 @@ final readonly class GatewayEvent
         public string $eventKey,
         public ?string $reference = null,
         public ?string $subscriptionCode = null,
+        public ?string $planCode = null,
         public ?string $customerCode = null,
         public ?string $emailToken = null,
         public ?int $amount = null,
@@ -34,6 +35,16 @@ final readonly class GatewayEvent
     /**
      * The event a server-side verification stands for, so the callback and webhooks share one code path.
      */
+    /**
+     * The same event with fields replaced, e.g. after re-checking it with the gateway.
+     *
+     * @param  array<string, mixed>  $changes
+     */
+    public function with(array $changes): self
+    {
+        return new self(...[...get_object_vars($this), ...$changes]);
+    }
+
     public static function fromVerifiedPayment(VerifiedPayment $payment): self
     {
         return new self(

@@ -48,11 +48,21 @@ class ApplyGatewayEvent
     {
         $payment = $this->ourPayment($gateway, $event->reference);
 
-        if ($payment) {
-            if ($payment->status === PaymentStatus::Succeeded) {
+        $renewalReference = null;
+        $subscription = null;
+
+        if ($payment && $payment->status === PaymentStatus::Succeeded) {
+            $isNewCharge = filled($event->transactionId) && filled($payment->gateway_transaction_id)
+                && $event->transactionId !== $payment->gateway_transaction_id;
+
+            if (! $isNewCharge) {
                 return null;
             }
 
+            // The gateway reused the first payment's reference for a later charge: that's a renewal.
+            $subscription = Subscription::query()->with('plan')->lockForUpdate()->find($payment->subscription_id);
+            $renewalReference = "{$payment->reference}:{$event->transactionId}";
+        } elseif ($payment) {
             $subscription = Subscription::query()->lockForUpdate()->find($payment->subscription_id);
 
             if ($event->amount !== $payment->amount || $event->currency !== 'NGN') {
@@ -60,6 +70,15 @@ class ApplyGatewayEvent
                     'status' => PaymentStatus::Failed,
                     'failure_reason' => 'Amount or currency did not match the plan',
                     'gateway_response' => $event->raw,
+                ]);
+
+                // The gateway may still have started billing the customer; someone has to sort it out.
+                Log::critical('A payment did not match its plan; access was not given. Check the plan price in the gateway dashboard and refund or cancel at the gateway if needed.', [
+                    'gateway' => $gateway->value,
+                    'reference' => $payment->reference,
+                    'expected' => $payment->amount,
+                    'received' => $event->amount,
+                    'currency' => $event->currency,
                 ]);
 
                 return null;
@@ -71,14 +90,16 @@ class ApplyGatewayEvent
         }
 
         // A renewal: the gateway chose the reference, so find the subscription another way.
-        $subscription = $this->findSubscription($gateway, $event);
+        $subscription ??= $this->findSubscription($gateway, $event);
 
         if ($event->currency !== 'NGN') {
-            throw new UnmatchedGatewayEvent("Ignored a {$event->currency} renewal: subscriptions are in naira.");
+            Log::critical("Ignored a {$event->currency} renewal: subscriptions are in naira.", ['gateway' => $gateway->value, 'reference' => $event->reference]);
+
+            return null;
         }
 
         $payment = Payment::query()->firstOrCreate(
-            ['reference' => $event->reference ?? "{$gateway->value}-{$event->eventKey}"],
+            ['reference' => $renewalReference ?? $event->reference ?? "{$gateway->value}-{$event->eventKey}"],
             [
                 'subscription_id' => $subscription->id,
                 'payer_id' => $subscription->payer_id,
@@ -220,34 +241,43 @@ class ApplyGatewayEvent
     }
 
     /**
-     * By the gateway's subscription code, or else the customer's most recent subscription on this gateway.
+     * The subscription an event belongs to. A gateway subscription code is authoritative: if it's unknown,
+     * nothing is guessed. Without one, the customer's subscription on the event's plan (by plan code, or else
+     * by amount) is used, the one falling due first. A family holds at most one live subscription per plan.
      *
      * @throws UnmatchedGatewayEvent
      */
     private function findSubscription(PaymentGatewayName $gateway, GatewayEvent $event): Subscription
     {
-        $query = Subscription::query()->with('plan')->where('gateway', $gateway)->lockForUpdate();
+        $query = fn () => Subscription::query()->with('plan')->where('gateway', $gateway)->lockForUpdate();
+        $unmatched = new UnmatchedGatewayEvent("No {$gateway->label()} subscription matches this event yet.");
 
-        $subscription = match (true) {
-            filled($event->subscriptionCode) => (clone $query)->where('gateway_subscription_code', $event->subscriptionCode)->first()
-                ?? ($event->customerCode ? $this->latestForCustomer(clone $query, $event->customerCode) : null),
-            filled($event->customerCode) => $this->latestForCustomer($query, $event->customerCode),
-            default => null,
-        };
+        if (filled($event->subscriptionCode)) {
+            $known = $query()->where('gateway_subscription_code', $event->subscriptionCode)->first();
 
-        return $subscription ?? throw new UnmatchedGatewayEvent("No {$gateway->label()} subscription matches this event yet.");
-    }
+            if ($known || $event->type !== GatewayEventType::SubscriptionCreated) {
+                return $known ?? throw $unmatched;
+            }
+        }
 
-    /**
-     * @param  Builder<Subscription>  $query
-     */
-    private function latestForCustomer(Builder $query, string $customerCode): ?Subscription
-    {
-        return $query
-            ->where('gateway_customer_code', $customerCode)
-            ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::PastDue, SubscriptionStatus::Pending, SubscriptionStatus::Cancelled])
-            ->latest('id')
-            ->first();
+        if (blank($event->customerCode)) {
+            throw $unmatched;
+        }
+
+        $planColumn = $gateway === PaymentGatewayName::Paystack ? 'paystack_plan_code' : 'flutterwave_plan_id';
+
+        return $query()
+            ->where('gateway_customer_code', $event->customerCode)
+            ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::PastDue, SubscriptionStatus::Cancelled])
+            ->when($event->type === GatewayEventType::SubscriptionCreated, fn (Builder $query) => $query->whereNull('gateway_subscription_code'))
+            ->when(
+                filled($event->planCode),
+                fn (Builder $query) => $query->whereHas('plan', fn (Builder $plan) => $plan->where($planColumn, $event->planCode)),
+                fn (Builder $query) => $query->when($event->amount, fn (Builder $query, int $amount) => $query->whereHas('plan', fn (Builder $plan) => $plan->where('amount', $amount))),
+            )
+            ->orderBy('current_period_ends_at')
+            ->orderBy('id')
+            ->first() ?? throw $unmatched;
     }
 
     /**

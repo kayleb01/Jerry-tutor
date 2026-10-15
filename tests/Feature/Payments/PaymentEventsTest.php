@@ -63,6 +63,8 @@ function fakeGateways(array $overrides = []): void
         'api.paystack.co/transaction/verify/*' => Http::response(paymentFixture('paystack', 'verify-success')),
         'api.flutterwave.com/v3/transactions/verify_by_reference*' => Http::response(paymentFixture('flutterwave', 'verify-success')),
         'api.flutterwave.com/v3/subscriptions*' => Http::response(paymentFixture('flutterwave', 'subscriptions')),
+        'api.flutterwave.com/v3/transactions/288200108/verify' => Http::response(paymentFixture('flutterwave', 'verify-success')),
+        'api.flutterwave.com/v3/transactions/288300555/verify' => Http::response(['status' => 'success', 'data' => paymentFixture('flutterwave', 'event-charge-renewal')['data']]),
         '*' => Http::response(['status' => true, 'message' => 'ok']),
         ...$overrides,
     ]);

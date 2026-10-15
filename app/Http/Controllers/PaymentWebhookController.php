@@ -29,7 +29,7 @@ class PaymentWebhookController extends Controller
             return response()->json(['status' => 'ignored']);
         }
 
-        $record = WebhookEvent::query()->firstOrCreate(
+        $record = WebhookEvent::query()->createOrFirst(
             ['gateway' => $name, 'event_key' => $event->eventKey],
             ['type' => $event->type->value, 'payload' => json_decode($request->getContent(), true) ?? []],
         );

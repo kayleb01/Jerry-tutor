@@ -90,6 +90,7 @@ class FlutterwaveGateway implements PaymentGateway
             paidAt: $succeeded && filled($data['created_at'] ?? null) ? CarbonImmutable::parse($data['created_at']) : null,
             failureReason: $succeeded ? null : ($data['processor_response'] ?? 'Payment was not completed'),
             raw: $data,
+            pending: ($data['status'] ?? null) === 'pending',
         );
     }
 
@@ -136,6 +137,34 @@ class FlutterwaveGateway implements PaymentGateway
             failureReason: $succeeded ? null : ($data['processor_response'] ?? 'Payment failed'),
             raw: $payload,
         );
+    }
+
+    /**
+     * Flutterwave's verif-hash is a shared secret rather than a signature of the body, so a successful
+     * charge is re-fetched by transaction id (as Flutterwave advises) and the verified figures are used.
+     */
+    public function confirm(GatewayEvent $event): GatewayEvent
+    {
+        if ($event->type !== GatewayEventType::PaymentSucceeded) {
+            return $event;
+        }
+
+        $data = $this->send(fn (PendingRequest $http) => $http->get('/transactions/'.rawurlencode((string) $event->transactionId).'/verify'))->json('data');
+
+        if (! is_array($data) || (string) ($data['id'] ?? '') !== (string) $event->transactionId) {
+            throw new GatewayException('Flutterwave could not confirm that transaction.');
+        }
+
+        $succeeded = ($data['status'] ?? null) === 'successful';
+
+        return $event->with([
+            'type' => $succeeded ? GatewayEventType::PaymentSucceeded : GatewayEventType::PaymentFailed,
+            'reference' => $data['tx_ref'] ?? $event->reference,
+            'amount' => self::toKobo($data['amount'] ?? 0),
+            'currency' => strtoupper((string) ($data['currency'] ?? '')),
+            'authorization' => $succeeded ? ($data['card']['token'] ?? $event->authorization) : null,
+            'failureReason' => $succeeded ? null : ($data['processor_response'] ?? 'Payment failed'),
+        ]);
     }
 
     /**

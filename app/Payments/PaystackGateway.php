@@ -74,6 +74,7 @@ class PaystackGateway implements PaymentGateway
         }
 
         $succeeded = ($data['status'] ?? null) === 'success';
+        $pending = in_array($data['status'] ?? null, ['ongoing', 'pending', 'processing', 'queued'], true);
 
         return new VerifiedPayment(
             reference: (string) ($data['reference'] ?? $reference),
@@ -88,6 +89,7 @@ class PaystackGateway implements PaymentGateway
             paidAt: filled($data['paid_at'] ?? null) ? CarbonImmutable::parse($data['paid_at']) : null,
             failureReason: $succeeded ? null : ($data['gateway_response'] ?? 'Payment was not completed'),
             raw: $data,
+            pending: $pending,
         );
     }
 
@@ -127,6 +129,7 @@ class PaystackGateway implements PaymentGateway
                 type: GatewayEventType::PaymentSucceeded,
                 eventKey: $key,
                 reference: $data['reference'],
+                planCode: is_array($data['plan'] ?? null) ? ($data['plan']['plan_code'] ?? null) : ($data['plan'] ?? null),
                 customerCode: $data['customer']['customer_code'] ?? null,
                 amount: (int) $data['amount'],
                 currency: strtoupper((string) $data['currency']),
@@ -141,6 +144,7 @@ class PaystackGateway implements PaymentGateway
                 type: GatewayEventType::SubscriptionCreated,
                 eventKey: $key,
                 subscriptionCode: $data['subscription_code'] ?? null,
+                planCode: $data['plan']['plan_code'] ?? null,
                 customerCode: $data['customer']['customer_code'] ?? null,
                 emailToken: $data['email_token'] ?? null,
                 periodEndsAt: filled($data['next_payment_date'] ?? null) ? CarbonImmutable::parse($data['next_payment_date']) : null,
@@ -188,6 +192,14 @@ class PaystackGateway implements PaymentGateway
             ),
             default => null,
         };
+    }
+
+    /**
+     * Paystack signs the whole body with our secret key, so a verified webhook needs no second look.
+     */
+    public function confirm(GatewayEvent $event): GatewayEvent
+    {
+        return $event;
     }
 
     /**

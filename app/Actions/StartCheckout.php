@@ -118,6 +118,16 @@ class StartCheckout
             }
         }
 
+        $samePlan = $payer->subscriptions()
+            ->where('plan_id', $plan->id)
+            ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::PastDue])
+            ->exists();
+
+        if ($samePlan) {
+            $bigger = Plan::query()->active()->where('max_students', '>', $plan->max_students)->orderBy('max_students')->value('name');
+            $fail("You already have a {$plan->name}.".($bigger ? " Choose the {$bigger} to cover more children." : ''));
+        }
+
         $covered = $students->first(fn (User $student): bool => $student->coveringSubscriptions()
             ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::PastDue])
             ->exists());
