@@ -48,3 +48,21 @@ function something()
 {
     // ..
 }
+
+/**
+ * A recorded gateway payload from tests/Fixtures/payments/{gateway}/{name}.json, as raw JSON.
+ */
+function paymentFixtureJson(string $gateway, string $name): string
+{
+    return file_get_contents(__DIR__."/Fixtures/payments/{$gateway}/{$name}.json");
+}
+
+/**
+ * A recorded gateway payload, decoded.
+ *
+ * @return array<string, mixed>
+ */
+function paymentFixture(string $gateway, string $name): array
+{
+    return json_decode(paymentFixtureJson($gateway, $name), true, flags: JSON_THROW_ON_ERROR);
+}

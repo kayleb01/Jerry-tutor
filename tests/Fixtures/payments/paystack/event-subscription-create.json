@@ -1,0 +1,1 @@
+{"event": "subscription.create", "data": {"subscription_code": "SUB_vsyqdmlzble3uii", "email_token": "d7gofp6yppn3qz7", "status": "active", "amount": 500000, "next_payment_date": "2026-11-15T12:00:00.000Z", "customer": {"customer_code": "CUS_xnxdt6s1zg1f4nx", "email": "ngozi@example.com"}, "plan": {"plan_code": "PLN_standard"}}}

@@ -1,0 +1,1 @@
+{"status": "success", "message": "Payment plan fetched", "data": {"id": 61427, "name": "Standard membership", "amount": 5000, "interval": "monthly", "duration": 0, "status": "active", "currency": "NGN", "plan_token": "rpp_12c8f1a", "created_at": "2026-10-01T10:00:00.000Z"}}
