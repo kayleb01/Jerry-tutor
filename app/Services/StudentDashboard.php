@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\QuizAttemptStatus;
 use App\Models\Lesson;
+use App\Models\QuizAttempt;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -66,7 +68,8 @@ class StudentDashboard
                 'classTime' => $this->duration($countable->sum(fn (Lesson $lesson): int => $this->minutes($lesson))),
                 'lessonsThisWeek' => $countable->count(),
             ],
-            'strands' => self::STRANDS,
+            'strands' => $this->strands($student),
+            'quizAccess' => $student->hasQuizAccess(),
             'today' => $today->values()->all(),
             'todayMinutes' => $today->reject(fn (array $card): bool => $card['state'] === 'cancelled')->sum('minutes'),
             'week' => $weekLessons
@@ -136,5 +139,37 @@ class StudentDashboard
         return $start->month === $end->month
             ? "Week of {$start->format('j')} – {$end->format('j F')}"
             : "Week of {$start->format('j F')} – {$end->format('j F')}";
+    }
+
+    /**
+     * The four strands, each linked to the student's quiz for that strand with their last score.
+     *
+     * @return array<int, array{key: string, name: string, summary: string, quizSlug: string|null, lastScore: string|null}>
+     */
+    private function strands(User $student): array
+    {
+        $year = $student->studentProfile?->year_group;
+        $slugs = collect(self::STRANDS)->mapWithKeys(fn (array $strand): array => [$strand['key'] => QuizCatalogue::strandQuizSlug($year, $strand['key'])]);
+
+        $latest = QuizAttempt::query()
+            ->where('user_id', $student->id)
+            ->where('status', QuizAttemptStatus::Submitted)
+            ->whereHas('quiz', fn ($quiz) => $quiz->whereIn('slug', $slugs->filter()->values()))
+            ->with('quiz:id,slug')
+            ->latest('submitted_at')
+            ->get()
+            ->unique('quiz_id')
+            ->keyBy(fn (QuizAttempt $attempt): string => $attempt->quiz->slug);
+
+        return array_map(function (array $strand) use ($slugs, $latest): array {
+            $slug = $slugs[$strand['key']];
+            $attempt = $slug ? $latest->get($slug) : null;
+
+            return [
+                ...$strand,
+                'quizSlug' => $slug,
+                'lastScore' => $attempt ? "{$attempt->score}/{$attempt->max_score}" : null,
+            ];
+        }, self::STRANDS);
     }
 }

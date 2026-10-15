@@ -26,6 +26,7 @@ use App\Http\Controllers\GuardianNoticeController;
 use App\Http\Controllers\LessonReportController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\QuizAttemptController;
+use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuizPlayerController;
 use App\Http\Controllers\RaisedIssueController;
 use App\Http\Controllers\RegisterController;
@@ -60,6 +61,7 @@ Route::post('webhooks/{gateway}', PaymentWebhookController::class)
     ->name('webhooks.payments');
 
 Route::middleware(['auth', 'verified', 'role:student', 'quiz.access'])->group(function () {
+    Route::get('quizzes', [QuizController::class, 'index'])->name('quizzes.index');
     Route::post('quizzes/{quiz:slug}/attempts', [QuizAttemptController::class, 'store'])->name('quizzes.attempts.store');
     Route::get('quiz-attempts/{attempt}', [QuizAttemptController::class, 'show'])->name('quiz-attempts.show');
     Route::post('quiz-attempts/{attempt}/submit', [QuizAttemptController::class, 'submit'])->name('quiz-attempts.submit');
