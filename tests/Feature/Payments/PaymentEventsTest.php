@@ -76,7 +76,7 @@ it('activates the subscription when the callback verifies a payment', function (
 
     $this->actingAs($this->parent)
         ->get(route('billing.callback', [$gateway, 'reference' => 'JGA-01JTESTREFERENCE']))
-        ->assertRedirect(route('dashboard'))
+        ->assertRedirect(route('billing.index'))
         ->assertInertiaFlash('toast.message', "You're subscribed. Ada can start their quizzes now.");
 
     $subscription->refresh();
@@ -100,7 +100,7 @@ it('accepts the Flutterwave redirect, which sends tx_ref', function () {
 
     $this->actingAs($this->parent)
         ->get(route('billing.callback', ['flutterwave', 'status' => 'successful', 'tx_ref' => 'JGA-01JTESTREFERENCE', 'transaction_id' => 288200108]))
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('billing.index'));
 
     expect(Payment::sole()->status)->toBe(PaymentStatus::Succeeded);
 });

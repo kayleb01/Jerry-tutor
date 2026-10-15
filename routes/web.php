@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
 use App\Http\Controllers\BillingCallbackController;
 use App\Http\Controllers\BillingCheckoutController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\CancelSubscriptionController;
 use App\Http\Controllers\ChildAttendanceController;
 use App\Http\Controllers\ChildController;
@@ -53,6 +54,7 @@ Route::post('webhooks/{gateway}', PaymentWebhookController::class)
     ->name('webhooks.payments');
 
 Route::middleware(['auth', 'verified', 'role:guardian,student'])->prefix('billing')->name('billing.')->group(function () {
+    Route::get('/', [BillingController::class, 'index'])->name('index');
     Route::post('checkout', [BillingCheckoutController::class, 'store'])->name('checkout');
     Route::get('callback/{gateway}', BillingCallbackController::class)->whereIn('gateway', ['paystack', 'flutterwave'])->name('callback');
     Route::post('subscriptions/{subscription}/cancel', CancelSubscriptionController::class)->name('subscriptions.cancel');

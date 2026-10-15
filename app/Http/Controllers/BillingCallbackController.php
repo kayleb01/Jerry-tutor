@@ -37,14 +37,14 @@ class BillingCallbackController extends Controller
                 $possessive = str_ends_with($names, 's') ? "{$names}'" : "{$names}'s";
                 Inertia::flash('toast', ['type' => 'success', 'message' => "Your payment is still being processed. We'll switch {$possessive} access on as soon as it clears."]);
 
-                return to_route('dashboard');
+                return to_route('billing.index');
             }
 
             $applyGatewayEvent->handle($name, GatewayEvent::fromVerifiedPayment($verified));
         } catch (GatewayException) {
             Inertia::flash('toast', ['type' => 'error', 'message' => "We couldn't confirm your payment yet. If you were charged, it will show here shortly."]);
 
-            return to_route('dashboard');
+            return to_route('billing.index');
         }
 
         $payment->refresh();
@@ -56,6 +56,6 @@ class BillingCallbackController extends Controller
             Inertia::flash('toast', ['type' => 'error', 'message' => "That payment didn't go through: {$payment->failure_reason}"]);
         }
 
-        return to_route('dashboard');
+        return to_route('billing.index');
     }
 }
