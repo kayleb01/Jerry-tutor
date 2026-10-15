@@ -33,7 +33,7 @@ it('lets a student with a parent account subscribe for themselves', function () 
     expect($subscription->payer_id)->toBe($this->ada->id)
         ->and($subscription->billing_email)->toBe('ada.home@example.com')
         ->and($this->ada->fresh()->email)->toBeNull();
-    Http::assertSent(fn (ClientRequest $request) => $request['email'] === 'ada.home@example.com');
+    Http::assertSent(fn (ClientRequest $request) => ($request->data()['email'] ?? null) === 'ada.home@example.com');
 });
 
 it('asks a student without an email address for one to send receipts to', function (array $email) {
@@ -55,7 +55,7 @@ it('uses the account email when the student has one', function () {
         ->assertRedirect('https://checkout.paystack.com/0peioxfhpn');
 
     expect(Subscription::sole()->billing_email)->toBeNull();
-    Http::assertSent(fn (ClientRequest $request) => $request['email'] === 'ada@example.com');
+    Http::assertSent(fn (ClientRequest $request) => ($request->data()['email'] ?? null) === 'ada@example.com');
 });
 
 it('shows a student the one-student plans and whether it needs their email', function () {
