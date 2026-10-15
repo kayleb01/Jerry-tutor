@@ -1,4 +1,4 @@
-import { Link, router, useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import FieldError from '@/components/field-error';
@@ -75,6 +75,8 @@ export default function Play(props: PlayProps) {
 function Player({ attempt, question }: PlayProps) {
     const form = useForm<AnswerData>(initialAnswer(question.response));
     const [confirmingFinish, setConfirmingFinish] = useState(false);
+    const [finishing, setFinishing] = useState(false);
+    const busy = form.processing || finishing;
     const { position, total } = attempt;
     const isLast = position >= total;
 
@@ -153,7 +155,16 @@ function Player({ attempt, question }: PlayProps) {
             return;
         }
 
-        saveThen(() => router.post(submitAttempt.url(attempt.id)));
+        saveThen(() =>
+            router.post(
+                submitAttempt.url(attempt.id),
+                {},
+                {
+                    onStart: () => setFinishing(true),
+                    onFinish: () => setFinishing(false),
+                },
+            ),
+        );
     }
 
     const error =
@@ -170,12 +181,16 @@ function Player({ attempt, question }: PlayProps) {
                         <span className="font-semibold">
                             Question {position} of {total}
                         </span>
-                        <Link
-                            href={quizzesIndex()}
-                            className="font-semibold text-link hover:underline"
+                        <button
+                            type="button"
+                            onClick={() =>
+                                saveThen(() => router.visit(quizzesIndex()))
+                            }
+                            disabled={busy}
+                            className="font-semibold text-link hover:underline disabled:opacity-40"
                         >
                             Save and leave
-                        </Link>
+                        </button>
                     </div>
                     <div
                         className="h-2 overflow-hidden rounded-full bg-surface-muted"
@@ -207,7 +222,7 @@ function Player({ attempt, question }: PlayProps) {
                                     key={item}
                                     type="button"
                                     onClick={() => goTo(item)}
-                                    disabled={form.processing}
+                                    disabled={busy}
                                     aria-current={
                                         item === position ? 'step' : undefined
                                     }
@@ -330,14 +345,14 @@ function Player({ attempt, question }: PlayProps) {
                                 <Button
                                     variant="outline"
                                     onClick={() => goTo(unanswered[0])}
-                                    disabled={form.processing}
+                                    disabled={busy}
                                 >
                                     Go to question {unanswered[0]}
                                 </Button>
                                 <Button
                                     variant="accent"
                                     onClick={requestFinish}
-                                    disabled={form.processing}
+                                    disabled={busy}
                                 >
                                     Finish anyway
                                 </Button>
@@ -350,7 +365,7 @@ function Player({ attempt, question }: PlayProps) {
                             variant="outline"
                             size="lg"
                             onClick={() => goTo(position - 1)}
-                            disabled={position <= 1 || form.processing}
+                            disabled={position <= 1 || busy}
                         >
                             <Icon name="arrow-left" className="size-4" />
                             Previous
@@ -362,7 +377,7 @@ function Player({ attempt, question }: PlayProps) {
                                     size="lg"
                                     className="hidden sm:inline-flex"
                                     onClick={requestFinish}
-                                    disabled={form.processing}
+                                    disabled={busy}
                                 >
                                     Finish
                                 </Button>
@@ -371,7 +386,7 @@ function Player({ attempt, question }: PlayProps) {
                                 type="submit"
                                 size="lg"
                                 variant={isLast ? 'accent' : 'primary'}
-                                disabled={form.processing}
+                                disabled={busy}
                             >
                                 {isLast
                                     ? 'Finish quiz'

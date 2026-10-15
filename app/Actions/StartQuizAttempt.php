@@ -23,24 +23,28 @@ class StartQuizAttempt
      */
     public function handle(Quiz $quiz, User $student): ?QuizAttempt
     {
-        $unfinished = QuizAttempt::query()
-            ->where('user_id', $student->id)
-            ->where('quiz_id', $quiz->id)
-            ->where('status', QuizAttemptStatus::InProgress)
-            ->latest('id')
-            ->first();
+        // Two tabs starting the same quiz at once must end up on one attempt: lock the student,
+        // then look for an unfinished attempt and pick questions inside the same transaction.
+        return DB::transaction(function () use ($quiz, $student): ?QuizAttempt {
+            User::query()->whereKey($student->id)->lockForUpdate()->first();
 
-        if ($unfinished) {
-            return $unfinished;
-        }
+            $unfinished = QuizAttempt::query()
+                ->where('user_id', $student->id)
+                ->where('quiz_id', $quiz->id)
+                ->where('status', QuizAttemptStatus::InProgress)
+                ->latest('id')
+                ->first();
 
-        $questions = $this->picker->pick($quiz, $student);
+            if ($unfinished) {
+                return $unfinished;
+            }
 
-        if ($questions->isEmpty()) {
-            return null;
-        }
+            $questions = $this->picker->pick($quiz, $student);
 
-        return DB::transaction(function () use ($quiz, $student, $questions): QuizAttempt {
+            if ($questions->isEmpty()) {
+                return null;
+            }
+
             $now = now();
             $attempt = QuizAttempt::create([
                 'user_id' => $student->id,

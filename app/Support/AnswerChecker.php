@@ -30,13 +30,44 @@ final class AnswerChecker
         };
     }
 
+    /** Leading currency signs and trailing units a child might add to a number. */
+    private const NUMBER_DECORATION = '/^[£₦$€]|(%|°|cm²|m²|cm|mm|km|kg|ml|m|g|l|p)$/iu';
+
+    /** Half a unit in the last stored decimal place (answers are kept to 4 places), so 1/3 matches 0.3333. */
+    private const STORED_PRECISION = 0.00005;
+
     /**
-     * "1,000", " +42 ", ".5", "3/4" and "-5" are all read as numbers; anything else is wrong.
+     * "1,000", " +42 ", ".5", "3/4", "1 3/4", "−5", "£5" and "36 cm" are all read as numbers; anything else isn't.
      */
     public static function parseNumber(string $typed): ?float
     {
-        $clean = str_replace([',', ' ', "\u{00a0}"], '', trim($typed));
-        $clean = ltrim($clean, '+');
+        $clean = trim(\Normalizer::normalize($typed, \Normalizer::FORM_KC) ?: $typed);
+        $clean = str_replace(["\u{2212}", "\u{2013}", "\u{2014}", "\u{fe63}"], '-', $clean);
+        $clean = (string) preg_replace('/\s+/u', ' ', $clean);
+        $clean = trim((string) preg_replace(self::NUMBER_DECORATION, '', $clean));
+        $clean = trim((string) preg_replace(self::NUMBER_DECORATION, '', $clean));
+        $clean = ltrim($clean, '+ ');
+
+        if (preg_match('/^(-?)(\d+) (\d+)\/(\d+)$/', $clean, $mixed)) {
+            if ((int) $mixed[4] === 0) {
+                return null;
+            }
+
+            $value = (float) $mixed[2] + (float) $mixed[3] / (float) $mixed[4];
+
+            return $mixed[1] === '-' ? -$value : $value;
+        }
+
+        $clean = str_replace(' ', '', $clean);
+
+        // A comma only separates thousands ("1,000"); "1,5" is ambiguous, so it isn't read.
+        if (str_contains($clean, ',')) {
+            if (! preg_match('/^-?\d{1,3}(,\d{3})+(\.\d+)?$/', $clean)) {
+                return null;
+            }
+
+            $clean = str_replace(',', '', $clean);
+        }
 
         if (preg_match('/^(-?\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/', $clean, $fraction)) {
             return (float) $fraction[2] === 0.0 ? null : (float) $fraction[1] / (float) $fraction[2];
@@ -49,7 +80,7 @@ final class AnswerChecker
     {
         $value = self::parseNumber($typed);
 
-        return $value !== null && abs($value - $answer) <= $tolerance + 1e-9;
+        return $value !== null && abs($value - $answer) <= $tolerance + self::STORED_PRECISION;
     }
 
     /**

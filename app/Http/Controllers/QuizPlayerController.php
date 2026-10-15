@@ -7,6 +7,8 @@ use App\Enums\QuizAttemptStatus;
 use App\Models\QuestionOption;
 use App\Models\QuizAttempt;
 use App\Models\QuizAttemptQuestion;
+use App\Support\AnswerChecker;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -46,7 +48,7 @@ class QuizPlayerController extends Controller
                 'imageUrl' => $question->image_path ? Storage::disk('public')->url($question->image_path) : null,
                 'marks' => $question->marks,
                 'options' => $question->type->hasOptions()
-                    ? $question->options->map(fn (QuestionOption $option): array => ['id' => $option->id, 'body' => $option->body])->values()->all()
+                    ? $this->shuffled($question->options, $item)->map(fn (QuestionOption $option): array => ['id' => $option->id, 'body' => $option->body])->values()->all()
                     : [],
                 'response' => $item->response,
             ],
@@ -75,8 +77,12 @@ class QuizPlayerController extends Controller
                 'options.*' => ['integer', 'distinct', Rule::in($optionIds)],
             ], ['options.*' => 'Tick at least one answer.', 'options.*.*' => 'Tick at least one answer.'])['options']))],
             QuestionType::Numeric => ['value' => trim($request->validate([
-                'value' => ['required', 'string', 'max:30'],
-            ], ['value.*' => 'Type a number.'])['value'])],
+                'value' => ['required', 'string', 'max:30', function (string $attribute, string $value, \Closure $fail): void {
+                    if (AnswerChecker::parseNumber($value) === null) {
+                        $fail('Type just the number, like 12, 0.5 or 3/4.');
+                    }
+                }],
+            ], ['value.required' => 'Type a number.', 'value.string' => 'Type a number.', 'value.max' => 'Type a number.'])['value'])],
             QuestionType::ShortText => ['text' => trim($request->validate([
                 'text' => ['required', 'string', 'max:100'],
             ], ['text.*' => 'Type your answer.'])['text'])],
@@ -88,6 +94,18 @@ class QuizPlayerController extends Controller
         $next = $request->boolean('stay') || $position >= $total ? $position : $position + 1;
 
         return to_route('quiz-attempts.questions.show', [$attempt, $next]);
+    }
+
+    /**
+     * The choices in an order fixed for this attempt question, so the right answer isn't always "A"
+     * and the order doesn't jump about when the student comes back to the question.
+     *
+     * @param  Collection<int, QuestionOption>  $options
+     * @return Collection<int, QuestionOption>
+     */
+    private function shuffled(Collection $options, QuizAttemptQuestion $item): Collection
+    {
+        return $options->sortBy(fn (QuestionOption $option): int => crc32("{$item->id}:{$option->id}"));
     }
 
     private function item(QuizAttempt $attempt, int $position): ?QuizAttemptQuestion

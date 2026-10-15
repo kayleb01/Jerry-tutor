@@ -112,6 +112,35 @@ it('refuses answers that do not fit the question', function () {
     expect($attempt->questions()->whereNotNull('response')->count())->toBe(0);
 });
 
+it('asks again when a number answer cannot be read', function () {
+    startQuiz($this->student, $this->quiz);
+    $attempt = QuizAttempt::sole();
+    $position = $attempt->questions->firstWhere('question_id', $this->number->id)->position;
+
+    $this->actingAs($this->student)->put(route('quiz-attempts.questions.update', [$attempt, $position]), ['value' => 'about 3'])
+        ->assertSessionHasErrors(['value']);
+
+    expect($attempt->questions()->whereNotNull('response')->count())->toBe(0);
+});
+
+it('mixes up the order of choices for each attempt, and keeps it while the student plays', function () {
+    $orders = collect(range(1, 8))->map(function () {
+        $student = User::factory()->student(YearGroup::Year5)->create();
+        Subscription::factory()->active()->forStudents($student)->create();
+        startQuiz($student, $this->quiz);
+        $attempt = QuizAttempt::where('user_id', $student->id)->sole();
+        $position = $attempt->questions->firstWhere('question_id', $this->choice->id)->position;
+        $order = fn () => collect($this->actingAs($student)->get(route('quiz-attempts.questions.show', [$attempt, $position]))->viewData('page')['props']['question']['options'])->pluck('id')->all();
+        $first = $order();
+
+        expect($order())->toBe($first);
+
+        return implode(',', $first);
+    });
+
+    expect($orders->unique()->count())->toBeGreaterThan(1);
+});
+
 it('keeps attempts private and closed once finished', function () {
     startQuiz($this->student, $this->quiz);
     $attempt = QuizAttempt::sole();

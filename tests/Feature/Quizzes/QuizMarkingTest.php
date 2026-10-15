@@ -75,6 +75,16 @@ it('marks numbers the way children type them', function (string $typed, float $a
     'negative' => ['-5', -5, 0, true],
     'nonsense' => ['twelve', 12, 0, false],
     'divide by zero' => ['1/0', 1, 0, false],
+    'mixed number' => ['1 3/4', 1.75, 0, true],
+    'negative mixed number' => ['-2 1/2', -2.5, 0, true],
+    'unicode minus' => ["\u{2212}5", -5, 0, true],
+    'dash as minus' => ["\u{2013}5", -5, 0, true],
+    'fullwidth digits' => ['１２', 12, 0, true],
+    'currency sign' => ['£5', 5, 0, true],
+    'unit' => ['36 cm', 36, 0, true],
+    'percent sign' => ['50%', 50, 0, true],
+    'decimal comma is not a thousands comma' => ['1,5', 15, 0, false],
+    'fraction against a rounded decimal' => ['1/3', 0.3333, 0, true],
 ]);
 
 it('marks short answers ignoring case, spacing and a full stop', function (string $typed, bool $correct) {
