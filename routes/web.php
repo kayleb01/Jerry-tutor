@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BillingSettingsController;
 use App\Http\Controllers\Admin\ClassEnrolmentController;
 use App\Http\Controllers\Admin\ClassGroupController;
@@ -106,6 +107,9 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('lesson-reports', [AdminLessonReportController::class, 'index'])->name('lesson-reports.index');
     Route::put('lesson-reports/{lesson}/review', [AdminLessonReportController::class, 'review'])->name('lesson-reports.review');
     Route::post('lesson-reports/{lesson}/raise', [AdminLessonReportController::class, 'raise'])->name('lesson-reports.raise');
+
+    Route::get('attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
+    Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
 
     Route::get('lateness/export', [LatenessReportController::class, 'export'])->name('lateness.export');
     Route::get('lateness', [LatenessReportController::class, 'index'])->name('lateness.index');
