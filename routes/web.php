@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/lessons/{lesson}/check-in', TutorCheckInController::class)->name('lessons.check-in');
     Route::get('/lessons/{lesson}/register', [RegisterController::class, 'show'])->name('lessons.register.show');
     Route::put('/lessons/{lesson}/register', [RegisterController::class, 'update'])->name('lessons.register.update');
+    Route::get('/report', [LessonReportController::class, 'next'])->middleware('role:tutor')->name('reports.next');
     Route::get('/lessons/{lesson}/report', [LessonReportController::class, 'edit'])->name('lessons.report.edit');
     Route::put('/lessons/{lesson}/report', [LessonReportController::class, 'update'])->name('lessons.report.update');
 });

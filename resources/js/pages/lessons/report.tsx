@@ -20,9 +20,20 @@ type ReportProps = {
         wentWell: string | null;
         issues: string | null;
         recommendations: string | null;
-        submittedAt: string;
+        recommendedActions: string[];
+        raisesIssue: boolean;
+        isDraft: boolean;
+        submittedAt: string | null;
     } | null;
     closesAt: string;
+    classOptions: { id: number; label: string }[] | null;
+    recommendationOptions: { value: string; label: string }[] | null;
+    panel: {
+        date: string;
+        time: string;
+        tutor: string | null;
+        attendance: string;
+    } | null;
 };
 
 const textarea =
@@ -64,8 +75,10 @@ export default function LessonReport({
                         {report ? 'Edit your report' : 'How did it go?'}
                     </CardTitle>
                     <CardDescription>
-                        {report ? `Last saved ${report.submittedAt}. ` : ''}You
-                        can change this until {closesAt}. Only you and the
+                        {report?.submittedAt
+                            ? `Last saved ${report.submittedAt}. `
+                            : ''}
+                        You can change this until {closesAt}. Only you and the
                         academy team can read it.
                     </CardDescription>
                 </CardHeader>
@@ -76,6 +89,11 @@ export default function LessonReport({
                     >
                         {({ errors, processing }) => (
                             <>
+                                <input
+                                    type="hidden"
+                                    name="action"
+                                    value="submit"
+                                />
                                 <fieldset
                                     className="flex flex-col gap-2"
                                     aria-describedby="rating-hint rating-error"

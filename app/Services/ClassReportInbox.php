@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeRole;
 use App\Enums\LessonStatus;
+use App\Enums\RecommendedAction;
 use App\Models\AttendanceRecord;
 use App\Models\Lesson;
 use App\Models\LessonReport;
@@ -283,11 +284,11 @@ class ClassReportInbox
 
     private function needsAttention(LessonReport $report): bool
     {
-        return filled($report->issues) || ($report->rating !== null && $report->rating <= 2);
+        return $report->raises_issue || filled($report->issues) || ($report->rating !== null && $report->rating <= 2);
     }
 
     /**
-     * @return array{id: int, author: string, rating: int|null, wentWell: string|null, issues: string|null, recommendations: string|null, submittedAt: string, needsAttention: bool}
+     * @return array{id: int, author: string, rating: int|null, wentWell: string|null, issues: string|null, recommendations: string|null, recommendedActions: array<int, string>, raisesIssue: bool, submittedAt: string, needsAttention: bool}
      */
     private function report(LessonReport $report): array
     {
@@ -298,6 +299,8 @@ class ClassReportInbox
             'wentWell' => $report->went_well,
             'issues' => $report->issues,
             'recommendations' => $report->recommendations,
+            'recommendedActions' => ($report->recommended_actions ?? collect())->map(fn (RecommendedAction $action): string => $action->label())->values()->all(),
+            'raisesIssue' => $report->raises_issue,
             'submittedAt' => $this->local($report->submitted_at),
             'needsAttention' => $this->needsAttention($report),
         ];
