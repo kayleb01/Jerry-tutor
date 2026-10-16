@@ -114,6 +114,7 @@ class TutorDashboard
             'location' => $lesson->classGroup->location,
             'students' => $lesson->classGroup->active_students_count,
             'startsAt' => $lesson->starts_at->toIso8601String(),
+            'dateLabel' => $lesson->starts_at->setTimezone(config('academy.timezone'))->format('l j M'),
             'state' => $lesson->starts_at->lessThanOrEqualTo($now) ? 'in_progress' : 'upcoming',
             'isToday' => $isToday,
             'canCheckIn' => $isToday && $own === null && $tutor->can('checkIn', $lesson),

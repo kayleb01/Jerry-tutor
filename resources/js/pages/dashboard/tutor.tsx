@@ -25,6 +25,7 @@ type NextLesson = {
     location: string | null;
     students: number;
     startsAt: string;
+    dateLabel: string;
     state: 'upcoming' | 'in_progress';
     isToday: boolean;
     canCheckIn: boolean;
@@ -75,25 +76,13 @@ type TutorDashboardProps = {
 const smallCaps =
     'text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs';
 
-function useNow(initial: string): string {
-    const [now, setNow] = useState(initial);
+function useNowMs(): number {
+    const [nowMs, setNowMs] = useState(() => Date.now());
     useEffect(() => {
-        setNow(initial);
-    }, [initial]);
-    useEffect(() => {
-        const timer = setInterval(() => {
-            const date = new Date();
-            setNow(
-                date.toLocaleTimeString('en-GB', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    timeZone: undefined,
-                }),
-            );
-        }, 60000);
+        const timer = setInterval(() => setNowMs(Date.now()), 60000);
         return () => clearInterval(timer);
     }, []);
-    return now;
+    return nowMs;
 }
 
 function bannerKicker(lesson: NextLesson, nowMs: number): string {
@@ -102,7 +91,7 @@ function bannerKicker(lesson: NextLesson, nowMs: number): string {
     }
     const start = new Date(lesson.startsAt);
     if (!lesson.isToday) {
-        return `Next class · ${start.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}`;
+        return `Next class · ${lesson.dateLabel}`;
     }
     const minutes = Math.max(1, Math.ceil((start.getTime() - nowMs) / 60000));
     if (minutes >= 60) {
@@ -119,16 +108,12 @@ export default function TutorDashboard({
     studentsToWatch,
     fromAcademy,
 }: TutorDashboardProps) {
-    const now = useNow(header.now);
-    const [nowMs, setNowMs] = useState(() => Date.now());
-    useEffect(() => {
-        setNowMs(Date.now());
-    }, [now]);
+    const nowMs = useNowMs();
 
     return (
         <AppLayout
             title={header.greeting}
-            subtitle={`${header.date} · Now ${now}`}
+            subtitle={`${header.date} · Now ${header.now}`}
         >
             <FromAcademy
                 notes={fromAcademy.map((note) => ({
@@ -303,6 +288,10 @@ function Banner({ lesson, nowMs }: { lesson: NextLesson; nowMs: number }) {
                             Your arrival time is recorded for punctuality.
                         </p>
                     </>
+                ) : lesson.isToday ? (
+                    <p className="text-sm text-primary-80">
+                        Check-in opens 30 minutes before the start.
+                    </p>
                 ) : null}
             </div>
         </section>

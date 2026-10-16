@@ -69,6 +69,7 @@ it('greets the tutor and shows the next class with check-in', function () {
             'location' => 'Room 2',
             'students' => 2,
             'startsAt' => '2026-10-13T15:00:00+00:00',
+            'dateLabel' => 'Tuesday 13 Oct',
             'state' => 'upcoming',
             'isToday' => true,
             'canCheckIn' => true,
