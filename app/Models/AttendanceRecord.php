@@ -78,4 +78,14 @@ class AttendanceRecord extends Model
     {
         return $this->hasOne(LatenessReport::class);
     }
+
+    /**
+     * The note telling the student's parents about this absence, if one was sent.
+     *
+     * @return HasOne<GuardianNotice, $this>
+     */
+    public function absenceNotice(): HasOne
+    {
+        return $this->hasOne(GuardianNotice::class);
+    }
 }

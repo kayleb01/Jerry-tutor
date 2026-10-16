@@ -70,6 +70,11 @@ class RecordAttendance
 
             $this->syncLatenessReport($record, $lesson);
 
+            if ($record->status !== AttendanceStatus::Absent) {
+                // They weren't absent after all, so parents who haven't read the alert yet shouldn't.
+                $record->absenceNotice()->whereNull('acknowledged_at')->delete();
+            }
+
             return $record->load('latenessReport');
         });
     }

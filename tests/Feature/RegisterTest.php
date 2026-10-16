@@ -38,7 +38,8 @@ it('shows the register with the class, tutor and students', function () {
             ->where('students.0.name', 'Ava')
             ->where('students.0.status', null)
             ->where('canEditTutor', false)
-            ->has('statuses', 4));
+            ->has('statuses', 3)
+            ->where('students.0.hasParent', false));
 });
 
 it('saves the register, working out lateness from arrival times', function () {
@@ -212,3 +213,18 @@ it('refuses register saves outside the tutor\'s window or by anyone else', funct
     'guardian' => ['guardian', null],
     'student' => ['student', null],
 ]);
+
+it('keeps an on-time arrival time, and treats one after the start as late', function () {
+    $this->actingAs($this->tutor)->put(route('lessons.register.update', $this->lesson), [
+        'attendance' => [
+            $this->ava->id => ['status' => 'present', 'arrived_at' => '09:56'],
+            $this->bola->id => ['status' => 'present', 'arrived_at' => '10:07'],
+        ],
+    ])->assertSessionHasNoErrors();
+
+    $records = $this->lesson->attendanceRecords()->get()->keyBy('user_id');
+    expect($records[$this->ava->id]->status)->toBe(AttendanceStatus::Present)
+        ->and($records[$this->ava->id]->arrived_at->setTimezone('Africa/Lagos')->format('H:i'))->toBe('09:56')
+        ->and($records[$this->bola->id]->status)->toBe(AttendanceStatus::Late)
+        ->and($records[$this->bola->id]->minutes_late)->toBe(7);
+});

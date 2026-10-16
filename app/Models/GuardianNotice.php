@@ -10,19 +10,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A note from the academy to a student's guardians (e.g. about lateness), shown on every
+ * A note from the academy to a student's guardians (about lateness or an absence), shown on every
  * linked guardian's dashboard until one of them acknowledges it.
  *
  * @property int $id
  * @property int $student_id
  * @property int|null $lateness_report_id
+ * @property int|null $attendance_record_id
  * @property int|null $sent_by_id
  * @property string $note
  * @property CarbonImmutable|null $acknowledged_at
  * @property int|null $acknowledged_by_id
  * @property CarbonImmutable $created_at
  */
-#[Fillable(['student_id', 'lateness_report_id', 'sent_by_id', 'note', 'acknowledged_at', 'acknowledged_by_id'])]
+#[Fillable(['student_id', 'lateness_report_id', 'attendance_record_id', 'sent_by_id', 'note', 'acknowledged_at', 'acknowledged_by_id'])]
 class GuardianNotice extends Model
 {
     /** @use HasFactory<GuardianNoticeFactory> */
@@ -55,6 +56,16 @@ class GuardianNotice extends Model
     public function latenessReport(): BelongsTo
     {
         return $this->belongsTo(LatenessReport::class);
+    }
+
+    /**
+     * The absence this note is about, when it is an absence alert.
+     *
+     * @return BelongsTo<AttendanceRecord, $this>
+     */
+    public function attendanceRecord(): BelongsTo
+    {
+        return $this->belongsTo(AttendanceRecord::class);
     }
 
     /**

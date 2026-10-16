@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\AlertGuardiansOfAbsence;
 use App\Actions\RecordAttendance;
 use App\Enums\AttendanceStatus;
 use App\Http\Requests\UpdateRegisterRequest;
@@ -32,6 +33,7 @@ class RegisterController extends Controller
         $students = User::withTrashed()
             ->whereKey($studentIds)
             ->with('studentProfile')
+            ->withExists('guardians')
             ->orderBy('name')
             ->get()
             ->map(fn (User $student): array => $this->row($student, $records->get($student->id)))
@@ -54,19 +56,19 @@ class RegisterController extends Controller
                 ['value' => 'present', 'label' => 'On time'],
                 ['value' => 'late', 'label' => 'Late'],
                 ['value' => 'absent', 'label' => 'Absent'],
-                ['value' => 'excused', 'label' => 'Excused'],
             ],
+            'graceMinutes' => (int) config('academy.lateness_grace_minutes'),
         ]);
     }
 
-    public function update(UpdateRegisterRequest $request, Lesson $lesson, RecordAttendance $recordAttendance): RedirectResponse
+    public function update(UpdateRegisterRequest $request, Lesson $lesson, RecordAttendance $recordAttendance, AlertGuardiansOfAbsence $alertGuardians): RedirectResponse
     {
         /** @var array<int|string, array{status: string, arrived_at?: string|null, notes?: string|null}> $attendance */
         $attendance = $request->validated('attendance');
         $people = User::withTrashed()->whereKey(array_keys($attendance))->get()->keyBy('id');
         $existing = $lesson->attendanceRecords()->get()->keyBy('user_id');
 
-        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $people, $existing): void {
+        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $alertGuardians, $people, $existing): void {
             foreach ($attendance as $userId => $entry) {
                 $record = $existing->get((int) $userId);
 
@@ -77,12 +79,13 @@ class RegisterController extends Controller
                 $attended = in_array($entry['status'], ['present', 'late'], true);
                 $arrivedAt = match (true) {
                     $entry['status'] === 'late' => $lesson->localTimeToUtc((string) $entry['arrived_at']),
+                    $entry['status'] === 'present' && filled($entry['arrived_at'] ?? null) => $lesson->localTimeToUtc((string) $entry['arrived_at']),
                     // Keep a real on-time arrival (e.g. the tutor's 08:58 check-in) instead of resetting it to the start.
                     $entry['status'] === 'present' && $record?->status === AttendanceStatus::Present => $record->arrived_at,
                     default => null,
                 };
 
-                $recordAttendance->handle(
+                $record = $recordAttendance->handle(
                     $lesson,
                     $people[(int) $userId],
                     $attended ? AttendanceStatus::Present : AttendanceStatus::from($entry['status']),
@@ -90,6 +93,8 @@ class RegisterController extends Controller
                     $arrivedAt,
                     $entry['notes'] ?? null,
                 );
+
+                $alertGuardians->handle($record, $request->user());
             }
         });
 
@@ -110,7 +115,8 @@ class RegisterController extends Controller
         }
 
         return match ($entry['status']) {
-            'present' => $record->status === AttendanceStatus::Present,
+            'present' => $record->status === AttendanceStatus::Present
+                && (blank($entry['arrived_at'] ?? null) || $record->arrived_at?->setTimezone(config('academy.timezone'))->format('H:i') === $entry['arrived_at']),
             'late' => $record->status === AttendanceStatus::Late
                 && $record->arrived_at?->setTimezone(config('academy.timezone'))->format('H:i') === ($entry['arrived_at'] ?? null),
             default => $record->status->value === $entry['status'],
@@ -130,6 +136,8 @@ class RegisterController extends Controller
             'arrivedAt' => $record?->arrived_at?->setTimezone(config('academy.timezone'))->format('H:i'),
             'minutesLate' => $record?->minutes_late,
             'notes' => $record?->notes,
+            // Whether marking them absent would alert a parent.
+            'hasParent' => (bool) ($person->guardians_exists ?? false),
         ];
     }
 }
