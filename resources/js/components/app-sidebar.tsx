@@ -1,3 +1,5 @@
+import { next as takeRegister } from '@/routes/registers';
+import { next as nextReport } from '@/routes/reports';
 import { Link, usePage } from '@inertiajs/react';
 import AppLogoImage from '@/components/app-logo-image';
 import Icon from '@/components/icon';
@@ -58,7 +60,11 @@ const navItems: Record<Role, NavItem[]> = {
             badge: 'subscriptions',
         },
     ],
-    tutor: [{ label: 'Today', icon: 'today', href: dashboard }],
+    tutor: [
+        { label: 'Dashboard', icon: 'dashboard', href: dashboard },
+        { label: 'Take the register', icon: 'list', href: takeRegister },
+        { label: 'End-of-class report', icon: 'report', href: nextReport },
+    ],
     student: [
         { label: 'Dashboard', icon: 'dashboard', href: dashboard },
         { label: 'Quizzes', icon: 'calculator', href: quizzesIndex },
