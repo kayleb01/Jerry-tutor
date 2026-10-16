@@ -3,12 +3,17 @@
 namespace App\Models;
 
 use App\Enums\AttendeeRole;
+use App\Enums\RecommendedAction;
 use Carbon\CarbonImmutable;
 use Database\Factories\LessonReportFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 
 /**
  * End-of-class feedback from one person (the tutor or a student who attended).
@@ -21,9 +26,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $went_well
  * @property string|null $issues
  * @property string|null $recommendations
- * @property CarbonImmutable $submitted_at
+ * @property Collection<int, RecommendedAction>|null $recommended_actions
+ * @property bool $raises_issue
+ * @property CarbonImmutable|null $submitted_at
  */
-#[Fillable(['lesson_id', 'author_id', 'author_role', 'rating', 'went_well', 'issues', 'recommendations', 'submitted_at'])]
+#[Fillable(['lesson_id', 'author_id', 'author_role', 'rating', 'went_well', 'issues', 'recommendations', 'recommended_actions', 'raises_issue', 'submitted_at'])]
 class LessonReport extends Model
 {
     /** @use HasFactory<LessonReportFactory> */
@@ -39,6 +46,8 @@ class LessonReport extends Model
         return [
             'author_role' => AttendeeRole::class,
             'rating' => 'integer',
+            'recommended_actions' => AsEnumCollection::of(RecommendedAction::class),
+            'raises_issue' => 'boolean',
             'submitted_at' => 'immutable_datetime',
         ];
     }
@@ -57,5 +66,21 @@ class LessonReport extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id')->withTrashed();
+    }
+
+    /**
+     * Reports that have been handed in, as opposed to a tutor's saved drafts.
+     *
+     * @param  Builder<LessonReport>  $query
+     */
+    #[Scope]
+    protected function submitted(Builder $query): void
+    {
+        $query->whereNotNull('lesson_reports.submitted_at');
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->submitted_at === null;
     }
 }

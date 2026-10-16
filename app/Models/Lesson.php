@@ -82,9 +82,19 @@ class Lesson extends Model
     }
 
     /**
+     * Submitted reports only; tutor drafts are not visible through this relation.
+     *
      * @return HasMany<LessonReport, $this>
      */
     public function lessonReports(): HasMany
+    {
+        return $this->hasMany(LessonReport::class)->submitted();
+    }
+
+    /**
+     * @return HasMany<LessonReport, $this>
+     */
+    public function reportsIncludingDrafts(): HasMany
     {
         return $this->hasMany(LessonReport::class);
     }

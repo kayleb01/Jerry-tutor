@@ -30,4 +30,9 @@ class LessonReportFactory extends Factory
             'submitted_at' => now(),
         ];
     }
+
+    public function draft(): static
+    {
+        return $this->state(['submitted_at' => null]);
+    }
 }

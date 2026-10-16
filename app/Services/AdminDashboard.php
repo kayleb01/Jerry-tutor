@@ -303,6 +303,7 @@ class AdminDashboard
     private function latestReports(AdminDashboardFilters $filters): array
     {
         return LessonReport::query()
+            ->submitted()
             ->with(['author', 'lesson' => fn (BelongsTo $query) => $query->with('classGroup')])
             ->whereHas('lesson', fn (Builder $query) => $this->scopeLessons($query, $filters)
                 ->where('starts_at', '>=', $filters->from->utc())
