@@ -35,7 +35,7 @@ Tutors currently land on a bare "Today" page. The academy wants tutors to have o
 - Local database: migrate only, never fresh/reseed.
 - "Last 90 days" means lessons whose start falls in the 90 days up to now.
 - **Automatic absences don't count as evidence** *(my call)*. `attendance:mark-no-shows` writes an Absent record (`recorded_by_id` null) for everyone left unrecorded after a lesson, including when the tutor simply never took the register. Students to watch and the student attendance figure use only attendance records a person entered (`recorded_by_id` not null). This matches `ClassReportInbox`, which already ignores absent-only lessons.
-- **"Needs a tutor report"** *(my call)* means one of the tutor's lessons that has started, isn't cancelled, has no submitted tutor report, where the tutor's own record isn't Absent or Excused, and where at least one person attended. This keeps the tutor's count in step with the admin "Awaiting tutor report" queue. The report policy refuses the excluded lessons for tutors.
+- **"Needs a tutor report"** *(my call)* means one of the tutor's lessons that has started, isn't cancelled, has no submitted tutor report, where no person has marked the tutor Absent or Excused (an automatic no-show absence, written when the tutor forgot to check in, doesn't count), and where at least one person attended (the tutor's check-in counts). The admin "Awaiting tutor report" queue uses the same rule, so the two stay in step. The report policy refuses the excluded lessons for tutors.
 
 ## Decided behaviour
 
