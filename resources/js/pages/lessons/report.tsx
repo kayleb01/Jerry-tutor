@@ -27,7 +27,7 @@ type ReportProps = {
     } | null;
     closesAt: string;
     classOptions: { id: number; label: string }[] | null;
-    recommendationOptions: { value: string; label: string }[] | null;
+    recommendationOptions: { value: string; label: string }[];
     panel: {
         date: string;
         time: string;

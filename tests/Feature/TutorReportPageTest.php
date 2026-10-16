@@ -168,3 +168,12 @@ it('refuses another tutor\'s report page', function () {
     $this->actingAs($other)->get(route('lessons.report.edit', $this->lesson))->assertForbidden();
     $this->actingAs($other)->put($this->url, ($this->payload)())->assertForbidden();
 });
+
+it('offers students the recommendation chips but not the picker or panel', function () {
+    $student = User::factory()->student()->create();
+    $this->group->enrol($student);
+    app(RecordAttendance::class)->handle($this->lesson, $student, AttendanceStatus::Present, null, CarbonImmutable::parse('2025-10-20 09:05:00', 'UTC'));
+
+    $this->actingAs($student)->get(route('lessons.report.edit', $this->lesson))
+        ->assertInertia(fn (Assert $page) => $page->has('recommendationOptions', 5)->where('classOptions', null)->where('panel', null));
+});

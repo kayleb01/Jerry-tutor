@@ -39,7 +39,8 @@ class LessonReportController extends Controller
         Gate::authorize('submitReport', $lesson);
 
         $timezone = config('academy.timezone');
-        $isTutor = $this->roleFor($request, $lesson) === AttendeeRole::Tutor;
+        $role = $this->roleFor($request, $lesson);
+        $isTutor = $role === AttendeeRole::Tutor;
         $report = $lesson->reportsIncludingDrafts()->where('author_id', $request->user()->id)->first();
 
         return Inertia::render('lessons/report', [
@@ -49,7 +50,7 @@ class LessonReportController extends Controller
                 'date' => $lesson->localStart()->format('l j F'),
                 'time' => $lesson->localStart()->format('H:i').'–'.$lesson->localEnd()->format('H:i'),
             ],
-            'authorRole' => $this->roleFor($request, $lesson)->value,
+            'authorRole' => $role->value,
             'report' => $report === null ? null : [
                 'rating' => $report->rating,
                 'wentWell' => $report->went_well,
@@ -62,7 +63,7 @@ class LessonReportController extends Controller
             ],
             'closesAt' => $lesson->ends_at->addHours(48)->setTimezone($timezone)->format('D j M, H:i'),
             'classOptions' => $isTutor ? $this->classOptions($request, $lesson) : null,
-            'recommendationOptions' => $isTutor ? RecommendedAction::options() : null,
+            'recommendationOptions' => RecommendedAction::options(),
             'panel' => $isTutor ? $this->panel($lesson) : null,
         ]);
     }
