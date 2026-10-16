@@ -332,7 +332,7 @@ export default function LessonReport({
                                 )}
 
                                 <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-                                    {!isSubmitted && (
+                                    {isTutor && !isSubmitted && (
                                         <Button
                                             type="submit"
                                             name="action"
