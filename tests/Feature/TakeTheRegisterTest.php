@@ -46,6 +46,25 @@ it('opens the most recent past class on a day with no classes', function () {
         ->assertRedirect(route('lessons.register.show', $recent));
 });
 
+it('opens the next upcoming class when the tutor has only future classes', function () {
+    ($this->lessonAt)('2025-10-06 09:00:00', ['status' => LessonStatus::Cancelled]);
+    $next = ($this->lessonAt)('2025-10-07 09:00:00');
+    ($this->lessonAt)('2025-10-08 09:00:00');
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:30:00', 'UTC'));
+    $this->actingAs($this->tutor)->get(route('registers.next'))
+        ->assertRedirect(route('lessons.register.show', $next));
+});
+
+it('goes back to the dashboard with a message when the tutor has only cancelled classes', function () {
+    ($this->lessonAt)('2025-10-07 09:00:00', ['status' => LessonStatus::Cancelled]);
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:30:00', 'UTC'));
+    $this->actingAs($this->tutor)->get(route('registers.next'))
+        ->assertRedirect(route('dashboard'))
+        ->assertInertiaFlash('toast.message', 'You have no classes to take a register for.');
+});
+
 it('goes back to the dashboard with a message when the tutor has no classes', function () {
     $this->actingAs($this->tutor)->get(route('registers.next'))
         ->assertRedirect(route('dashboard'))

@@ -21,7 +21,7 @@ use Inertia\Response;
 class RegisterController extends Controller
 {
     /**
-     * Today's current or next class, else the tutor's most recent past one.
+     * Today's current or next class, else the tutor's most recent past one, else their next upcoming one (read-only until it opens).
      */
     public function next(Request $request): RedirectResponse
     {
@@ -38,7 +38,8 @@ class RegisterController extends Controller
 
         $lesson = $today->first(fn (Lesson $lesson): bool => $lesson->starts_at <= $now && $lesson->ends_at > $now)
             ?? $today->first(fn (Lesson $lesson): bool => $lesson->starts_at > $now)
-            ?? $lessons->where('starts_at', '<=', $now)->latest('starts_at')->first();
+            ?? (clone $lessons)->where('starts_at', '<=', $now->utc())->latest('starts_at')->first()
+            ?? (clone $lessons)->where('starts_at', '>', $now->utc())->orderBy('starts_at')->first();
 
         if ($lesson === null) {
             Inertia::flash('toast', ['type' => 'error', 'message' => 'You have no classes to take a register for.']);
