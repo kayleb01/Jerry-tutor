@@ -6,6 +6,7 @@ use App\Enums\AttendanceStatus;
 use App\Enums\Role;
 use App\Models\Lesson;
 use App\Models\User;
+use App\Services\TutorReports;
 use Carbon\CarbonImmutable;
 
 class LessonPolicy
@@ -50,19 +51,20 @@ class LessonPolicy
     }
 
     /**
-     * The tutor, or a student who attended (on time or late), from the start until 48 hours after the end.
+     * The lesson's tutor while the class still needs a report (or already has one), with no deadline;
+     * or a student who attended (on time or late), from the start until 48 hours after the end.
      * Admins read reports but never write them.
      */
     public function submitReport(User $user, Lesson $lesson): bool
     {
+        if ($lesson->tutor_id === $user->id) {
+            return app(TutorReports::class)->canReportOn($user, $lesson);
+        }
+
         $now = CarbonImmutable::now();
 
         if ($lesson->isCancelled() || $now->lessThan($lesson->starts_at) || $now->greaterThan($lesson->ends_at->addHours(self::REPORT_WINDOW_HOURS))) {
             return false;
-        }
-
-        if ($lesson->tutor_id === $user->id) {
-            return true;
         }
 
         return $user->hasRole(Role::Student) && $lesson->attendanceRecords()

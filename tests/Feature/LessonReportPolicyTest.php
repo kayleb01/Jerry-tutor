@@ -21,18 +21,28 @@ beforeEach(function () {
     });
 });
 
-it('opens reporting from the start until 48 hours after the end', function (string $now, bool $allowed) {
+it('opens reporting to students from the start until 48 hours after the end', function (string $now, bool $allowed) {
     $student = ($this->attended)(AttendanceStatus::Present);
     $this->travelTo(CarbonImmutable::parse($now, 'UTC'));
 
-    expect($this->tutor->can('submitReport', $this->lesson))->toBe($allowed)
-        ->and($student->can('submitReport', $this->lesson))->toBe($allowed);
+    expect($student->can('submitReport', $this->lesson))->toBe($allowed);
 })->with([
     'before the start' => ['2025-10-04 08:59:00', false],
     'at the start' => ['2025-10-04 09:00:00', true],
     'just after the end' => ['2025-10-04 10:05:00', true],
     '48 hours after the end' => ['2025-10-06 10:00:00', true],
     'later than that' => ['2025-10-06 10:01:00', false],
+]);
+
+it('gives the tutor no deadline once the class has started and someone attended', function (string $now, bool $allowed) {
+    ($this->attended)(AttendanceStatus::Present);
+    $this->travelTo(CarbonImmutable::parse($now, 'UTC'));
+
+    expect($this->tutor->can('submitReport', $this->lesson))->toBe($allowed);
+})->with([
+    'before the start' => ['2025-10-04 08:59:00', false],
+    'at the start' => ['2025-10-04 09:00:00', true],
+    '60 days later' => ['2025-12-03 10:00:00', true],
 ]);
 
 it('lets students who attended report', function (AttendanceStatus $status, bool $allowed) {
