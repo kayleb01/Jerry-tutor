@@ -67,6 +67,8 @@ type RegisterRowProps = {
     startTime: string;
     graceMinutes: number;
     errors: Record<string, string | undefined>;
+    /** Looking only: the buttons and arrival time are disabled and notes can't be added. */
+    readOnly?: boolean;
 };
 
 export default function RegisterRow({
@@ -77,6 +79,7 @@ export default function RegisterRow({
     startTime,
     graceMinutes,
     errors,
+    readOnly = false,
 }: RegisterRowProps) {
     const [isNoteOpen, setIsNoteOpen] = useState(Boolean(person.notes));
     const field = (name: string) => `attendance[${person.id}][${name}]`;
@@ -136,7 +139,7 @@ export default function RegisterRow({
                         <label
                             key={option.value}
                             className={cn(
-                                'inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-neutral-80 bg-surface px-3 text-[0.8125rem] font-semibold text-muted-foreground has-focus-visible:outline-2 has-focus-visible:outline-ring dark:border-neutral-30',
+                                'inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-neutral-80 bg-surface px-3 text-[0.8125rem] font-semibold text-muted-foreground has-focus-visible:outline-2 has-focus-visible:outline-ring has-disabled:cursor-default dark:border-neutral-30',
                                 checkedTone[option.value],
                             )}
                         >
@@ -145,6 +148,7 @@ export default function RegisterRow({
                                 name={field('status')}
                                 value={option.value}
                                 checked={mark.status === option.value}
+                                disabled={readOnly}
                                 onChange={() => choose(option.value)}
                                 className="sr-only"
                             />
@@ -170,6 +174,7 @@ export default function RegisterRow({
                                 onChange={(event) =>
                                     setArrived(event.target.value)
                                 }
+                                disabled={readOnly}
                                 required={mark.status === 'late'}
                                 aria-invalid={!!errors[errorKey('arrived_at')]}
                                 aria-describedby={`${person.id}-arrived-error`}
@@ -188,7 +193,7 @@ export default function RegisterRow({
                 message={errors[errorKey('arrived_at')]}
             />
             {mark.status !== '' &&
-                (isNoteOpen ? (
+                (isNoteOpen || (readOnly && person.notes) ? (
                     <div className="flex flex-col gap-1.5 sm:pl-12">
                         <label
                             htmlFor={`${person.id}-notes`}
@@ -200,6 +205,7 @@ export default function RegisterRow({
                             id={`${person.id}-notes`}
                             name={field('notes')}
                             defaultValue={person.notes ?? ''}
+                            readOnly={readOnly}
                             autoFocus={!person.notes}
                             aria-describedby={`${person.id}-notes-error`}
                         />
@@ -208,7 +214,7 @@ export default function RegisterRow({
                             message={errors[errorKey('notes')]}
                         />
                     </div>
-                ) : (
+                ) : readOnly ? null : (
                     <button
                         type="button"
                         onClick={() => setIsNoteOpen(true)}

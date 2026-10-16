@@ -10,6 +10,8 @@ import { Button, buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
+import { dashboard } from '@/routes';
+import { checkIn as checkInRoute } from '@/routes/lessons';
 import { update } from '@/routes/lessons/register';
 import { edit as editReport } from '@/routes/lessons/report';
 
@@ -18,12 +20,20 @@ type RegisterProps = {
         id: number;
         className: string;
         date: string;
+        dateLong: string;
         time: string;
         location: string | null;
         status: string;
     };
     tutor: RegisterPerson;
     students: RegisterPerson[];
+    canEdit: boolean;
+    editingNote: string | null;
+    checkIn: {
+        at: string | null;
+        minutesLate: number | null;
+        canCheckIn: boolean;
+    } | null;
     canEditTutor: boolean;
     canReport: boolean;
     graceMinutes: number;
@@ -47,6 +57,9 @@ export default function Register({
     lesson,
     tutor,
     students,
+    canEdit,
+    editingNote,
+    checkIn,
     canEditTutor,
     canReport,
     graceMinutes,
@@ -86,18 +99,29 @@ export default function Register({
     return (
         <AppLayout
             title={lesson.className}
-            subtitle={`Register · ${lesson.date}, ${lesson.time}${lesson.location ? ` · ${lesson.location}` : ''}`}
+            subtitle={`${lesson.dateLong} · scheduled ${lesson.time.replace('–', ' – ')}${lesson.location ? ` · ${lesson.location}` : ''}`}
             actions={
-                canReport && (
-                    <Link
-                        href={editReport(lesson.id)}
-                        className={buttonClasses('outline')}
-                    >
-                        Write end-of-class report
-                    </Link>
-                )
+                <>
+                    {checkIn && (
+                        <CheckInBadge lessonId={lesson.id} checkIn={checkIn} />
+                    )}
+                    {canReport && (
+                        <Link
+                            href={editReport(lesson.id)}
+                            className={buttonClasses('outline')}
+                        >
+                            Write end-of-class report
+                        </Link>
+                    )}
+                </>
             }
         >
+            <Link
+                href={dashboard()}
+                className="self-start text-sm font-semibold text-link hover:underline"
+            >
+                ← Dashboard
+            </Link>
             <Form {...update.form(lesson.id)} className="flex flex-col gap-6">
                 {({ errors, processing }) => (
                     <>
@@ -135,52 +159,63 @@ export default function Register({
                             />
                         </section>
 
-                        <Card className="p-card">
-                            <h2 className="mb-1 text-base font-bold sm:text-lg">
-                                Tutor
-                            </h2>
-                            {canEditTutor ? (
-                                <RegisterRow
-                                    person={tutor}
-                                    role="tutor"
-                                    mark={marks[tutor.id]}
-                                    onChange={(mark) => setMark(tutor.id, mark)}
-                                    startTime={startTime}
-                                    graceMinutes={graceMinutes}
-                                    errors={errors}
-                                />
-                            ) : (
-                                <div className="flex items-center justify-between gap-3 py-3">
-                                    <span className="flex items-center gap-3 font-semibold">
-                                        <PersonAvatar
-                                            name={tutor.name}
-                                            role="tutor"
-                                        />
-                                        {tutor.name}
-                                    </span>
-                                    {tutor.status ? (
-                                        <AttendanceStatusBadge
-                                            status={
-                                                tutor.status as AttendanceStatus
-                                            }
-                                            minutesLate={tutor.minutesLate}
-                                        />
-                                    ) : (
-                                        <span className="text-sm text-muted-foreground">
-                                            Not checked in. Check in from your
-                                            Today screen.
+                        {checkIn === null && (
+                            <Card className="p-card">
+                                <h2 className="mb-1 text-base font-bold sm:text-lg">
+                                    Tutor
+                                </h2>
+                                {canEditTutor ? (
+                                    <RegisterRow
+                                        person={tutor}
+                                        role="tutor"
+                                        mark={marks[tutor.id]}
+                                        onChange={(mark) =>
+                                            setMark(tutor.id, mark)
+                                        }
+                                        startTime={startTime}
+                                        graceMinutes={graceMinutes}
+                                        errors={errors}
+                                        readOnly={!canEdit}
+                                    />
+                                ) : (
+                                    <div className="flex items-center justify-between gap-3 py-3">
+                                        <span className="flex items-center gap-3 font-semibold">
+                                            <PersonAvatar
+                                                name={tutor.name}
+                                                role="tutor"
+                                            />
+                                            {tutor.name}
                                         </span>
-                                    )}
-                                </div>
-                            )}
-                        </Card>
+                                        {tutor.status ? (
+                                            <AttendanceStatusBadge
+                                                status={
+                                                    tutor.status as AttendanceStatus
+                                                }
+                                                minutesLate={tutor.minutesLate}
+                                            />
+                                        ) : (
+                                            <span className="text-sm text-muted-foreground">
+                                                Not checked in. Check in from
+                                                your Today screen.
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            </Card>
+                        )}
+
+                        {editingNote && (
+                            <p className="text-sm text-muted-foreground">
+                                {editingNote}
+                            </p>
+                        )}
 
                         <Card className="p-card">
                             <div className="mb-1 flex flex-wrap items-center justify-between gap-3 border-b pb-3">
                                 <h2 className="text-base font-bold sm:text-lg">
                                     Register
                                 </h2>
-                                {unmarked.length > 0 && (
+                                {canEdit && unmarked.length > 0 && (
                                     <Button
                                         type="button"
                                         variant="secondary"
@@ -207,20 +242,23 @@ export default function Register({
                                         startTime={startTime}
                                         graceMinutes={graceMinutes}
                                         errors={errors}
+                                        readOnly={!canEdit}
                                     />
                                 ))
                             )}
                         </Card>
 
-                        <div className="flex justify-end">
-                            <Button
-                                type="submit"
-                                size="lg"
-                                disabled={processing}
-                            >
-                                {processing ? 'Saving…' : 'Save register'}
-                            </Button>
-                        </div>
+                        {canEdit && (
+                            <div className="flex justify-end">
+                                <Button
+                                    type="submit"
+                                    size="lg"
+                                    disabled={processing}
+                                >
+                                    {processing ? 'Saving…' : 'Save register'}
+                                </Button>
+                            </div>
+                        )}
                     </>
                 )}
             </Form>
@@ -247,5 +285,41 @@ function Count({
                 {hint}
             </p>
         </Card>
+    );
+}
+
+function CheckInBadge({
+    lessonId,
+    checkIn,
+}: {
+    lessonId: number;
+    checkIn: NonNullable<RegisterProps['checkIn']>;
+}) {
+    if (checkIn.at !== null) {
+        return (
+            <span className="inline-flex items-center rounded-full bg-surface-muted px-3 py-1.5 text-sm font-semibold">
+                You checked in {checkIn.at} ·{' '}
+                {checkIn.minutesLate
+                    ? `${checkIn.minutesLate} min late`
+                    : 'on time'}
+            </span>
+        );
+    }
+
+    return (
+        <>
+            <span className="inline-flex items-center rounded-full bg-surface-muted px-3 py-1.5 text-sm font-semibold">
+                You haven't checked in
+            </span>
+            {checkIn.canCheckIn && (
+                <Form {...checkInRoute.form(lessonId)}>
+                    {({ processing }) => (
+                        <Button type="submit" disabled={processing}>
+                            Check in
+                        </Button>
+                    )}
+                </Form>
+            )}
+        </>
     );
 }

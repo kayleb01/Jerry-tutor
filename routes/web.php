@@ -50,6 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::post('/lessons/{lesson}/check-in', TutorCheckInController::class)->name('lessons.check-in');
+    Route::get('/take-register', [RegisterController::class, 'next'])->middleware('role:tutor')->name('registers.next');
     Route::get('/lessons/{lesson}/register', [RegisterController::class, 'show'])->name('lessons.register.show');
     Route::put('/lessons/{lesson}/register', [RegisterController::class, 'update'])->name('lessons.register.update');
     Route::get('/report', [LessonReportController::class, 'next'])->middleware('role:tutor')->name('reports.next');

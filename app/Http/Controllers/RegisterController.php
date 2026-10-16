@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Actions\AlertGuardiansOfAbsence;
 use App\Actions\RecordAttendance;
 use App\Enums\AttendanceStatus;
+use App\Enums\LessonStatus;
 use App\Http\Requests\UpdateRegisterRequest;
 use App\Models\AttendanceRecord;
 use App\Models\Lesson;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +20,41 @@ use Inertia\Response;
 
 class RegisterController extends Controller
 {
+    /**
+     * Today's current or next class, else the tutor's most recent past one.
+     */
+    public function next(Request $request): RedirectResponse
+    {
+        $now = CarbonImmutable::now();
+        $timezone = config('academy.timezone');
+        $lessons = Lesson::query()
+            ->where('tutor_id', $request->user()->id)
+            ->where('status', '!=', LessonStatus::Cancelled);
+
+        $today = (clone $lessons)
+            ->whereBetween('starts_at', [$now->setTimezone($timezone)->startOfDay()->utc(), $now->setTimezone($timezone)->endOfDay()->utc()])
+            ->orderBy('starts_at')
+            ->get();
+
+        $lesson = $today->first(fn (Lesson $lesson): bool => $lesson->starts_at <= $now && $lesson->ends_at > $now)
+            ?? $today->first(fn (Lesson $lesson): bool => $lesson->starts_at > $now)
+            ?? $lessons->where('starts_at', '<=', $now)->latest('starts_at')->first();
+
+        if ($lesson === null) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'You have no classes to take a register for.']);
+
+            return to_route('dashboard');
+        }
+
+        return to_route('lessons.register.show', $lesson);
+    }
+
     public function show(Request $request, Lesson $lesson): Response
     {
-        Gate::authorize('takeRegister', $lesson);
+        Gate::authorize('viewRegister', $lesson);
+
+        $user = $request->user();
+        $canEdit = $user->can('takeRegister', $lesson);
 
         $lesson->load(['classGroup', 'tutor', 'attendanceRecords']);
         $records = $lesson->attendanceRecords->keyBy('user_id');
@@ -44,14 +78,18 @@ class RegisterController extends Controller
                 'id' => $lesson->id,
                 'className' => $lesson->classGroup->name,
                 'date' => $lesson->localStart()->format('l j F'),
+                'dateLong' => $lesson->localStart()->format('l j F'),
                 'time' => $lesson->localStart()->format('H:i').'–'.$lesson->localEnd()->format('H:i'),
                 'location' => $lesson->classGroup->location,
                 'status' => $lesson->status->value,
             ],
             'tutor' => $this->row($lesson->tutor, $records->get($lesson->tutor_id)),
             'students' => $students,
-            'canEditTutor' => $request->user()->can('recordTutorAttendance', $lesson),
-            'canReport' => $request->user()->can('submitReport', $lesson),
+            'canEdit' => $canEdit,
+            'editingNote' => $canEdit ? null : $this->editingNote($lesson),
+            'checkIn' => $lesson->tutor_id === $user->id ? $this->checkIn($user, $lesson, $records->get($lesson->tutor_id)) : null,
+            'canEditTutor' => $user->can('recordTutorAttendance', $lesson),
+            'canReport' => $user->can('submitReport', $lesson),
             'statuses' => [
                 ['value' => 'present', 'label' => 'On time'],
                 ['value' => 'late', 'label' => 'Late'],
@@ -101,6 +139,33 @@ class RegisterController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Register saved.']);
 
         return to_route('lessons.register.show', $lesson);
+    }
+
+    private function editingNote(Lesson $lesson): string
+    {
+        $opens = $lesson->localStart()->subMinutes(30);
+
+        if (CarbonImmutable::now()->lessThan($lesson->starts_at->subMinutes(30))) {
+            return $opens->isToday()
+                ? 'The register opens at '.$opens->format('H:i').'.'
+                : 'The register opens on '.$opens->format('D j M \a\t H:i').'.';
+        }
+
+        return 'This register closed on '.$lesson->localEnd()->addDay()->format('D j M').'.';
+    }
+
+    /**
+     * @return array{at: string|null, minutesLate: int|null, canCheckIn: bool}
+     */
+    private function checkIn(User $user, Lesson $lesson, ?AttendanceRecord $record): array
+    {
+        $checkedIn = $record?->arrived_at !== null;
+
+        return [
+            'at' => $checkedIn ? $record->arrived_at->setTimezone(config('academy.timezone'))->format('H:i') : null,
+            'minutesLate' => $checkedIn ? $record->minutes_late : null,
+            'canCheckIn' => ! $checkedIn && $record === null && $user->can('checkIn', $lesson),
+        ];
     }
 
     /**

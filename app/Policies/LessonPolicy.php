@@ -27,6 +27,15 @@ class LessonPolicy
     }
 
     /**
+     * Admins and the lesson's own tutor can always look at a register, whether or not it is still open for changes.
+     */
+    public function viewRegister(User $user, Lesson $lesson): bool
+    {
+        return ! $lesson->isCancelled()
+            && ($user->hasRole(Role::Admin) || $lesson->tutor_id === $user->id);
+    }
+
+    /**
      * The lesson's tutor (inside their window) or any admin (decision D4: admins override).
      */
     public function takeRegister(User $user, Lesson $lesson): bool

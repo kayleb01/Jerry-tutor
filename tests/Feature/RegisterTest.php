@@ -133,6 +133,12 @@ it('keeps registers private to the lesson\'s tutor and admins', function (string
         ->assertForbidden();
 })->with(['tutor', 'guardian', 'student']);
 
+it('keeps registers read-only for anyone but their tutor and admins', function (string $state) {
+    $this->actingAs(User::factory()->{$state}()->create())
+        ->put(route('lessons.register.update', $this->lesson), ['attendance' => []])
+        ->assertForbidden();
+})->with(['tutor', 'guardian', 'student']);
+
 it('lists a class\'s recent and upcoming lessons for admins', function () {
     $this->actingAs(User::factory()->admin()->create())->get(route('admin.classes.edit', $this->group))
         ->assertInertia(fn (Assert $page) => $page
