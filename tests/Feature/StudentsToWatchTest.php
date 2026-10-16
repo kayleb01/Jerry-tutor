@@ -162,3 +162,15 @@ it('lists at most five, attendance concerns first, and only the tutor\'s own stu
 
     expect($names)->toBe(['Late D', 'Late E', 'Late F', 'Quiz A', 'Quiz B']);
 });
+
+it('does not round a quiz average just under 85% up into the list', function () {
+    $geometry = Strand::factory()->create(['name' => 'Geometry']);
+    $eve = watchedStudent($this->group, 'Eve');
+    $quiz = Quiz::factory()->create(['strand_id' => $geometry->id]);
+
+    foreach ([85, 85, 85, 84, 84] as $score) {
+        QuizAttempt::factory()->submitted($score, 100)->create(['user_id' => $eve->id, 'quiz_id' => $quiz->id]);
+    }
+
+    expect(watchList($this->tutor))->toBe([]);
+});

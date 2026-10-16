@@ -30,6 +30,7 @@ type NextLesson = {
     isToday: boolean;
     canCheckIn: boolean;
     checkedInAt: string | null;
+    isLate: boolean;
     minutesLate: number | null;
 };
 
@@ -241,7 +242,13 @@ export default function TutorDashboard({
     );
 }
 
+const CHECK_IN_OPENS_MS = 30 * 60 * 1000;
+
 function Banner({ lesson, nowMs }: { lesson: NextLesson; nowMs: number }) {
+    const checkInNotOpenYet =
+        lesson.isToday &&
+        nowMs < new Date(lesson.startsAt).getTime() - CHECK_IN_OPENS_MS;
+
     return (
         <section className="relative flex flex-col gap-4 overflow-hidden rounded-lg bg-brand p-card text-brand-foreground sm:gap-5 sm:p-6">
             <span
@@ -256,7 +263,8 @@ function Banner({ lesson, nowMs }: { lesson: NextLesson; nowMs: number }) {
                 <p className="text-body text-primary-90">
                     {lesson.time}
                     {lesson.location ? ` · ${lesson.location}` : ''} ·{' '}
-                    {lesson.students} students
+                    {lesson.students}{' '}
+                    {lesson.students === 1 ? 'student' : 'students'}
                 </p>
             </div>
             <div className="relative flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -270,9 +278,11 @@ function Banner({ lesson, nowMs }: { lesson: NextLesson; nowMs: number }) {
                         </Link>
                         <p className="text-sm text-primary-80">
                             Checked in {lesson.checkedInAt} ·{' '}
-                            {lesson.minutesLate
-                                ? `${lesson.minutesLate} min late`
-                                : 'on time'}
+                            {!lesson.isLate
+                                ? 'on time'
+                                : lesson.minutesLate
+                                  ? `${lesson.minutesLate} min late`
+                                  : 'late'}
                         </p>
                     </>
                 ) : lesson.canCheckIn ? (
@@ -288,7 +298,7 @@ function Banner({ lesson, nowMs }: { lesson: NextLesson; nowMs: number }) {
                             Your arrival time is recorded for punctuality.
                         </p>
                     </>
-                ) : lesson.isToday ? (
+                ) : checkInNotOpenYet ? (
                     <p className="text-sm text-primary-80">
                         Check-in opens 30 minutes before the start.
                     </p>

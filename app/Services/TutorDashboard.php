@@ -94,7 +94,7 @@ class TutorDashboard
             ->orderBy('starts_at');
 
         $isToday = true;
-        $lesson = $query()->where('starts_at', '<=', $endOfDay)->where('ends_at', '>', $now)->first();
+        $lesson = $query()->where('starts_at', '<=', $endOfDay)->where('ends_at', '>', $now->utc())->first();
 
         if ($lesson === null) {
             $isToday = false;
@@ -119,6 +119,7 @@ class TutorDashboard
             'isToday' => $isToday,
             'canCheckIn' => $isToday && $own === null && $tutor->can('checkIn', $lesson),
             'checkedInAt' => $own?->arrived_at?->setTimezone(config('academy.timezone'))->format('H:i'),
+            'isLate' => $own?->status === AttendanceStatus::Late,
             'minutesLate' => $own?->status === AttendanceStatus::Late ? $own->minutes_late : null,
         ];
     }
@@ -164,8 +165,8 @@ class TutorDashboard
             ->join('lessons', 'lessons.id', '=', 'attendance_records.lesson_id')
             ->where('lessons.tutor_id', $tutor->id)
             ->where('lessons.status', '!=', LessonStatus::Cancelled->value)
-            ->where('lessons.starts_at', '>=', $now->subDays(StudentsToWatch::DAYS))
-            ->where('lessons.starts_at', '<=', $now);
+            ->where('lessons.starts_at', '>=', $now->subDays(StudentsToWatch::DAYS)->utc())
+            ->where('lessons.starts_at', '<=', $now->utc());
     }
 
     /**
@@ -182,15 +183,11 @@ class TutorDashboard
     }
 
     /**
-     * "Year 5 · Geometry (Monday)": the day name within a week, otherwise "(12 Oct)".
+     * "{class name} (Monday)": the day name within a week, otherwise "(12 Oct)".
      */
     private function oldestLabel(Lesson $lesson, CarbonImmutable $now): string
     {
-        $group = $lesson->classGroup;
-        $yearLabel = $group->year_group?->label();
-        $name = $yearLabel !== null && str_starts_with($group->name, $yearLabel.' ')
-            ? $yearLabel.' · '.substr($group->name, strlen($yearLabel) + 1)
-            : $group->name;
+        $name = $lesson->classGroup->name;
         $when = $lesson->starts_at->greaterThan($now->subDays(7)) ? $lesson->localStart()->format('l') : $lesson->localStart()->format('j M');
 
         return "{$name} ({$when})";

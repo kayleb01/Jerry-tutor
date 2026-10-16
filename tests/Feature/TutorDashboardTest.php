@@ -74,6 +74,7 @@ it('greets the tutor and shows the next class with check-in', function () {
             'isToday' => true,
             'canCheckIn' => true,
             'checkedInAt' => null,
+            'isLate' => false,
             'minutesLate' => null,
         ]);
 });
@@ -99,8 +100,16 @@ it('shows the next class as checked in once the tutor has arrived', function () 
         'isToday' => true,
         'canCheckIn' => false,
         'checkedInAt' => '15:55',
+        'isLate' => true,
         'minutesLate' => 5,
     ]);
+});
+
+it('marks a late check-in as late even without a minute count', function () {
+    $lesson = ($this->lessonAt)('2026-10-13 14:50:00');
+    ($this->tutorRecord)($lesson, AttendanceStatus::Late, CarbonImmutable::parse('2026-10-13 14:55:00', 'UTC'));
+
+    expect(($this->dashboard)()['nextLesson'])->toMatchArray(['isLate' => true, 'minutesLate' => null]);
 });
 
 it('names the next class on a later day when none is left today', function () {
@@ -149,7 +158,7 @@ it('works out punctuality, classes this week, reports to submit and student atte
 
     expect($stats['punctuality'])->toBe(['percent' => 75, 'onTime' => 3, 'attended' => 4])
         ->and($stats['week'])->toBe(['total' => 4, 'done' => 2, 'toGo' => 2])
-        ->and($stats['reports'])->toBe(['count' => 2, 'oldest' => 'Year 5 · Geometry (Monday)'])
+        ->and($stats['reports'])->toBe(['count' => 2, 'oldest' => 'Year 5 Geometry (Monday)'])
         ->and($stats['studentAttendance'])->toBe(80);
 });
 
@@ -158,7 +167,7 @@ it('dates the oldest report by day and month once it is more than a week old', f
     $lesson = ($this->lessonAt)('2026-10-02 09:00:00');
     ($this->studentRecord)($lesson, AttendanceStatus::Present);
 
-    expect(($this->dashboard)()['stats']['reports'])->toBe(['count' => 1, 'oldest' => 'Year 6 · Algebra (2 Oct)']);
+    expect(($this->dashboard)()['stats']['reports'])->toBe(['count' => 1, 'oldest' => 'Year 6 Algebra (2 Oct)']);
 });
 
 it('lists this week\'s classes Monday to Sunday with their state, summary and report status', function () {

@@ -142,7 +142,7 @@ class StudentsToWatch
      * @param  array<int, int>  $studentIds
      * @return Collection<int, object{absent: int|string, late: int|string}>
      */
-    private function attendanceCounts(User $tutor, array $studentIds, CarbonImmutable $since, CarbonImmutable $now)
+    private function attendanceCounts(User $tutor, array $studentIds, CarbonImmutable $since, CarbonImmutable $now): Collection
     {
         return $this->recordsQuery($tutor, $studentIds, $since, $now)
             ->groupBy('attendance_records.user_id')
@@ -157,7 +157,7 @@ class StudentsToWatch
      * @param  array<int, int>  $studentIds
      * @return Collection<int, object{status: string, notes: string|null}>
      */
-    private function lastRecords(User $tutor, array $studentIds, CarbonImmutable $since, CarbonImmutable $now)
+    private function lastRecords(User $tutor, array $studentIds, CarbonImmutable $since, CarbonImmutable $now): Collection
     {
         return $this->recordsQuery($tutor, $studentIds, $since, $now)
             ->whereNotExists(function (Builder $query) use ($tutor, $since, $now): void {
@@ -185,7 +185,7 @@ class StudentsToWatch
      * @param  array<int, int>  $studentIds
      * @return Collection<int, object{name: string, average: int}>
      */
-    private function bestStrands(array $studentIds, CarbonImmutable $since, CarbonImmutable $now)
+    private function bestStrands(array $studentIds, CarbonImmutable $since, CarbonImmutable $now): Collection
     {
         return DB::table('quiz_attempts')
             ->join('quizzes', 'quizzes.id', '=', 'quiz_attempts.quiz_id')
@@ -198,14 +198,14 @@ class StudentsToWatch
             ->havingRaw('count(*) >= ?', [self::MIN_QUIZZES])
             ->selectRaw('quiz_attempts.user_id, strands.name, avg(quiz_attempts.score * 100.0 / quiz_attempts.max_score) as average')
             ->get()
+            ->filter(fn (object $row): bool => (float) $row->average >= self::HIGH_AVERAGE)
+            ->sortBy([['average', 'desc'], ['name', 'asc']])
+            ->unique('user_id')
             ->map(function (object $row): object {
                 $row->average = (int) round($row->average);
 
                 return $row;
             })
-            ->filter(fn (object $row): bool => $row->average >= self::HIGH_AVERAGE)
-            ->sortBy([['average', 'desc'], ['name', 'asc']])
-            ->unique('user_id')
             ->keyBy('user_id');
     }
 }
