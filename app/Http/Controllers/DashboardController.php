@@ -10,6 +10,7 @@ use App\Models\Lesson;
 use App\Models\RaisedIssue;
 use App\Models\User;
 use App\Services\AdminDashboard;
+use App\Services\GuardianDashboard;
 use App\Services\ReportsDue;
 use App\Services\StudentDashboard;
 use App\Support\AdminDashboardFilters;
@@ -33,7 +34,11 @@ class DashboardController extends Controller
             Role::Admin => app(AdminDashboard::class)->for($user, AdminDashboardFilters::fromQuery($request->query())),
             Role::Tutor => [...$this->tutorToday($user), 'fromAcademy' => $this->fromAcademy($user)],
             Role::Student => app(StudentDashboard::class)->for($user, $request->query('week') === 'next'),
-            Role::Guardian => ['fromAcademy' => $this->noticesForGuardian($user)],
+            Role::Guardian => [
+                'fromAcademy' => $this->noticesForGuardian($user),
+                'children' => app(GuardianDashboard::class)->childrenOf($user),
+                'paymentsAvailable' => app(GuardianDashboard::class)->paymentsAvailable(),
+            ],
             default => [],
         };
 

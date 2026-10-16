@@ -8,7 +8,7 @@ import { index as quizzesIndex } from '@/routes/quizzes';
 import { store as startQuiz } from '@/routes/quizzes/attempts';
 import type { Strand } from '@/types';
 
-const accents: Record<Strand['key'], string> = {
+export const strandAccents: Record<Strand['key'], string> = {
     number: 'bg-strand-number',
     algebra: 'bg-strand-algebra',
     statistics: 'bg-strand-statistics',
@@ -34,7 +34,7 @@ export default function StrandCard({
                         <span
                             className={cn(
                                 'size-2.5 rounded-full',
-                                accents[strand.key],
+                                strandAccents[strand.key],
                             )}
                             aria-hidden="true"
                         />

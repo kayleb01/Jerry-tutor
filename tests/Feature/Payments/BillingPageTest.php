@@ -47,8 +47,8 @@ it('shows a parent their children, plans, subscriptions and payments', function 
             ->where('plans.0', ['id' => $this->standard->id, 'name' => 'Standard membership', 'description' => 'One student', 'amount' => '₦5,000', 'maxStudents' => 1])
             ->where('plans.1.maxStudents', 4)
             ->has('children', 3)
-            ->where('children.0', ['id' => $this->ada->id, 'name' => 'Ada Okafor', 'yearGroup' => 'Year 5', 'state' => 'covered', 'note' => 'Standard membership · renews 15 Nov', 'pendingOther' => false])
-            ->where('children.1', ['id' => $this->ife->id, 'name' => 'Ife Okafor', 'yearGroup' => 'Year 3', 'state' => 'none', 'note' => 'No quiz access yet', 'pendingOther' => false])
+            ->where('children.0', ['id' => $this->ada->id, 'name' => 'Ada Okafor', 'yearGroup' => 'Year 5', 'state' => 'covered', 'note' => 'Standard membership · renews 15 Nov', 'pendingOther' => false, 'paymentFailed' => false])
+            ->where('children.1', ['id' => $this->ife->id, 'name' => 'Ife Okafor', 'yearGroup' => 'Year 3', 'state' => 'none', 'note' => 'No quiz access yet', 'pendingOther' => false, 'paymentFailed' => false])
             ->where('children.2.state', 'pending')
             ->where('children.2.note', 'Waiting for the payment to be confirmed')
             ->has('subscriptions', 2)
@@ -88,8 +88,10 @@ it('explains what a past-due or cancelling subscription means', function () {
             ->where('subscriptions.1.note', 'Ends on 1 November. It won’t renew.')
             ->where('subscriptions.1.canCancel', false)
             ->where('children.0.state', 'covered')
+            ->where('children.0.paymentFailed', true)
             ->where('children.1.state', 'none')
-            ->where('children.2.state', 'covered'));
+            ->where('children.2.state', 'covered')
+            ->where('children.2.paymentFailed', false));
 });
 
 it('lets a student see and pay only for themselves', function () {

@@ -10,10 +10,10 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Payments\PaymentGatewayManager;
+use App\Services\QuizAccessState;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -89,33 +89,15 @@ class BillingController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string, yearGroup: string|null, state: string, note: string, pendingOther: bool}
+     * @return array{id: int, name: string, yearGroup: string|null, state: string, note: string, pendingOther: bool, paymentFailed: bool}
      */
     private function child(User $child, User $viewer, CarbonImmutable $now): array
     {
-        $covering = $child->coveringSubscriptions()->grantingAccess($now)->with(['plan', 'payer'])->latest('current_period_ends_at')->first();
-        $pending = $covering === null ? $child->coveringSubscriptions()
-            ->with('payer')
-            ->where('status', SubscriptionStatus::Pending)
-            ->where('subscriptions.created_at', '>', $now->subDay())
-            ->latest('subscriptions.id')
-            ->first() : null;
-        $pendingOther = $pending !== null && $pending->payer_id !== $viewer->id;
-
-        [$state, $note] = match (true) {
-            $covering !== null => ['covered', $covering->plan->name.' · '.$this->shortStatus($covering).$this->paidBy($covering, $viewer)],
-            $pendingOther => ['pending', Str::before($pending->payer->name, ' ').' started paying'.($child->is($viewer) ? ' for you' : '')],
-            $pending !== null => ['pending', 'Waiting for the payment to be confirmed'],
-            default => ['none', 'No quiz access yet'],
-        };
-
         return [
             'id' => $child->id,
             'name' => $child->name,
             'yearGroup' => $child->studentProfile?->year_group->label(),
-            'state' => $state,
-            'note' => $note,
-            'pendingOther' => $pendingOther,
+            ...app(QuizAccessState::class)->for($child, $viewer, $now),
         ];
     }
 
@@ -144,25 +126,6 @@ class BillingController extends Controller
             'canCancel' => $running && ! $subscription->cancel_at_period_end,
             'canUpdateCard' => $running && ! $subscription->cancel_at_period_end,
         ];
-    }
-
-    /**
-     * A child can be paid for by a parent or pay for themselves; say so when it isn't the viewer.
-     */
-    private function paidBy(Subscription $subscription, User $viewer): string
-    {
-        return $subscription->payer_id === $viewer->id ? '' : ' · paid by '.Str::before($subscription->payer->name, ' ');
-    }
-
-    private function shortStatus(Subscription $subscription): string
-    {
-        $date = $subscription->current_period_ends_at?->setTimezone(config('academy.timezone'))->format('j M');
-
-        return match (true) {
-            $subscription->status === SubscriptionStatus::PastDue => 'payment failed',
-            $subscription->status === SubscriptionStatus::Cancelled, $subscription->cancel_at_period_end => "ends {$date}",
-            default => "renews {$date}",
-        };
     }
 
     private function card(?string $brand, ?string $last4): ?string

@@ -2,6 +2,7 @@ import { Form, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import FieldError from '@/components/field-error';
 import Icon from '@/components/icon';
+import QuizAccessBadge from '@/components/quiz-access-badge';
 import { Badge } from '@/components/ui/badge';
 import type { BadgeTone } from '@/components/ui/badge';
 import { Button, buttonClasses } from '@/components/ui/button';
@@ -31,6 +32,7 @@ type Child = {
     note: string;
     /** Someone else (a parent, or the student themselves) is part-way through paying. */
     pendingOther: boolean;
+    paymentFailed: boolean;
 };
 
 type SubscriptionRow = {
@@ -70,18 +72,6 @@ type BillingProps = {
     subscriptions: SubscriptionRow[];
     payments: PaymentRow[];
     cancelReasons: string[];
-};
-
-const childTones: Record<Child['state'], BadgeTone> = {
-    covered: 'present',
-    pending: 'gold',
-    none: 'neutral',
-};
-
-const childLabels: Record<Child['state'], string> = {
-    covered: 'Quiz access',
-    pending: 'Waiting',
-    none: 'No access',
 };
 
 const subscriptionTones: Record<SubscriptionRow['status'], BadgeTone> = {
@@ -161,9 +151,10 @@ export default function Billing({
                                             .join(' · ')}
                                     </p>
                                 </div>
-                                <Badge tone={childTones[child.state]}>
-                                    {childLabels[child.state]}
-                                </Badge>
+                                <QuizAccessBadge
+                                    state={child.state}
+                                    paymentFailed={child.paymentFailed}
+                                />
                             </Card>
                         ))}
                     </div>
