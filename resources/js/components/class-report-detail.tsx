@@ -17,6 +17,8 @@ export type ClassReport = {
     wentWell: string | null;
     issues: string | null;
     recommendations: string | null;
+    recommendedActions: string[];
+    raisesIssue: boolean;
     submittedAt: string;
     needsAttention: boolean;
 };
@@ -49,6 +51,34 @@ export type ClassReportLesson = {
 };
 
 const STUDENTS_SHOWN = 3;
+
+function RaisedIssueBadge() {
+    return (
+        <span className="inline-flex h-5 items-center gap-1 rounded-md bg-absent-soft px-1.5 text-[0.6875rem] font-semibold text-absent">
+            <Icon name="flag" className="size-3" />
+            Raised an issue
+        </span>
+    );
+}
+
+function RecommendedActionBadges({ actions }: { actions: string[] }) {
+    if (actions.length === 0) {
+        return null;
+    }
+
+    return (
+        <ul className="mt-2 flex flex-wrap gap-1.5">
+            {actions.map((action) => (
+                <li
+                    key={action}
+                    className="inline-flex h-6 items-center rounded-md bg-primary-95 px-2 text-xs font-semibold text-primary-30 dark:bg-primary-20 dark:text-primary-90"
+                >
+                    {action}
+                </li>
+            ))}
+        </ul>
+    );
+}
 
 const smallCaps =
     'text-[0.6875rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase sm:text-xs';
@@ -330,8 +360,9 @@ function TutorReportCard({
                         className="size-10"
                     />
                     <div>
-                        <p className="font-semibold">
+                        <p className="flex flex-wrap items-center gap-2 font-semibold">
                             Tutor report · {report.author}
+                            {report.raisesIssue && <RaisedIssueBadge />}
                         </p>
                         <p className="text-[0.8125rem] text-muted-foreground">
                             Submitted {report.submittedAt}
@@ -358,6 +389,14 @@ function TutorReportCard({
                     </p>
                 </div>
             </div>
+            {report.recommendedActions.length > 0 && (
+                <div>
+                    <p className={smallCaps}>Recommended actions</p>
+                    <RecommendedActionBadges
+                        actions={report.recommendedActions}
+                    />
+                </div>
+            )}
             {report.recommendations && (
                 <div className="flex gap-3 rounded-md bg-primary-95 px-4 py-3.5 text-sm dark:bg-primary-20/50">
                     <Icon
@@ -384,6 +423,7 @@ function StudentReportRow({ report }: { report: ClassReport }) {
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                     <p className="flex flex-wrap items-center gap-2 font-semibold">
                         {report.author}
+                        {report.raisesIssue && <RaisedIssueBadge />}
                         {report.needsAttention && (
                             <span className="inline-flex h-5 items-center gap-1 rounded-md bg-absent-soft px-1.5 text-[0.6875rem] font-semibold text-absent">
                                 <Icon name="flag" className="size-3" />
@@ -412,6 +452,7 @@ function StudentReportRow({ report }: { report: ClassReport }) {
                         “{text}”
                     </p>
                 ))}
+                <RecommendedActionBadges actions={report.recommendedActions} />
                 {report.recommendations && (
                     <p className="mt-1 text-[0.8125rem] font-semibold text-secondary-30 dark:text-secondary-80">
                         Recommends: {report.recommendations}
