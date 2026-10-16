@@ -21,7 +21,7 @@ beforeEach(function () {
     ]);
 });
 
-it('shows the tutor today\'s lessons in academy time', function () {
+it('shows the tutor their next class in academy time', function () {
     $this->travelTo(CarbonImmutable::parse('2025-10-04 08:45:00', 'UTC'));
     Lesson::factory()->for($this->group)->create([
         'tutor_id' => $this->tutor->id,
@@ -32,15 +32,14 @@ it('shows the tutor today\'s lessons in academy time', function () {
     $this->actingAs($this->tutor)->get(route('dashboard'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard/tutor')
-            ->has('today', 1)
-            ->where('today.0.className', 'Year 5 Maths')
-            ->where('today.0.time', '10:00–11:00')
-            ->where('today.0.location', 'Room 1')
-            ->where('today.0.students', 1)
-            ->where('today.0.checkedInAt', null)
-            ->where('today.0.canCheckIn', true)
-            ->has('upcoming', 1)
-            ->where('upcoming.0.when', 'Sat 11 Oct, 10:00'));
+            ->where('nextLesson.id', $this->lesson->id)
+            ->where('nextLesson.className', 'Year 5 Maths')
+            ->where('nextLesson.time', '10:00 – 11:00')
+            ->where('nextLesson.location', 'Room 1')
+            ->where('nextLesson.students', 1)
+            ->where('nextLesson.checkedInAt', null)
+            ->where('nextLesson.canCheckIn', true)
+            ->has('week', 1));
 });
 
 it('checks the tutor in on time', function () {
@@ -66,8 +65,8 @@ it('records a late check-in and its lateness report', function () {
 
     $this->actingAs($this->tutor)->get(route('dashboard'))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('today.0.checkedInAt', '10:12')
-            ->where('today.0.late', true));
+            ->where('nextLesson.checkedInAt', '10:12')
+            ->where('nextLesson.minutesLate', 12));
 });
 
 it('keeps the first check-in time if the tutor presses it again', function () {
@@ -103,5 +102,5 @@ it('will not let check-in overwrite a record an admin or the no-show job already
         ->and($record->latenessReport)->toBeNull();
 
     $this->actingAs($this->tutor)->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page->where('today.0.canCheckIn', false));
+        ->assertInertia(fn (Assert $page) => $page->where('nextLesson.canCheckIn', false));
 })->with([AttendanceStatus::Absent, AttendanceStatus::Excused]);

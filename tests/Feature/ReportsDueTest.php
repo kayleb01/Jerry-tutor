@@ -6,6 +6,7 @@ use App\Models\ClassGroup;
 use App\Models\Lesson;
 use App\Models\LessonReport;
 use App\Models\User;
+use App\Services\ReportsDue;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -29,20 +30,23 @@ beforeEach(function () {
 it('lists yesterday\'s lesson for the tutor and the student to report on', function (string $who) {
     $user = $who === 'tutor' ? $this->tutor : $this->ava;
 
-    $this->actingAs($user)->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->has('reportsDue', 1)
-            ->where('reportsDue.0.id', $this->lesson->id)
-            ->where('reportsDue.0.className', 'Year 5 Maths')
-            ->where('reportsDue.0.when', 'Mon 13 Oct, 17:00')
-            ->where('reportsDue.0.closesAt', 'Wed 15 Oct, 18:00'));
+    expect(app(ReportsDue::class)->for($user))->toBe([[
+        'id' => $this->lesson->id,
+        'className' => 'Year 5 Maths',
+        'when' => 'Mon 13 Oct, 17:00',
+        'closesAt' => 'Wed 15 Oct, 18:00',
+    ]]);
+
+    if ($who === 'student') {
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertInertia(fn (Assert $page) => $page->has('reportsDue', 1)->where('reportsDue.0.id', $this->lesson->id));
+    }
 })->with(['tutor', 'student']);
 
 it('drops a lesson once reported or once the window closes', function () {
     LessonReport::factory()->for($this->lesson)->create(['author_id' => $this->tutor->id]);
 
-    $this->actingAs($this->tutor)->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page->has('reportsDue', 0));
+    expect(app(ReportsDue::class)->for($this->tutor))->toBe([]);
 
     $this->travelTo(CarbonImmutable::parse('2025-10-15 17:01:00', 'UTC'));
     $this->actingAs($this->ava)->get(route('dashboard'))
@@ -58,6 +62,10 @@ it('does not ask absent students or other tutors', function () {
 
     $this->actingAs($absent)->get(route('dashboard'))
         ->assertInertia(fn (Assert $page) => $page->has('reportsDue', 0));
-    $this->actingAs(User::factory()->tutor()->create())->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page->has('reportsDue', 0));
+    expect(app(ReportsDue::class)->for(User::factory()->tutor()->create()))->toBe([]);
+});
+
+it('no longer sends reportsDue to the tutor dashboard', function () {
+    $this->actingAs($this->tutor)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->missing('reportsDue'));
 });

@@ -97,12 +97,12 @@ it('closes 48 hours after the lesson ends', function () {
     $this->actingAs($this->ava)->put(route('lessons.report.update', $this->lesson), reportPayload())->assertForbidden();
 });
 
-it('offers the report on the student dashboard and the tutor Today screen', function () {
+it('offers the report on the student dashboard and the tutor dashboard', function () {
     $this->actingAs($this->ava)->get(route('dashboard'))
         ->assertInertia(fn (Assert $page) => $page->where('today.0.canReport', true)->where('today.0.reported', false));
 
     $this->actingAs($this->tutor)->get(route('dashboard'))
-        ->assertInertia(fn (Assert $page) => $page->where('today.0.canReport', true));
+        ->assertInertia(fn (Assert $page) => $page->where('week.0.id', $this->lesson->id)->where('week.0.report', 'needed'));
 
     $this->actingAs($this->tutor)->get(route('lessons.register.show', $this->lesson))
         ->assertInertia(fn (Assert $page) => $page->where('canReport', true));
