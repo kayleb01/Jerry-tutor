@@ -15,6 +15,17 @@ enum Difficulty: string
     }
 
     /**
+     * The next level up, or null from the hardest.
+     */
+    public function next(): ?self
+    {
+        $cases = self::cases();
+        $index = array_search($this, $cases, true);
+
+        return $cases[$index + 1] ?? null;
+    }
+
+    /**
      * @return array<int, array{value: string, label: string}>
      */
     public static function options(): array
