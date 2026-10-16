@@ -6,7 +6,6 @@ use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeRole;
 use App\Enums\LessonStatus;
 use App\Enums\RecommendedAction;
-use App\Models\AttendanceRecord;
 use App\Models\Lesson;
 use App\Models\LessonReport;
 use App\Models\RaisedIssue;
@@ -84,12 +83,11 @@ class ClassReportInbox
             'raised' => $query->whereHas('raisedIssues', fn (Builder $issues) => $issues->whereNull('acknowledged_at')),
             'missing' => $query
                 ->where('lessons.ends_at', '<', $now)
-                ->whereHas('attendanceRecords', $this->attended(...))
-                ->whereDoesntHave('lessonReports', fn (Builder $reports) => $reports->where('author_role', AttendeeRole::Tutor)),
+                ->needingTutorReport($now),
             'reviewed' => $query
                 ->whereNotNull('lessons.reports_reviewed_at')
                 ->whereDoesntHave('lessonReports', $this->unreviewed(...)),
-            default => $query->where(fn (Builder $query) => $query->whereHas('lessonReports')->orWhereHas('attendanceRecords', $this->attended(...))),
+            default => $query->where(fn (Builder $query) => $query->whereHas('lessonReports')->orWhereHas('attendanceRecords', fn (Builder $records) => $records->attended())),
         };
     }
 
@@ -124,6 +122,7 @@ class ClassReportInbox
                 'tutor',
                 'lessonReports:id,lesson_id,author_role,submitted_at',
                 'raisedIssues' => fn (HasMany $issues) => $issues->whereNull('acknowledged_at'),
+                'attendanceRecords' => fn (HasMany $records) => $records->where('attendee_role', AttendeeRole::Tutor),
             ])
             ->paginate($perPage)
             ->withQueryString()
@@ -237,16 +236,6 @@ class ClassReportInbox
     }
 
     /**
-     * Someone was actually there. Absent records alone don't count: the no-show job writes those for every lesson.
-     *
-     * @param  Builder<AttendanceRecord>  $records
-     */
-    private function attended(Builder $records): void
-    {
-        $records->whereIn('status', [AttendanceStatus::Present, AttendanceStatus::Late]);
-    }
-
-    /**
      * Reports submitted after the lesson's last review (or never reviewed).
      *
      * @param  Builder<LessonReport>  $reports
@@ -271,7 +260,7 @@ class ClassReportInbox
 
         return match (true) {
             $lesson->raisedIssues->whereNull('acknowledged_at')->isNotEmpty() => ['raised', 'Raised with tutor'],
-            ! $hasTutorReport && $lesson->ends_at->lessThan($now) => $lesson->ends_at->addHours(LessonPolicy::REPORT_WINDOW_HOURS)->greaterThan($now)
+            ! $hasTutorReport && ! $lesson->tutorWasAway() && $lesson->ends_at->lessThan($now) => $lesson->ends_at->addHours(LessonPolicy::REPORT_WINDOW_HOURS)->greaterThan($now)
                 ? ['pending', 'Tutor report pending']
                 : ['missing', 'Tutor report missing'],
             $this->isReviewed($lesson) => ['reviewed', 'Reviewed'],

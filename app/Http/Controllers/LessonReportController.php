@@ -6,6 +6,7 @@ use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeRole;
 use App\Enums\RecommendedAction;
 use App\Http\Requests\LessonReportRequest;
+use App\Models\AttendanceRecord;
 use App\Models\Lesson;
 use App\Models\LessonReport;
 use App\Services\TutorReports;
@@ -127,9 +128,9 @@ class LessonReportController extends Controller
     {
         $students = $lesson->attendanceRecords()
             ->where('attendee_role', AttendeeRole::Student)
-            ->whereNotNull('recorded_by_id')
+            ->personEntered()
             ->pluck('status');
-        $present = $students->filter(fn (AttendanceStatus $status): bool => in_array($status, [AttendanceStatus::Present, AttendanceStatus::Late], true))->count();
+        $present = $students->filter(fn (AttendanceStatus $status): bool => in_array($status, AttendanceRecord::ATTENDED, true))->count();
 
         return [
             'date' => $lesson->localStart()->format('D j M Y'),

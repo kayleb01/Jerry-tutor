@@ -235,3 +235,27 @@ it('does not chase tutor reports for classes nobody attended', function () {
         ->and(inboxIds('missing'))->toBe([$ran->id])
         ->and(inboxIds('all'))->toBe([$ran->id]);
 });
+
+it('does not chase a tutor report when a person marked the tutor away, but does after an automatic absence', function () {
+    $excused = inboxLesson('2026-10-13 09:00:00');
+    inboxAttend($excused);
+    AttendanceRecord::factory()->for($excused)->create([
+        'user_id' => $excused->tutor_id,
+        'attendee_role' => AttendeeRole::Tutor,
+        'status' => AttendanceStatus::Excused,
+        'recorded_by_id' => $this->admin->id,
+    ]);
+
+    $autoAbsent = inboxLesson('2026-10-12 09:00:00');
+    inboxAttend($autoAbsent);
+    AttendanceRecord::factory()->for($autoAbsent)->create([
+        'user_id' => $autoAbsent->tutor_id,
+        'attendee_role' => AttendeeRole::Tutor,
+        'status' => AttendanceStatus::Absent,
+        'recorded_by_id' => null,
+    ]);
+
+    expect(inboxIds('missing'))->toBe([$autoAbsent->id])
+        ->and(inboxRow($excused)['state'])->toBe('waiting')
+        ->and(inboxRow($autoAbsent)['state'])->toBe('missing');
+});

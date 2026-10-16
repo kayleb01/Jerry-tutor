@@ -2,9 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\AttendanceStatus;
-use App\Enums\AttendeeRole;
-use App\Enums\LessonStatus;
 use App\Models\Lesson;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -16,8 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 class TutorReports
 {
     /**
-     * Started, uncancelled lessons the tutor taught, where someone attended, the tutor was not
-     * marked Absent or Excused, and no submitted tutor report exists. Newest first.
+     * The tutor's lessons that need a report (see Lesson::needingTutorReport()). Newest first.
      *
      * @return Builder<Lesson>
      */
@@ -27,15 +23,7 @@ class TutorReports
 
         return Lesson::query()
             ->where('lessons.tutor_id', $tutor->id)
-            ->where('lessons.starts_at', '<=', $now)
-            ->where('lessons.status', '!=', LessonStatus::Cancelled)
-            ->whereDoesntHave('lessonReports', fn (Builder $reports) => $reports->where('author_role', AttendeeRole::Tutor))
-            ->whereDoesntHave('attendanceRecords', fn (Builder $records) => $records
-                ->where('attendee_role', AttendeeRole::Tutor)
-                ->where('user_id', $tutor->id)
-                ->whereIn('status', [AttendanceStatus::Absent, AttendanceStatus::Excused]))
-            ->whereHas('attendanceRecords', fn (Builder $records) => $records
-                ->whereIn('status', [AttendanceStatus::Present, AttendanceStatus::Late]))
+            ->needingTutorReport($now)
             ->orderByDesc('lessons.starts_at');
     }
 
@@ -48,7 +36,7 @@ class TutorReports
             return false;
         }
 
-        if ($lesson->lessonReports()->where('author_role', AttendeeRole::Tutor)->where('author_id', $tutor->id)->exists()) {
+        if ($lesson->lessonReports()->fromTutor()->where('author_id', $tutor->id)->exists()) {
             return true;
         }
 

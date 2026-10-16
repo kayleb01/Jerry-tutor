@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\AttendeeRole;
 use App\Enums\LessonStatus;
 use Carbon\CarbonImmutable;
 use Database\Factories\LessonFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -138,5 +141,39 @@ class Lesson extends Model
     public function isCancelled(): bool
     {
         return $this->status === LessonStatus::Cancelled;
+    }
+
+    /**
+     * Lessons that need a tutor report: started by $now, not cancelled, no submitted tutor report,
+     * someone attended, and the tutor wasn't marked away by a person (see tutorWasAway()).
+     *
+     * @param  Builder<Lesson>  $query
+     */
+    #[Scope]
+    protected function needingTutorReport(Builder $query, CarbonImmutable $now): void
+    {
+        $query
+            ->where('lessons.starts_at', '<=', $now->utc())
+            ->where('lessons.status', '!=', LessonStatus::Cancelled)
+            ->whereDoesntHave('lessonReports', fn (Builder $reports) => $reports->fromTutor())
+            ->whereDoesntHave('attendanceRecords', fn (Builder $records) => $records
+                ->where('attendance_records.attendee_role', AttendeeRole::Tutor)
+                ->whereColumn('attendance_records.user_id', 'lessons.tutor_id')
+                ->whereIn('attendance_records.status', AttendanceRecord::AWAY)
+                ->personEntered())
+            ->whereHas('attendanceRecords', fn (Builder $records) => $records->attended());
+    }
+
+    /**
+     * A person marked the lesson's tutor Absent or Excused, so no tutor report is owed. An automatic
+     * absence from the no-show job doesn't count: the tutor may have taught without checking in.
+     * Reads the loaded attendanceRecords; the query form is needingTutorReport().
+     */
+    public function tutorWasAway(): bool
+    {
+        return $this->attendanceRecords->contains(fn (AttendanceRecord $record): bool => $record->attendee_role === AttendeeRole::Tutor
+            && $record->user_id === $this->tutor_id
+            && in_array($record->status, AttendanceRecord::AWAY, true)
+            && $record->isPersonEntered());
     }
 }

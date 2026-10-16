@@ -107,3 +107,18 @@ it('lets the tutor report on an old class but not another tutor\'s', function ()
     $submitted->update(['status' => LessonStatus::Cancelled]);
     expect($this->tutor->can('submitReport', $submitted))->toBeFalse();
 });
+
+it('still needs a report when the tutor taught but the no-show job marked them absent', function () {
+    $lesson = ($this->lessonAt)('2025-10-19 09:00:00');
+    ($this->record)($lesson, User::factory()->student()->create(), AttendanceStatus::Present);
+    ($this->record)($lesson, $this->tutor, AttendanceStatus::Absent, AttendeeRole::Tutor, null);
+
+    expect(($this->needing)())->toBe([$lesson->id])
+        ->and($this->tutor->can('submitReport', $lesson))->toBeTrue();
+});
+
+it('compares start times in UTC whatever timezone now is given in', function () {
+    ($this->attendedLesson)('2025-10-20 12:30:00');
+
+    expect($this->reports->needingReport($this->tutor, CarbonImmutable::now()->setTimezone('Africa/Lagos'))->pluck('id')->all())->toBe([]);
+});

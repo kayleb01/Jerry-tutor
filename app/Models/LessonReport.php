@@ -79,6 +79,17 @@ class LessonReport extends Model
         $query->whereNotNull('lesson_reports.submitted_at');
     }
 
+    /**
+     * Reports written by the lesson's tutor (as opposed to its students).
+     *
+     * @param  Builder<LessonReport>  $query
+     */
+    #[Scope]
+    protected function fromTutor(Builder $query): void
+    {
+        $query->where('lesson_reports.author_role', AttendeeRole::Tutor);
+    }
+
     public function isDraft(): bool
     {
         return $this->submitted_at === null;

@@ -7,6 +7,8 @@ use App\Enums\AttendeeRole;
 use Carbon\CarbonImmutable;
 use Database\Factories\AttendanceRecordFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +33,12 @@ class AttendanceRecord extends Model
 {
     /** @use HasFactory<AttendanceRecordFactory> */
     use HasFactory;
+
+    /** Statuses meaning the person was there. */
+    public const ATTENDED = [AttendanceStatus::Present, AttendanceStatus::Late];
+
+    /** Statuses meaning the person was not there. */
+    public const AWAY = [AttendanceStatus::Absent, AttendanceStatus::Excused];
 
     /**
      * Get the attributes that should be cast.
@@ -87,5 +95,32 @@ class AttendanceRecord extends Model
     public function absenceNotice(): HasOne
     {
         return $this->hasOne(GuardianNotice::class);
+    }
+
+    /**
+     * Records a person entered. The no-show job's automatic absences leave recorded_by_id null and are not evidence.
+     *
+     * @param  Builder<AttendanceRecord>  $query
+     */
+    #[Scope]
+    protected function personEntered(Builder $query): void
+    {
+        $query->whereNotNull('attendance_records.recorded_by_id');
+    }
+
+    /**
+     * Someone was actually there (Present or Late).
+     *
+     * @param  Builder<AttendanceRecord>  $query
+     */
+    #[Scope]
+    protected function attended(Builder $query): void
+    {
+        $query->whereIn('attendance_records.status', self::ATTENDED);
+    }
+
+    public function isPersonEntered(): bool
+    {
+        return $this->recorded_by_id !== null;
     }
 }
