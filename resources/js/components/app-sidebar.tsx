@@ -11,6 +11,7 @@ import { index as adminClassesIndex } from '@/routes/admin/classes';
 import { index as adminLatenessIndex } from '@/routes/admin/lateness';
 import { index as adminLessonReportsIndex } from '@/routes/admin/lesson-reports';
 import { index as adminQuestionsIndex } from '@/routes/admin/questions';
+import { index as adminSubjectsIndex } from '@/routes/admin/subjects';
 import { index as adminSubscriptionsIndex } from '@/routes/admin/subscriptions';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as billingIndex } from '@/routes/billing';
@@ -36,6 +37,7 @@ const navItems: Record<Role, NavItem[]> = {
         },
         { label: 'Users', icon: 'users', href: adminUsersIndex },
         { label: 'Classes', icon: 'classes', href: adminClassesIndex },
+        { label: 'Subjects', icon: 'book', href: adminSubjectsIndex },
         {
             label: 'Lateness reports',
             icon: 'alarm',

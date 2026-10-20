@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\QuestionImportController;
 use App\Http\Controllers\Admin\QuestionStatusController;
 use App\Http\Controllers\Admin\RestoreUserController;
+use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\SubscriptionActionsController;
 use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
 use App\Http\Controllers\Admin\UserController;
@@ -96,6 +97,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
         ->parameters(['classes' => 'classGroup']);
     Route::post('classes/{classGroup}/students', [ClassEnrolmentController::class, 'store'])->name('classes.students.store');
     Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
+
+    Route::get('subjects', [SubjectController::class, 'index'])->name('subjects.index');
+    Route::post('subjects', [SubjectController::class, 'store'])->name('subjects.store');
+    Route::put('subjects/{subject}', [SubjectController::class, 'update'])->name('subjects.update');
 
     Route::get('payments/export', [AdminPaymentController::class, 'export'])->name('payments.export');
     Route::get('payments', [AdminPaymentController::class, 'index'])->name('payments.index');
