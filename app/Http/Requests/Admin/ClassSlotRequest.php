@@ -78,8 +78,7 @@ class ClassSlotRequest extends FormRequest
             );
 
             if ($clash !== null) {
-                $range = substr($clash->timeLabel(), 4);
-                $validator->errors()->add('start_time', "{$group->name} already has {$clash->subject->name} {$range} on {$clash->weekday->label()}");
+                $validator->errors()->add('start_time', $clash->clashMessage());
             }
         }];
     }

@@ -24,7 +24,7 @@ type NavItem = {
     icon: IconName;
     href: () => { url: string; method: 'get' };
     /** A count from the shared `badges` prop, shown as a pill when above zero. */
-    badge?: 'classReports' | 'lateness' | 'subscriptions';
+    badge?: 'classReports' | 'lateness' | 'subscriptions' | 'pendingTutors';
 };
 
 const navItems: Record<Role, NavItem[]> = {
@@ -35,7 +35,12 @@ const navItems: Record<Role, NavItem[]> = {
             icon: 'check',
             href: adminAttendanceIndex,
         },
-        { label: 'Users', icon: 'users', href: adminUsersIndex },
+        {
+            label: 'Users',
+            icon: 'users',
+            href: adminUsersIndex,
+            badge: 'pendingTutors',
+        },
         { label: 'Classes', icon: 'classes', href: adminClassesIndex },
         { label: 'Subjects', icon: 'book', href: adminSubjectsIndex },
         {
@@ -104,7 +109,8 @@ function initials(name: string): string {
 }
 
 export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
-    const { auth, badges, billing } = usePage().props;
+    const { auth, badges, billing, pendingTutorCount } = usePage().props;
+    const counts = { ...badges, pendingTutors: pendingTutorCount ?? 0 };
     const currentPath = usePage().url.split('?')[0];
 
     if (!auth.user) {
@@ -147,7 +153,7 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
                         : []),
                 ].map((item: NavItem) => {
                     const active = isActive(item.href().url);
-                    const count = item.badge ? (badges?.[item.badge] ?? 0) : 0;
+                    const count = item.badge ? (counts[item.badge] ?? 0) : 0;
 
                     return (
                         <Link

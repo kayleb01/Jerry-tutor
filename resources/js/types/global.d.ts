@@ -19,6 +19,8 @@ declare module '@inertiajs/core' {
                 subscriptions?: number;
             };
             billing?: { selfPay: boolean };
+            /** Verified tutor applications awaiting a decision; null unless the viewer is an admin. */
+            pendingTutorCount?: number | null;
             [key: string]: unknown;
         };
         flashDataType: {

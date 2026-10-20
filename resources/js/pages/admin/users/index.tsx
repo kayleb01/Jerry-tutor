@@ -1,4 +1,4 @@
-import { Form, Link } from '@inertiajs/react';
+import { Form, Link, usePage } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
+import { index as tutorApplications } from '@/routes/admin/tutor-applications';
 import { create, edit, index } from '@/routes/admin/users';
 import type { Option, Paginated } from '@/types';
 
@@ -30,6 +31,7 @@ type UsersIndexProps = {
 };
 
 export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
+    const { pendingTutorCount } = usePage().props;
     const roleLabel = (value: string) =>
         roles.find((role) => role.value === value)?.label ?? value;
 
@@ -83,12 +85,20 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
                         Filter
                     </Button>
                 </Form>
-                <Link
-                    href={create()}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-sm bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
-                >
-                    Add user
-                </Link>
+                <div className="flex flex-wrap items-center gap-3">
+                    <Link
+                        href={tutorApplications()}
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-input px-4 text-sm font-semibold text-foreground hover:bg-surface-muted"
+                    >
+                        Pending tutors ({pendingTutorCount ?? 0})
+                    </Link>
+                    <Link
+                        href={create()}
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-sm bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+                    >
+                        Add user
+                    </Link>
+                </div>
             </div>
             <Card>
                 <CardContent className="relative overflow-x-auto p-0">

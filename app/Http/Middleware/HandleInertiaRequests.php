@@ -2,10 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\Role;
 use App\Enums\SubscriptionStatus;
 use App\Models\LatenessReport;
 use App\Models\Subscription;
+use App\Models\User;
 use App\Services\ClassReportInbox;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -53,6 +55,10 @@ class HandleInertiaRequests extends Middleware
             'badges' => fn (): array => $request->user()?->role === Role::Admin
                 ? ['classReports' => $this->classReportsToReview(), 'lateness' => LatenessReport::whereNull('reviewed_at')->count(), 'subscriptions' => Subscription::where('status', SubscriptionStatus::PastDue)->count()]
                 : [],
+            // Verified tutor applications waiting for a decision, for the Users badge and Pending tutors link.
+            'pendingTutorCount' => fn (): ?int => $request->user()?->role === Role::Admin
+                ? User::query()->tutorApplications(ApprovalStatus::Pending)->count()
+                : null,
         ];
     }
 

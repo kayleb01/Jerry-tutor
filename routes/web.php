@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\RestoreUserController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\SubscriptionActionsController;
 use App\Http\Controllers\Admin\SubscriptionController as AdminSubscriptionController;
+use App\Http\Controllers\Admin\TutorApplicationController as AdminTutorApplicationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
 use App\Http\Controllers\BillingCallbackController;
@@ -105,6 +106,11 @@ Route::middleware(['auth', 'verified', 'approved.tutor', 'role:admin'])->prefix(
     Route::resource('users', UserController::class)->except(['show'])->withTrashed(['edit']);
     Route::post('users/{user}/restore', RestoreUserController::class)->withTrashed()->name('users.restore');
     Route::put('users/{user}/password', UserPasswordController::class)->name('users.password.update');
+
+    Route::get('tutor-applications', [AdminTutorApplicationController::class, 'index'])->name('tutor-applications.index');
+    Route::get('tutor-applications/{tutor}', [AdminTutorApplicationController::class, 'show'])->name('tutor-applications.show');
+    Route::post('tutor-applications/{tutor}/approve', [AdminTutorApplicationController::class, 'approve'])->name('tutor-applications.approve');
+    Route::post('tutor-applications/{tutor}/reject', [AdminTutorApplicationController::class, 'reject'])->name('tutor-applications.reject');
 
     Route::resource('classes', ClassGroupController::class)
         ->except(['show', 'destroy'])

@@ -45,4 +45,12 @@ class TutorClassRequest extends Model
     {
         return $this->belongsTo(Subject::class);
     }
+
+    /**
+     * e.g. "Year 5 · Science", named like the lessons it would become. Reads classGroup and subject.
+     */
+    public function label(): string
+    {
+        return Lesson::titleFor($this->classGroup->name, $this->subject->name);
+    }
 }

@@ -8,6 +8,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -109,6 +111,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isRejectedTutor(): bool
     {
         return $this->hasRole(Role::Tutor) && $this->approval_status === ApprovalStatus::Rejected;
+    }
+
+    /**
+     * A verified tutor application an admin can still decide on (pending, or rejected and reconsidered).
+     */
+    public function hasReviewableApplication(): bool
+    {
+        return ($this->isPendingTutor() || $this->isRejectedTutor()) && $this->email_verified_at !== null;
+    }
+
+    /**
+     * Tutor applications in the given state that admins can see: only once the email is verified.
+     *
+     * @param  Builder<User>  $query
+     */
+    #[Scope]
+    protected function tutorApplications(Builder $query, ApprovalStatus $status): void
+    {
+        $query->where('role', Role::Tutor)
+            ->where('approval_status', $status)
+            ->whereNotNull('email_verified_at');
     }
 
     /**

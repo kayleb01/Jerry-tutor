@@ -120,20 +120,39 @@ class ClassSlot extends Model
      */
     public static function overlapping(ClassGroup $group, Weekday $day, string $start, int $minutes, ?int $ignoreSlotId = null): ?ClassSlot
     {
-        $newStart = self::minutesOfDay($start);
-        $newEnd = $newStart + $minutes;
-
         return $group->slots()
             ->where('weekday', $day->value)
             ->whereNotNull('start_time')
             ->when($ignoreSlotId !== null, fn (Builder $query) => $query->whereKeyNot($ignoreSlotId))
             ->orderBy('start_time')
             ->get()
-            ->first(function (ClassSlot $slot) use ($newStart, $newEnd): bool {
-                $slotStart = self::minutesOfDay($slot->start_time);
+            ->first(fn (ClassSlot $slot): bool => $slot->overlaps($day, $start, $minutes))
+            ?->setRelation('classGroup', $group);
+    }
 
-                return $slotStart < $newEnd && $newStart < $slotStart + $slot->duration_minutes;
-            });
+    /**
+     * Whether this slot's time intersects [start, start + minutes) on that day. Unscheduled slots never do.
+     */
+    public function overlaps(Weekday $day, string $start, int $minutes): bool
+    {
+        if (! $this->hasSchedule() || $this->weekday !== $day) {
+            return false;
+        }
+
+        $newStart = self::minutesOfDay($start);
+        $slotStart = self::minutesOfDay($this->start_time);
+
+        return $slotStart < $newStart + $minutes && $newStart < $slotStart + $this->duration_minutes;
+    }
+
+    /**
+     * The overlap refusal, e.g. "Year 5 already has Maths 09:00–11:00 on Monday". Reads classGroup and subject.
+     */
+    public function clashMessage(): string
+    {
+        $range = substr($this->timeLabel(), 4);
+
+        return "{$this->classGroup->name} already has {$this->subject->name} {$range} on {$this->weekday->label()}";
     }
 
     private static function minutesOfDay(string $time): int

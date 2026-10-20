@@ -137,9 +137,14 @@ class Lesson extends Model
      */
     public function title(): string
     {
-        $className = $this->classGroup->name;
-        $subjectName = $this->slot->subject->name;
+        return self::titleFor($this->classGroup->name, $this->slot->subject->name);
+    }
 
+    /**
+     * The one definition of a lesson's name, also used to name a class and subject before any lesson exists.
+     */
+    public static function titleFor(string $className, string $subjectName): string
+    {
         if (preg_match('/\b'.preg_quote($subjectName, '/').'\b/iu', $className) === 1) {
             return $className;
         }
