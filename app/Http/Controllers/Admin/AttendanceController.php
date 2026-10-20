@@ -52,14 +52,14 @@ class AttendanceController extends Controller
 
         return response()->streamDownload(function () use ($log, $filters, $timezone): void {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['Date', 'Name', 'Role', 'Class', "Scheduled start ({$timezone})", "Arrived ({$timezone})", 'Attendance', 'Minutes late', 'Notes'], escape: '');
+            fputcsv($out, ['Date', 'Name', 'Role', 'Lesson', "Scheduled start ({$timezone})", "Arrived ({$timezone})", 'Attendance', 'Minutes late', 'Notes'], escape: '');
 
             $log->records($filters)->lazy(500)->each(function (AttendanceRecord $record) use ($out, $timezone): void {
                 fputcsv($out, array_map($this->safeCell(...), [
                     $record->lesson->localStart()->toDateString(),
                     $record->user?->name ?? 'Deleted user',
                     $record->attendee_role->value,
-                    $record->lesson->classGroup->name,
+                    $record->lesson->title(),
                     $record->lesson->localStart()->format('H:i'),
                     $record->arrived_at?->setTimezone($timezone)->format('H:i') ?? '',
                     $record->status->label(),

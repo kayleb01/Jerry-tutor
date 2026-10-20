@@ -22,19 +22,19 @@ class AbsenceMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $record = $this->record->loadMissing(['user', 'lesson.classGroup']);
+        $record = $this->record->loadMissing(['user', 'lesson.classGroup', 'lesson.slot.subject']);
 
-        return new Envelope(subject: Str::before($record->user->name, ' ')." was absent from {$record->lesson->classGroup->name}");
+        return new Envelope(subject: Str::before($record->user->name, ' ')." was absent from {$record->lesson->title()}");
     }
 
     public function content(): Content
     {
-        $record = $this->record->loadMissing(['user', 'lesson.classGroup']);
+        $record = $this->record->loadMissing(['user', 'lesson.classGroup', 'lesson.slot.subject']);
 
         return new Content(markdown: 'mail.absence', with: [
             'guardianName' => Str::before($this->guardian->name, ' '),
             'childName' => Str::before($record->user->name, ' '),
-            'className' => $record->lesson->classGroup->name,
+            'className' => $record->lesson->title(),
             'when' => $record->lesson->localStart()->format('l j F \a\t H:i'),
             'dashboardUrl' => route('dashboard'),
         ]);

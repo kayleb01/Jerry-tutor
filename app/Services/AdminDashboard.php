@@ -157,6 +157,7 @@ class AdminDashboard
             ->with([
                 'tutor',
                 'classGroup' => fn (BelongsTo $query) => $query->withCount('activeStudents'),
+                'slot.subject',
                 'attendanceRecords',
                 'lessonReports',
             ])
@@ -169,7 +170,7 @@ class AdminDashboard
                 return [
                     'id' => $lesson->id,
                     'time' => $lesson->localStart()->format('H:i'),
-                    'className' => $lesson->classGroup->name,
+                    'className' => $lesson->title(),
                     'tutor' => $lesson->tutor?->name,
                     'state' => match (true) {
                         $lesson->isCancelled() => 'cancelled',
@@ -309,7 +310,7 @@ class AdminDashboard
     {
         return LessonReport::query()
             ->submitted()
-            ->with(['author', 'lesson' => fn (BelongsTo $query) => $query->with('classGroup')])
+            ->with(['author', 'lesson' => fn (BelongsTo $query) => $query->with(['classGroup', 'slot.subject'])])
             ->whereHas('lesson', fn (Builder $query) => $this->scopeLessons($query, $filters)
                 ->where('starts_at', '>=', $filters->from->utc())
                 ->where('starts_at', '<=', $filters->to->utc()))
@@ -322,7 +323,7 @@ class AdminDashboard
                 'id' => $report->id,
                 'author' => $report->author->name,
                 'role' => $report->author_role->value,
-                'className' => $report->lesson->classGroup->name,
+                'className' => $report->lesson->title(),
                 'submittedAt' => $report->submitted_at->setTimezone(config('academy.timezone'))->format('D j M, H:i'),
                 'wentWell' => $report->went_well,
                 'recommendations' => $report->recommendations,

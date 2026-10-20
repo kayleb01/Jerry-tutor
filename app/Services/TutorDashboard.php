@@ -89,7 +89,7 @@ class TutorDashboard
             ->where('status', '!=', LessonStatus::Cancelled)
             ->with([
                 'classGroup' => fn (BelongsTo $query) => $query->withCount('activeStudents'),
-                'slot',
+                'slot.subject',
                 'attendanceRecords' => fn (HasMany $query) => $query->where('user_id', $tutor->id)->where('attendee_role', AttendeeRole::Tutor),
             ])
             ->orderBy('starts_at');
@@ -110,7 +110,7 @@ class TutorDashboard
 
         return [
             'id' => $lesson->id,
-            'className' => $lesson->classGroup->name,
+            'className' => $lesson->title(),
             'time' => $this->timeRange($lesson),
             'location' => $lesson->slot->location,
             'students' => $lesson->classGroup->active_students_count,
@@ -178,7 +178,7 @@ class TutorDashboard
         $count = $this->tutorReports->needingReport($tutor, $now)->count();
         $oldest = $count === 0
             ? null
-            : $this->tutorReports->needingReport($tutor, $now)->with('classGroup')->reorder('lessons.starts_at')->first();
+            : $this->tutorReports->needingReport($tutor, $now)->with(['classGroup', 'slot.subject'])->reorder('lessons.starts_at')->first();
 
         return ['count' => $count, 'oldest' => $oldest === null ? null : $this->oldestLabel($oldest, $now)];
     }
@@ -188,7 +188,7 @@ class TutorDashboard
      */
     private function oldestLabel(Lesson $lesson, CarbonImmutable $now): string
     {
-        $name = $lesson->classGroup->name;
+        $name = $lesson->title();
         $when = $lesson->starts_at->greaterThan($now->subDays(7)) ? $lesson->localStart()->format('l') : $lesson->localStart()->format('j M');
 
         return "{$name} ({$when})";
@@ -207,6 +207,7 @@ class TutorDashboard
             ->whereBetween('starts_at', [$from->utc(), $to->utc()])
             ->with([
                 'classGroup' => fn (BelongsTo $query) => $query->withCount('activeStudents'),
+                'slot.subject',
                 'attendanceRecords' => fn (HasMany $query) => $query->where('user_id', $tutor->id)->where('attendee_role', AttendeeRole::Tutor),
                 'reportsIncludingDrafts' => fn (HasMany $query) => $query->where('author_id', $tutor->id)->where('author_role', AttendeeRole::Tutor),
             ])
@@ -236,7 +237,7 @@ class TutorDashboard
             'id' => $lesson->id,
             'day' => $isToday ? 'Today' : $lesson->localStart()->format('D'),
             'time' => $this->timeRange($lesson),
-            'className' => $lesson->classGroup->name,
+            'className' => $lesson->title(),
             'state' => $state,
             'summary' => $this->summary($lesson, $state, $now),
             'report' => $this->reportStatus($lesson, $state, $needsReport),

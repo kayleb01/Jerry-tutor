@@ -54,12 +54,12 @@ class DashboardController extends Controller
         return RaisedIssue::query()
             ->where('tutor_id', $tutor->id)
             ->whereNull('acknowledged_at')
-            ->with(['lesson.classGroup', 'raisedBy'])
+            ->with(['lesson.classGroup', 'lesson.slot.subject', 'raisedBy'])
             ->latest('id')
             ->get()
             ->map(fn (RaisedIssue $issue): array => [
                 'id' => $issue->id,
-                'className' => $issue->lesson->classGroup->name,
+                'className' => $issue->lesson->title(),
                 'when' => $issue->lesson->localStart()->format('D j M'),
                 'note' => $issue->note,
                 'raisedBy' => $issue->raisedBy?->name,

@@ -33,12 +33,12 @@ class ReportsDue
                     ->where('user_id', $user->id)
                     ->whereIn('status', [AttendanceStatus::Present, AttendanceStatus::Late]))
                 : $query->where('tutor_id', $user->id))
-            ->with('classGroup')
+            ->with(['classGroup', 'slot.subject'])
             ->orderByDesc('ends_at')
             ->get()
             ->map(fn (Lesson $lesson): array => [
                 'id' => $lesson->id,
-                'className' => $lesson->classGroup->name,
+                'className' => $lesson->title(),
                 'when' => $lesson->localStart()->format('D j M, H:i'),
                 'closesAt' => $lesson->ends_at->addHours(48)->setTimezone(config('academy.timezone'))->format('D j M, H:i'),
             ])

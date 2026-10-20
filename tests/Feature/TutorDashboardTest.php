@@ -61,7 +61,7 @@ it('greets the tutor and shows the next class with check-in', function () {
     expect($props['header'])->toBe(['date' => 'Tuesday 13 October 2026', 'greeting' => 'Good afternoon, Mr Adeyemi', 'now' => '15:56'])
         ->and($props['nextLesson'])->toBe([
             'id' => $lesson->id,
-            'className' => 'Year 5 Geometry',
+            'className' => 'Year 5 Geometry · Maths',
             'time' => '16:00 – 17:00',
             'location' => 'Room 2',
             'students' => 2,
@@ -155,7 +155,7 @@ it('works out punctuality, classes this week, reports to submit and student atte
 
     expect($stats['punctuality'])->toBe(['percent' => 75, 'onTime' => 3, 'attended' => 4])
         ->and($stats['week'])->toBe(['total' => 4, 'done' => 2, 'toGo' => 2])
-        ->and($stats['reports'])->toBe(['count' => 2, 'oldest' => 'Year 5 Geometry (Monday)'])
+        ->and($stats['reports'])->toBe(['count' => 2, 'oldest' => 'Year 5 Geometry · Maths (Monday)'])
         ->and($stats['studentAttendance'])->toBe(80);
 });
 
@@ -164,7 +164,7 @@ it('dates the oldest report by day and month once it is more than a week old', f
     $lesson = ($this->lessonAt)('2026-10-02 09:00:00');
     ($this->studentRecord)($lesson, AttendanceStatus::Present);
 
-    expect(($this->dashboard)()['stats']['reports'])->toBe(['count' => 1, 'oldest' => 'Year 6 Algebra (2 Oct)']);
+    expect(($this->dashboard)()['stats']['reports'])->toBe(['count' => 1, 'oldest' => 'Year 6 Algebra · Maths (2 Oct)']);
 });
 
 it('lists this week\'s classes Monday to Sunday with their state, summary and report status', function () {
@@ -206,7 +206,7 @@ it('lists this week\'s classes Monday to Sunday with their state, summary and re
 
     $row = fn (Lesson $lesson): array => collect($week)->firstWhere('id', $lesson->id);
 
-    expect($row($mondayEarly))->toBe(['id' => $mondayEarly->id, 'day' => 'Mon', 'time' => '08:00 – 09:00', 'className' => 'Year 5 Geometry', 'state' => 'past', 'summary' => '2 of 3 present · you were on time', 'report' => 'submitted', 'canOpenRegister' => false])
+    expect($row($mondayEarly))->toBe(['id' => $mondayEarly->id, 'day' => 'Mon', 'time' => '08:00 – 09:00', 'className' => 'Year 5 Geometry · Maths', 'state' => 'past', 'summary' => '2 of 3 present · you were on time', 'report' => 'submitted', 'canOpenRegister' => false])
         ->and($row($mondayLate))->toMatchArray(['summary' => '1 of 1 present · you were 7 min late', 'report' => 'draft', 'state' => 'past'])
         ->and($row($tuesdayEarly))->toMatchArray(['day' => 'Today', 'state' => 'past', 'summary' => "1 of 1 present · you didn't check in", 'report' => 'needed', 'canOpenRegister' => false])
         ->and($row($tuesdayEmpty))->toMatchArray(['state' => 'past', 'summary' => 'Register not taken', 'report' => null])

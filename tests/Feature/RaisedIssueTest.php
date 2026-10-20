@@ -27,7 +27,7 @@ it('shows a tutor only their own unread notes from the academy', function () {
             ->has('fromAcademy', 1)
             ->where('fromAcademy.0', [
                 'id' => $mine->id,
-                'className' => 'Year 4 Number',
+                'className' => 'Year 4 Number · Maths',
                 'when' => 'Tue 13 Oct',
                 'note' => 'Please recap place value for Tolu.',
                 'raisedBy' => 'Mrs J. Great',

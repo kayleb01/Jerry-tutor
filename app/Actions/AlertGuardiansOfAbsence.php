@@ -25,7 +25,7 @@ class AlertGuardiansOfAbsence
             return;
         }
 
-        $record->loadMissing(['user', 'lesson.classGroup']);
+        $record->loadMissing(['user', 'lesson.classGroup', 'lesson.slot.subject']);
         $guardians = $record->user->guardians()->orderBy('name')->get();
 
         if ($guardians->isEmpty()) {
@@ -38,7 +38,7 @@ class AlertGuardiansOfAbsence
             'student_id' => $record->user_id,
             'attendance_record_id' => $record->id,
             'sent_by_id' => $sentBy->id,
-            'note' => "{$firstName} was absent from {$record->lesson->classGroup->name} on {$record->lesson->localStart()->format('D j M')}.",
+            'note' => "{$firstName} was absent from {$record->lesson->title()} on {$record->lesson->localStart()->format('D j M')}.",
         ]);
 
         // Emails can't be recalled, so they only go once the register has been saved.

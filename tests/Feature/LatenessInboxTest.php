@@ -70,7 +70,7 @@ it('shows each report as a row', function () {
         'id' => $report->id,
         'name' => 'Tolu Ade',
         'role' => 'student',
-        'className' => 'Year 4 Number',
+        'className' => 'Year 4 Number · Maths',
         'date' => 'Tue 13 Oct',
         'scheduled' => '14:00',
         'arrived' => '14:12',
@@ -95,7 +95,7 @@ it('gives the person their recent history and repeat count', function () {
         'name' => 'Tolu Ade',
         'roleLabel' => 'Student',
         'yearGroup' => 'Year 4',
-        'className' => 'Year 4 Number',
+        'className' => 'Year 4 Number · Maths',
         'date' => 'Tue 13 Oct',
         'scheduled' => '14:00',
         'arrived' => '14:12',
@@ -104,7 +104,7 @@ it('gives the person their recent history and repeat count', function () {
         'repeatCount' => 4,
     ])
         ->and(array_column($detail['history']['items'], 'date'))->toBe(['Tue 6 Oct', 'Tue 29 Sep', 'Tue 15 Sep', 'Sun 13 Sep'])
-        ->and($detail['history']['items'][0])->toBe(['date' => 'Tue 6 Oct', 'className' => 'Year 4 Number', 'minutesLate' => 6])
+        ->and($detail['history']['items'][0])->toBe(['date' => 'Tue 6 Oct', 'className' => 'Year 4 Number · Maths', 'minutesLate' => 6])
         ->and($detail['history']['total'])->toBe(5);
 });
 
@@ -125,7 +125,7 @@ it('only offers to notify a parent for students with a guardian', function () {
     expect($detail)->toMatchArray([
         'canNotifyParent' => true,
         'guardians' => ['Mrs Ade'],
-        'parentMessage' => 'Tolu arrived 12 minutes late to Year 4 Number on Tuesday 13 October (the class started at 14:00).',
+        'parentMessage' => 'Tolu arrived 12 minutes late to Year 4 Number · Maths on Tuesday 13 October (the class started at 14:00).',
     ])
         ->and($detail['notices'][0])->toMatchArray(['note' => 'Tolu was late.', 'sentBy' => 'Mrs J. Great', 'acknowledgedAt' => null, 'acknowledgedBy' => null]);
 });

@@ -59,12 +59,12 @@ class GuardianDashboard
             ->whereIn('class_group_id', $child->enrolledClassGroups()->wherePivotNull('left_at')->select('class_groups.id'))
             ->where('starts_at', '>', $now->utc())
             ->where('status', '!=', LessonStatus::Cancelled)
-            ->with('classGroup')
+            ->with(['classGroup', 'slot.subject'])
             ->orderBy('starts_at')
             ->first();
 
         return $lesson ? [
-            'className' => $lesson->classGroup->name,
+            'className' => $lesson->title(),
             'when' => $lesson->localStart()->format('D j M, H:i'),
         ] : null;
     }

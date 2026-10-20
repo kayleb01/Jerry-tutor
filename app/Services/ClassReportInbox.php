@@ -119,6 +119,7 @@ class ClassReportInbox
         return $this->ordered($this->query($filters, null, $now))
             ->with([
                 'classGroup',
+                'slot.subject',
                 'tutor',
                 'lessonReports:id,lesson_id,author_role,submitted_at',
                 'raisedIssues' => fn (HasMany $issues) => $issues->whereNull('acknowledged_at'),
@@ -148,7 +149,7 @@ class ClassReportInbox
 
         return [
             'id' => $lesson->id,
-            'className' => $lesson->classGroup->name,
+            'className' => $lesson->title(),
             'tutor' => $lesson->tutor?->name,
             'day' => $this->dayLabel($lesson->localStart(), $now),
             'time' => $lesson->localStart()->format('H:i'),
@@ -165,7 +166,7 @@ class ClassReportInbox
     public function detail(Lesson $lesson, ?CarbonImmutable $now = null): array
     {
         $now ??= CarbonImmutable::now();
-        $lesson->load(['classGroup', 'tutor', 'lessonReports.author', 'raisedIssues.raisedBy', 'reportsReviewedBy', 'attendanceRecords']);
+        $lesson->load(['classGroup', 'slot.subject', 'tutor', 'lessonReports.author', 'raisedIssues.raisedBy', 'reportsReviewedBy', 'attendanceRecords']);
 
         $students = $lesson->attendanceRecords->where('attendee_role', AttendeeRole::Student);
         $attended = $students->whereIn('status', [AttendanceStatus::Present, AttendanceStatus::Late])->count();
@@ -182,7 +183,7 @@ class ClassReportInbox
 
         return [
             'id' => $lesson->id,
-            'className' => $lesson->classGroup->name,
+            'className' => $lesson->title(),
             'tutor' => $lesson->tutor?->name,
             'when' => $this->dayLabel($lesson->localStart(), $now).' '.$lesson->localStart()->format('H:i'),
             'attendance' => $students->isEmpty() ? null : "{$attended} of {$students->count()} present",

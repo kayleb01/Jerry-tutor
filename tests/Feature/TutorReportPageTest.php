@@ -107,10 +107,10 @@ it('offers only classes that still need a report, plus the one being viewed', fu
     $this->actingAs($this->tutor)->get(route('lessons.report.edit', $submitted))
         ->assertInertia(fn (Assert $page) => $page
             ->where('classOptions', [
-                ['id' => $this->lesson->id, 'label' => 'Year 5 · Geometry · Mon 20 Oct, 10:00'],
-                ['id' => $newest->id, 'label' => 'Year 5 · Geometry · Sun 19 Oct, 17:30'],
-                ['id' => $submitted->id, 'label' => 'Year 5 · Geometry · Mon 13 Oct, 17:30'],
-                ['id' => $older->id, 'label' => 'Year 5 · Geometry · Sun 12 Oct, 17:30'],
+                ['id' => $this->lesson->id, 'label' => 'Year 5 · Geometry · Maths · Mon 20 Oct, 10:00'],
+                ['id' => $newest->id, 'label' => 'Year 5 · Geometry · Maths · Sun 19 Oct, 17:30'],
+                ['id' => $submitted->id, 'label' => 'Year 5 · Geometry · Maths · Mon 13 Oct, 17:30'],
+                ['id' => $older->id, 'label' => 'Year 5 · Geometry · Maths · Sun 12 Oct, 17:30'],
             ])
             ->has('recommendationOptions', 5));
 });

@@ -62,7 +62,7 @@ it('shows the week\'s totals and every record, newest lesson first with the tuto
             ])
             ->where('records.total', 5)
             ->where('records.data', fn ($rows) => collect($rows)->pluck('name')->all() === ['Mr K. Mensah', 'Chidi Obi', 'Sade Eze', 'Tolu Ade', 'Zainab Kareem'])
-            ->where('records.data.0', fn ($row) => $row['role'] === 'tutor' && $row['className'] === 'Year 8 · Algebra' && $row['date'] === 'Tue 13 Oct'
+            ->where('records.data.0', fn ($row) => $row['role'] === 'tutor' && $row['className'] === 'Year 8 · Algebra · Maths' && $row['date'] === 'Tue 13 Oct'
                 && $row['scheduled'] === '15:00' && $row['arrived'] === '15:05' && $row['status'] === 'late' && $row['minutesLate'] === 5)
             ->where('records.data.4.arrived', null)
             ->where('records.data.4.status', 'absent'));
@@ -102,7 +102,7 @@ it('offers today\'s running lessons for opening a register', function () {
     ($this->lesson)($this->year8, '2026-10-16 14:00:00');
 
     $this->actingAs($this->admin)->get(route('admin.attendance.index'))
-        ->assertInertia(fn (Assert $page) => $page->where('todayLessons', [['id' => $running->id, 'time' => '15:00', 'className' => 'Year 8 · Algebra']]));
+        ->assertInertia(fn (Assert $page) => $page->where('todayLessons', [['id' => $running->id, 'time' => '15:00', 'className' => 'Year 8 · Algebra · Maths']]));
 });
 
 it('exports the filtered records as CSV, with formulas made harmless', function () {
@@ -116,8 +116,8 @@ it('exports the filtered records as CSV, with formulas made harmless', function 
         ->streamedContent();
 
     expect($csv)
-        ->toContain('Date,Name,Role,Class,"Scheduled start (Africa/Lagos)","Arrived (Africa/Lagos)",Attendance,"Minutes late",Notes')
-        ->toContain("2026-10-13,\"'=HYPERLINK(\"\"x\"\")\",student,\"Year 8 · Algebra\",15:00,15:04,Late,4,")
+        ->toContain('Date,Name,Role,Lesson,"Scheduled start (Africa/Lagos)","Arrived (Africa/Lagos)",Attendance,"Minutes late",Notes')
+        ->toContain("2026-10-13,\"'=HYPERLINK(\"\"x\"\")\",student,\"Year 8 · Algebra · Maths\",15:00,15:04,Late,4,")
         ->not->toContain('Tolu Ade');
 });
 

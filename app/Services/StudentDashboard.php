@@ -47,7 +47,7 @@ class StudentDashboard
             ->whereBetween('starts_at', [$from->utc(), $to->utc()])
             ->with([
                 'classGroup',
-                'slot',
+                'slot.subject',
                 'attendanceRecords' => fn (HasMany $query) => $query->where('user_id', $student->id),
                 'lessonReports' => fn (HasMany $query) => $query->where('author_id', $student->id),
             ])
@@ -107,7 +107,7 @@ class StudentDashboard
 
         return [
             'id' => $lesson->id,
-            'className' => $lesson->classGroup->name,
+            'className' => $lesson->title(),
             'time' => $lesson->localStart()->format('H:i').'–'.$lesson->localEnd()->format('H:i'),
             'location' => $lesson->slot->location,
             'minutes' => $this->minutes($lesson),

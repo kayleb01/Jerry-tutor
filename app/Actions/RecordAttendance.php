@@ -113,7 +113,7 @@ class RecordAttendance
                 'user_id' => $record->user_id,
                 'attendee_role' => $record->attendee_role,
                 'lesson_id' => $lesson->id,
-                'class_name' => $lesson->classGroup->name,
+                'class_name' => $lesson->title(),
                 'lesson_date' => $lesson->localStart()->toDateString(),
                 'scheduled_start_at' => $lesson->starts_at,
                 'arrived_at' => $record->arrived_at,

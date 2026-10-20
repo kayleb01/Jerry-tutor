@@ -68,7 +68,7 @@ class LessonReportController extends Controller
         }
 
         $this->markReviewed($lesson, $request->user());
-        Inertia::flash('toast', ['type' => 'success', 'message' => "{$lesson->classGroup->name} marked as reviewed."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "{$lesson->title()} marked as reviewed."]);
 
         return redirect($this->inboxUrl($validated['next'] ?? null));
     }

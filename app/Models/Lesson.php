@@ -131,6 +131,22 @@ class Lesson extends Model
         return $this->belongsTo(User::class, 'reports_reviewed_by_id')->withTrashed();
     }
 
+    /**
+     * "{class} · {subject}", or just the class name when it already contains the subject as a whole word.
+     * Reads classGroup and slot.subject, so eager-load them when listing lessons.
+     */
+    public function title(): string
+    {
+        $className = $this->classGroup->name;
+        $subjectName = $this->slot->subject->name;
+
+        if (preg_match('/\b'.preg_quote($subjectName, '/').'\b/iu', $className) === 1) {
+            return $className;
+        }
+
+        return $className.' · '.$subjectName;
+    }
+
     public function localStart(): CarbonImmutable
     {
         return $this->starts_at->setTimezone(config('academy.timezone'));

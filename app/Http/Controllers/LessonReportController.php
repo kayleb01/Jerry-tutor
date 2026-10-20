@@ -47,7 +47,7 @@ class LessonReportController extends Controller
         return Inertia::render('lessons/report', [
             'lesson' => [
                 'id' => $lesson->id,
-                'className' => $lesson->classGroup->name,
+                'className' => $lesson->title(),
                 'date' => $lesson->localStart()->format('l j F'),
                 'time' => $lesson->localStart()->format('H:i').'–'.$lesson->localEnd()->format('H:i'),
             ],
@@ -105,7 +105,7 @@ class LessonReportController extends Controller
      */
     private function classOptions(Request $request, Lesson $current): array
     {
-        $lessons = $this->tutorReports->needingReport($request->user())->with('classGroup')->get();
+        $lessons = $this->tutorReports->needingReport($request->user())->with(['classGroup', 'slot.subject'])->get();
 
         if (! $lessons->contains('id', $current->id)) {
             $lessons->push($current);
@@ -115,7 +115,7 @@ class LessonReportController extends Controller
             ->sortByDesc('starts_at')
             ->map(fn (Lesson $lesson): array => [
                 'id' => $lesson->id,
-                'label' => $lesson->classGroup->name.' · '.$lesson->localStart()->format('D j M, H:i'),
+                'label' => $lesson->title().' · '.$lesson->localStart()->format('D j M, H:i'),
             ])
             ->values()
             ->all();

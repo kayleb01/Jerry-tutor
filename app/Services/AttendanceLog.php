@@ -29,7 +29,7 @@ class AttendanceLog
         return $this->filtered($filters)
             ->join('users', 'users.id', '=', 'attendance_records.user_id')
             ->select('attendance_records.*')
-            ->with(['user' => fn ($query) => $query->withTrashed(), 'lesson.classGroup'])
+            ->with(['user' => fn ($query) => $query->withTrashed(), 'lesson.classGroup', 'lesson.slot.subject'])
             ->orderByDesc('lessons.starts_at')
             ->orderByDesc('lessons.id')
             ->orderByDesc('attendance_records.attendee_role')
@@ -80,7 +80,7 @@ class AttendanceLog
             'id' => $record->id,
             'name' => $record->user?->name ?? 'Deleted user',
             'role' => $record->attendee_role->value,
-            'className' => $record->lesson->classGroup->name,
+            'className' => $record->lesson->title(),
             'date' => $record->lesson->localStart()->format('D j M'),
             'scheduled' => $record->lesson->localStart()->format('H:i'),
             'arrived' => $record->arrived_at?->setTimezone(config('academy.timezone'))->format('H:i'),
@@ -101,13 +101,13 @@ class AttendanceLog
         return Lesson::query()
             ->where('status', '!=', LessonStatus::Cancelled)
             ->whereBetween('starts_at', [$today->utc(), $today->endOfDay()->utc()])
-            ->with('classGroup')
+            ->with(['classGroup', 'slot.subject'])
             ->orderBy('starts_at')
             ->get()
             ->map(fn (Lesson $lesson): array => [
                 'id' => $lesson->id,
                 'time' => $lesson->localStart()->format('H:i'),
-                'className' => $lesson->classGroup->name,
+                'className' => $lesson->title(),
             ])
             ->all();
     }
