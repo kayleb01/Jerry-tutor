@@ -15,6 +15,7 @@ import { index as adminSubjectsIndex } from '@/routes/admin/subjects';
 import { index as adminSubscriptionsIndex } from '@/routes/admin/subscriptions';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as billingIndex } from '@/routes/billing';
+import { index as tutorClassesIndex } from '@/routes/tutor/classes';
 import { index as childrenIndex } from '@/routes/children';
 import { index as quizzesIndex } from '@/routes/quizzes';
 import type { Role } from '@/types';
@@ -69,6 +70,7 @@ const navItems: Record<Role, NavItem[]> = {
     ],
     tutor: [
         { label: 'Dashboard', icon: 'dashboard', href: dashboard },
+        { label: 'My classes', icon: 'classes', href: tutorClassesIndex },
         { label: 'Take the register', icon: 'list', href: takeRegister },
         { label: 'End-of-class report', icon: 'report', href: nextReport },
     ],
