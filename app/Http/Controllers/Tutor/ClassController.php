@@ -7,14 +7,14 @@ use App\Models\ClassGroup;
 use App\Models\ClassSlot;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ClassController extends Controller
 {
     /**
-     * The tutor's classes, with their own slots and the students currently enrolled.
+     * The tutor's classes, with their own slots and the students currently enrolled. Adding a student
+     * mirrors ClassGroupPolicy::addStudent using the slots already loaded for this tutor.
      */
     public function index(Request $request): Response
     {
@@ -35,7 +35,7 @@ class ClassController extends Controller
                 'name' => $class->name,
                 'yearGroup' => $class->year_group?->label(),
                 'isActive' => $class->is_active,
-                'canAddStudent' => Gate::forUser($tutor)->allows('addStudent', $class),
+                'canAddStudent' => $class->is_active && $class->slots->isNotEmpty(),
                 'slots' => $class->slots
                     ->sortBy(fn (ClassSlot $slot): string => ($slot->weekday?->value ?? 9).'|'.$slot->start_time)
                     ->values()

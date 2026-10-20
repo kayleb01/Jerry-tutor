@@ -41,6 +41,17 @@ it('lists the tutor\'s classes with their slots and active students', function (
             ->where('classes.0.canAddStudent', true));
 });
 
+it('offers adding students only on the tutor\'s active classes', function () {
+    $tutor = User::factory()->tutor()->create();
+    ClassGroup::factory()->withSlot($tutor)->create(['name' => 'A Active']);
+    ClassGroup::factory()->withSlot($tutor)->create(['name' => 'B Inactive', 'is_active' => false]);
+
+    $this->actingAs($tutor)->get(route('tutor.classes.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('classes.0.canAddStudent', true)
+            ->where('classes.1.canAddStudent', false));
+});
+
 it('adds a student to a class the tutor teaches', function () {
     $tutor = User::factory()->tutor()->create();
     $group = ClassGroup::factory()->withSlot($tutor)->create(['name' => 'Year 5 A', 'year_group' => YearGroup::Year6]);
@@ -113,3 +124,12 @@ it('is not available to admins, students or guardians through these routes', fun
     $this->actingAs($user)->get(route('tutor.classes.students.create', $group))->assertForbidden();
     $this->actingAs($user)->post(route('tutor.classes.students.store', $group), studentPayload())->assertForbidden();
 })->with(['admin', 'student', 'guardian']);
+
+it('refuses another tutor\'s class before checking the form', function () {
+    $tutor = User::factory()->tutor()->create();
+    $other = ClassGroup::factory()->withSlot()->create();
+
+    $this->actingAs($tutor)
+        ->post(route('tutor.classes.students.store', $other), studentPayload(['username' => 'Not Valid!', 'name' => '']))
+        ->assertForbidden();
+});

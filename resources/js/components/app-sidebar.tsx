@@ -13,6 +13,7 @@ import { index as adminLessonReportsIndex } from '@/routes/admin/lesson-reports'
 import { index as adminQuestionsIndex } from '@/routes/admin/questions';
 import { index as adminSubjectsIndex } from '@/routes/admin/subjects';
 import { index as adminSubscriptionsIndex } from '@/routes/admin/subscriptions';
+import { index as adminTutorApplicationsIndex } from '@/routes/admin/tutor-applications';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as billingIndex } from '@/routes/billing';
 import { index as tutorClassesIndex } from '@/routes/tutor/classes';
@@ -26,6 +27,8 @@ type NavItem = {
     href: () => { url: string; method: 'get' };
     /** A count from the shared `badges` prop, shown as a pill when above zero. */
     badge?: 'classReports' | 'lateness' | 'subscriptions' | 'pendingTutors';
+    /** Other pages that belong under this item, so it stays highlighted there. */
+    alsoActiveOn?: Array<() => { url: string; method: 'get' }>;
 };
 
 const navItems: Record<Role, NavItem[]> = {
@@ -41,6 +44,7 @@ const navItems: Record<Role, NavItem[]> = {
             icon: 'users',
             href: adminUsersIndex,
             badge: 'pendingTutors',
+            alsoActiveOn: [adminTutorApplicationsIndex],
         },
         { label: 'Classes', icon: 'classes', href: adminClassesIndex },
         { label: 'Subjects', icon: 'book', href: adminSubjectsIndex },
@@ -154,7 +158,10 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
                           ]
                         : []),
                 ].map((item: NavItem) => {
-                    const active = isActive(item.href().url);
+                    const active = [
+                        item.href,
+                        ...(item.alsoActiveOn ?? []),
+                    ].some((href) => isActive(href().url));
                     const count = item.badge ? (counts[item.badge] ?? 0) : 0;
 
                     return (

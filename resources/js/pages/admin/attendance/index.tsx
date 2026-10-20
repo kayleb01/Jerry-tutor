@@ -390,7 +390,7 @@ function RecordsTable({ records }: { records: AttendanceRow[] }) {
                             Role
                         </th>
                         <th scope="col" className={heading}>
-                            Class
+                            Lesson
                         </th>
                         <th scope="col" className={heading}>
                             Date

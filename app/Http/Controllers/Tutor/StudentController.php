@@ -31,8 +31,6 @@ class StudentController extends Controller
 
     public function store(StoreStudentRequest $request, ClassGroup $classGroup, CreateStudentAccount $createStudent): RedirectResponse
     {
-        Gate::authorize('addStudent', $classGroup);
-
         $student = DB::transaction(function () use ($request, $classGroup, $createStudent) {
             $student = $createStudent->handle($request->validated());
             $classGroup->enrol($student);

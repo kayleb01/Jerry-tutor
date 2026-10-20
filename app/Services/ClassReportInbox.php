@@ -76,6 +76,7 @@ class ClassReportInbox
             ->when($filters['search'] !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $query
                 ->whereHas('classGroup', $nameMatches)
                 ->orWhereHas('tutor', $nameMatches)
+                ->orWhereHas('slot.subject', $nameMatches)
                 ->orWhereHas('lessonReports.author', $nameMatches)));
 
         return match ($queue ?? $filters['queue']) {

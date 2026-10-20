@@ -10,11 +10,11 @@ class StoreStudentRequest extends FormRequest
     use AccountValidationRules;
 
     /**
-     * Whether the tutor teaches this class is checked in the controller through ClassGroupPolicy.
+     * Only a tutor who teaches this active class may add to it (ClassGroupPolicy), checked before validation.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('addStudent', $this->route('classGroup'));
     }
 
     protected function prepareForValidation(): void

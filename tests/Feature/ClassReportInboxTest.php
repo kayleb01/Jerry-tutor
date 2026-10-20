@@ -5,9 +5,11 @@ use App\Enums\AttendeeRole;
 use App\Enums\LessonStatus;
 use App\Models\AttendanceRecord;
 use App\Models\ClassGroup;
+use App\Models\ClassSlot;
 use App\Models\Lesson;
 use App\Models\LessonReport;
 use App\Models\RaisedIssue;
+use App\Models\Subject;
 use App\Models\User;
 use App\Services\ClassReportInbox;
 use Carbon\CarbonImmutable;
@@ -150,6 +152,16 @@ it('filters by class, tutor, dates and search, and counts every queue', function
 
     expect($this->inbox->filters(['queue' => 'nope', 'class' => 'abc', 'tutor' => '-3', 'from' => 'yesterday', 'search' => ['x']]))
         ->toMatchArray(['queue' => 'review', 'class' => null, 'tutor' => null, 'from' => null, 'to' => null, 'search' => '']);
+});
+
+it('finds lessons by their subject', function () {
+    $maths = inboxLesson('2026-10-13 09:00:00');
+    inboxReport($maths, AttendeeRole::Student);
+    $science = ClassSlot::factory()->for($this->group)->create(['subject_id' => Subject::query()->firstOrCreate(['name' => 'Science'])->id]);
+    $scienceLesson = inboxLesson('2026-10-12 09:00:00', ['class_slot_id' => $science->id]);
+    inboxReport($scienceLesson, AttendeeRole::Student);
+
+    expect(inboxIds('all', ['search' => 'Science']))->toBe([$scienceLesson->id]);
 });
 
 it('labels each row with its most important state and a friendly day', function () {

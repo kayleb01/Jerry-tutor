@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\LessonScheduler;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class ApproveTutorApplication
 {
@@ -18,12 +19,15 @@ class ApproveTutorApplication
     /**
      * Apply the admin's validated decisions, approve the tutor and email them once it has all saved.
      * Handing a slot over rebuilds only its future unattended lessons, so taught lessons keep their tutor.
+     * A failed email is reported but never undoes the approval; the return value says whether it went.
      *
      * @param  array<int, array{request_id: int, slot_id: int|null, action: string, weekday?: int|null, start_time?: string|null, duration_minutes?: int|null, location?: string|null}>  $decisions
      */
-    public function handle(User $tutor, array $decisions): void
+    public function handle(User $tutor, array $decisions): bool
     {
-        DB::transaction(function () use ($tutor, $decisions): void {
+        $emailSent = true;
+
+        DB::transaction(function () use ($tutor, $decisions, &$emailSent): void {
             $requests = $tutor->requestedClasses()->get()->keyBy('id');
 
             foreach ($decisions as $decision) {
@@ -36,8 +40,17 @@ class ApproveTutorApplication
 
             $tutor->forceFill(['approval_status' => ApprovalStatus::Approved])->save();
 
-            DB::afterCommit(fn () => Mail::to($tutor->email)->send(new TutorApprovedMail($tutor)));
+            DB::afterCommit(function () use ($tutor, &$emailSent): void {
+                try {
+                    Mail::to($tutor->email)->send(new TutorApprovedMail($tutor));
+                } catch (Throwable $exception) {
+                    report($exception);
+                    $emailSent = false;
+                }
+            });
         });
+
+        return $emailSent;
     }
 
     private function teach(User $tutor, int $slotId): void

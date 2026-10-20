@@ -97,9 +97,11 @@ class TutorApplicationController extends Controller
 
     public function approve(ApproveTutorRequest $request, User $tutor, ApproveTutorApplication $approve): RedirectResponse
     {
-        $approve->handle($tutor, $request->validated('decisions'));
+        $emailSent = $approve->handle($tutor, $request->validated('decisions'));
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "{$tutor->name} is approved."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => $emailSent
+            ? "{$tutor->name} is approved."
+            : "{$tutor->name} is approved, but the email couldn't be sent."]);
 
         return to_route('admin.tutor-applications.index');
     }

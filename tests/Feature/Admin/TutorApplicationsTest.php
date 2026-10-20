@@ -11,6 +11,7 @@ use App\Models\TutorClassRequest;
 use App\Models\User;
 use App\Services\LessonScheduler;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -215,6 +216,20 @@ it('emails the tutor once approved', function () {
 
         return $mail->hasTo($this->applicant->email);
     });
+});
+
+it('still approves the tutor when the approval email cannot be sent', function () {
+    Exceptions::fake();
+    Mail::shouldReceive('to->send')->once()->andThrow(new RuntimeException('Mail server is down'));
+    $request = applicationRequest($this->year5, $this->science);
+
+    approveApplication([['request_id' => $request->id, 'slot_id' => null, 'action' => 'skip']])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('admin.tutor-applications.index'))
+        ->assertInertiaFlash('toast', ['type' => 'success', 'message' => "Bola Applicant is approved, but the email couldn't be sent."]);
+
+    expect($this->applicant->fresh()->approval_status)->toBe(ApprovalStatus::Approved);
+    Exceptions::assertReported(fn (RuntimeException $e): bool => $e->getMessage() === 'Mail server is down');
 });
 
 it('sends no email when the approval is refused', function () {
