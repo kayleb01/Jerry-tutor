@@ -76,8 +76,9 @@ return new class extends Migration
         });
 
         Schema::table('lessons', function (Blueprint $table) {
+            $table->dropForeign(['class_slot_id']);
             $table->dropUnique(['class_slot_id', 'starts_at']);
-            $table->dropConstrainedForeignId('class_slot_id');
+            $table->dropColumn('class_slot_id');
         });
     }
 
