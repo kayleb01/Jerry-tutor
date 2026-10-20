@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\Role;
+use App\Enums\Weekday;
 use App\Enums\YearGroup;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ClassGroupRequest;
 use App\Models\ClassGroup;
 use App\Models\ClassSlot;
 use App\Models\Lesson;
+use App\Models\Subject;
 use App\Models\User;
 use App\Services\LessonScheduler;
 use Illuminate\Database\Eloquent\Builder;
@@ -63,14 +65,33 @@ class ClassGroupController extends Controller
                 'name' => $classGroup->name,
                 'yearGroup' => $classGroup->year_group?->value,
                 'isActive' => $classGroup->is_active,
-                'slots' => $classGroup->slots()
-                    ->with(['subject', 'tutor'])
-                    ->orderBy('weekday')
-                    ->orderBy('start_time')
-                    ->get()
-                    ->map(fn (ClassSlot $slot): string => $this->slotSummary($slot))
-                    ->all(),
             ],
+            'slots' => $classGroup->slots()
+                ->with(['subject', 'tutor'])
+                ->orderBy('weekday')
+                ->orderBy('start_time')
+                ->get()
+                ->map(fn (ClassSlot $slot): array => [
+                    'id' => $slot->id,
+                    'label' => $slot->timeLabel(),
+                    'subject' => $slot->subject->name,
+                    'subjectId' => $slot->subject_id,
+                    'tutor' => $slot->tutor?->name,
+                    'tutorId' => $slot->tutor_id,
+                    'weekday' => $slot->weekday?->value,
+                    'startTime' => $slot->start_time,
+                    'duration' => $slot->duration_minutes,
+                    'location' => $slot->location,
+                ])
+                ->all(),
+            'subjects' => Subject::options(),
+            'tutors' => User::query()
+                ->where('role', Role::Tutor)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $tutor): array => ['value' => $tutor->id, 'label' => $tutor->name])
+                ->all(),
+            'weekdays' => Weekday::options(),
             'students' => $classGroup->activeStudents()
                 ->with('studentProfile')
                 ->orderBy('name')

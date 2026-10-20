@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BillingSettingsController;
 use App\Http\Controllers\Admin\ClassEnrolmentController;
 use App\Http\Controllers\Admin\ClassGroupController;
+use App\Http\Controllers\Admin\ClassSlotController;
 use App\Http\Controllers\Admin\LatenessReportController;
 use App\Http\Controllers\Admin\LessonReportController as AdminLessonReportController;
 use App\Http\Controllers\Admin\PaymentController as AdminPaymentController;
@@ -95,6 +96,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::resource('classes', ClassGroupController::class)
         ->except(['show', 'destroy'])
         ->parameters(['classes' => 'classGroup']);
+    Route::scopeBindings()->group(function () {
+        Route::post('classes/{classGroup}/slots', [ClassSlotController::class, 'store'])->name('classes.slots.store');
+        Route::put('classes/{classGroup}/slots/{slot}', [ClassSlotController::class, 'update'])->name('classes.slots.update');
+        Route::delete('classes/{classGroup}/slots/{slot}', [ClassSlotController::class, 'destroy'])->name('classes.slots.destroy');
+    });
     Route::post('classes/{classGroup}/students', [ClassEnrolmentController::class, 'store'])->name('classes.students.store');
     Route::delete('classes/{classGroup}/students/{student}', [ClassEnrolmentController::class, 'destroy'])->name('classes.students.destroy');
 

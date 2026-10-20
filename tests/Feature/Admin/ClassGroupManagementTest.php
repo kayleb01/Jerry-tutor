@@ -83,7 +83,7 @@ it('shows the edit page with the class timetable', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('admin/classes/edit')
             ->where('classGroup.id', $group->id)
-            ->where('classGroup.slots', ['Maths · Sat 10:00–11:00 · Tunde Tutor'])
+            ->where('slots.0.label', 'Sat 10:00–11:00')
             ->has('yearGroups'));
 });
 

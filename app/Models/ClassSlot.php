@@ -6,6 +6,7 @@ use App\Enums\Weekday;
 use Carbon\CarbonImmutable;
 use Database\Factories\ClassSlotFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -111,5 +112,34 @@ class ClassSlot extends Model
         $start = CarbonImmutable::createFromFormat('H:i', $this->start_time);
 
         return "{$this->weekday->shortLabel()} {$start->format('H:i')}–{$start->addMinutes($this->duration_minutes)->format('H:i')}";
+    }
+
+    /**
+     * The class's other scheduled, non-removed slot on that day whose time intersects [start, start + minutes).
+     * A slot ending exactly when another starts does not overlap.
+     */
+    public static function overlapping(ClassGroup $group, Weekday $day, string $start, int $minutes, ?int $ignoreSlotId = null): ?ClassSlot
+    {
+        $newStart = self::minutesOfDay($start);
+        $newEnd = $newStart + $minutes;
+
+        return $group->slots()
+            ->where('weekday', $day->value)
+            ->whereNotNull('start_time')
+            ->when($ignoreSlotId !== null, fn (Builder $query) => $query->whereKeyNot($ignoreSlotId))
+            ->orderBy('start_time')
+            ->get()
+            ->first(function (ClassSlot $slot) use ($newStart, $newEnd): bool {
+                $slotStart = self::minutesOfDay($slot->start_time);
+
+                return $slotStart < $newEnd && $newStart < $slotStart + $slot->duration_minutes;
+            });
+    }
+
+    private static function minutesOfDay(string $time): int
+    {
+        [$hour, $minute] = array_map('intval', explode(':', $time));
+
+        return $hour * 60 + $minute;
     }
 }

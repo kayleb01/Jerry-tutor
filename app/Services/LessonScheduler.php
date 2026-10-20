@@ -68,6 +68,16 @@ class LessonScheduler
                 continue;
             }
 
+            $startTaken = Lesson::query()
+                ->where('class_group_id', $slot->class_group_id)
+                ->where('starts_at', $startsAt)
+                ->where('class_slot_id', '!=', $slot->id)
+                ->exists();
+
+            if ($startTaken) {
+                continue;
+            }
+
             $lesson = Lesson::query()->firstOrCreate(
                 ['class_slot_id' => $slot->id, 'starts_at' => $startsAt],
                 [

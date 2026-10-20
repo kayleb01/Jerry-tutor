@@ -1,4 +1,7 @@
 import { Form, Link } from '@inertiajs/react';
+import { useState } from 'react';
+import ClassSlotForm from '@/components/class-slot-form';
+import type { ClassSlotRow } from '@/components/class-slot-form';
 import ClassGroupFields from '@/components/class-group-fields';
 import type { ClassGroupDefaults } from '@/components/class-group-fields';
 import FieldError from '@/components/field-error';
@@ -15,6 +18,11 @@ import { Select } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { update } from '@/routes/admin/classes';
 import {
+    destroy as removeSlot,
+    store as addSlot,
+    update as updateSlot,
+} from '@/routes/admin/classes/slots';
+import {
     destroy as withdrawStudent,
     store as enrolStudent,
 } from '@/routes/admin/classes/students';
@@ -24,7 +32,6 @@ import type { Option } from '@/types';
 export type EditableClassGroup = ClassGroupDefaults & {
     id: number;
     name: string;
-    slots: string[];
 };
 
 type Student = {
@@ -44,6 +51,10 @@ type ClassLesson = {
 
 type EditClassProps = {
     classGroup: EditableClassGroup;
+    slots: ClassSlotRow[];
+    subjects: Option[];
+    tutors: Option[];
+    weekdays: Option[];
     lessons: ClassLesson[];
     students: Student[];
     candidates: Option[];
@@ -52,22 +63,23 @@ type EditClassProps = {
 
 export default function EditClass({
     classGroup,
+    slots,
+    subjects,
+    tutors,
+    weekdays,
     lessons,
     students,
     candidates,
     yearGroups,
 }: EditClassProps) {
+    const [editingSlot, setEditingSlot] = useState<number | null>(null);
+
     return (
         <AppLayout title={classGroup.name}>
             <div className="grid gap-6 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
                         <CardTitle>Details</CardTitle>
-                        <CardDescription>
-                            {classGroup.slots.length === 0
-                                ? 'No timetable yet.'
-                                : classGroup.slots.join(' / ')}
-                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Form
@@ -193,6 +205,113 @@ export default function EditClass({
                 </Card>
                 <Card className="lg:col-span-2">
                     <CardHeader>
+                        <CardTitle>Timetable</CardTitle>
+                        <CardDescription>
+                            Each slot is a subject taught weekly. Lessons are
+                            scheduled from its day, time and tutor.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-6">
+                        {slots.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                No timetable yet. Add a slot below.
+                            </p>
+                        ) : (
+                            <ul className="divide-y">
+                                {slots.map((slot) => (
+                                    <li key={slot.id} className="py-3">
+                                        {editingSlot === slot.id ? (
+                                            <ClassSlotForm
+                                                action={updateSlot.form([
+                                                    classGroup.id,
+                                                    slot.id,
+                                                ])}
+                                                idPrefix={`slot-${slot.id}`}
+                                                subjects={subjects}
+                                                tutors={tutors}
+                                                weekdays={weekdays}
+                                                slot={slot}
+                                                submitLabel="Save slot"
+                                                onDone={() =>
+                                                    setEditingSlot(null)
+                                                }
+                                            />
+                                        ) : (
+                                            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                                                <p className="text-sm">
+                                                    <span className="font-medium">
+                                                        {slot.label}
+                                                    </span>
+                                                    <span className="text-muted-foreground">
+                                                        {' · '}
+                                                        {slot.subject}
+                                                        {' · '}
+                                                        {slot.tutor ??
+                                                            'No tutor'}
+                                                        {slot.location
+                                                            ? ` · ${slot.location}`
+                                                            : ''}
+                                                    </span>
+                                                </p>
+                                                <div className="flex items-center gap-4 text-sm font-medium">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setEditingSlot(
+                                                                slot.id,
+                                                            )
+                                                        }
+                                                        className="text-link underline-offset-4 hover:underline"
+                                                    >
+                                                        Edit
+                                                        <span className="sr-only">
+                                                            {' '}
+                                                            {slot.subject}{' '}
+                                                            {slot.label}
+                                                        </span>
+                                                    </button>
+                                                    <Link
+                                                        href={removeSlot([
+                                                            classGroup.id,
+                                                            slot.id,
+                                                        ])}
+                                                        as="button"
+                                                        onBefore={() =>
+                                                            confirm(
+                                                                `Remove ${slot.subject} ${slot.label}? Its upcoming lessons without attendance will be deleted.`,
+                                                            )
+                                                        }
+                                                        className="text-danger underline-offset-4 hover:underline"
+                                                    >
+                                                        Remove
+                                                        <span className="sr-only">
+                                                            {' '}
+                                                            {slot.subject}{' '}
+                                                            {slot.label}
+                                                        </span>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        <div className="flex flex-col gap-3 border-t pt-5">
+                            <h3 className="text-sm font-semibold">Add slot</h3>
+                            <ClassSlotForm
+                                action={addSlot.form(classGroup.id)}
+                                idPrefix="new-slot"
+                                subjects={subjects}
+                                tutors={tutors}
+                                weekdays={weekdays}
+                                submitLabel="Add slot"
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="lg:col-span-2">
+                    <CardHeader>
                         <CardTitle>Lessons</CardTitle>
                         <CardDescription>
                             Recent and upcoming lessons. Open a register to view
@@ -202,7 +321,7 @@ export default function EditClass({
                     <CardContent>
                         {lessons.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                No lessons scheduled. Give the class a day, time
+                                No lessons scheduled. Give a slot a day, time
                                 and tutor to schedule lessons.
                             </p>
                         ) : (
