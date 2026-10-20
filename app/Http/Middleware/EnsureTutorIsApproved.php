@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Role;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -9,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureTutorIsApproved
 {
     /**
-     * Keep tutors who are pending or rejected on the application status page.
+     * Keep every tutor the academy hasn't approved (pending, rejected or undecided) on the application status page.
      *
      * @param  Closure(Request): (Response)  $next
      */
@@ -17,7 +18,7 @@ class EnsureTutorIsApproved
     {
         $user = $request->user();
 
-        if ($user !== null && ($user->isPendingTutor() || $user->isRejectedTutor())) {
+        if ($user !== null && $user->hasRole(Role::Tutor) && ! $user->isApprovedTutor()) {
             return redirect()->route('tutors.application');
         }
 

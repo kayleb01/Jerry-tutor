@@ -131,3 +131,12 @@ it('shows admins how many classes need review in the sidebar', function () {
     $this->actingAs($this->tutor)->get(route('dashboard'))
         ->assertInertia(fn (Assert $page) => $page->where('badges', []));
 });
+
+it('offers only approved tutors in the tutor filter', function () {
+    User::factory()->pendingTutor()->create(['name' => 'Pat Pending']);
+    User::factory()->rejectedTutor()->create(['name' => 'Rex Rejected']);
+
+    $this->actingAs($this->admin)->get(route('admin.lesson-reports.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('tutors', [['value' => $this->tutor->id, 'label' => 'Tunde Bakare']]));
+});

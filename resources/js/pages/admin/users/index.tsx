@@ -18,6 +18,7 @@ type Row = {
     role: string;
     yearGroup: string | null;
     deactivated: boolean;
+    applicationStatus: 'pending' | 'rejected' | null;
 };
 
 type UsersIndexProps = {
@@ -155,6 +156,22 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
                                                 className="ml-2"
                                             >
                                                 Deactivated
+                                            </Badge>
+                                        )}
+                                        {user.applicationStatus && (
+                                            <Badge
+                                                tone={
+                                                    user.applicationStatus ===
+                                                    'rejected'
+                                                        ? 'absent'
+                                                        : 'late'
+                                                }
+                                                className="ml-2"
+                                            >
+                                                {user.applicationStatus ===
+                                                'rejected'
+                                                    ? 'Rejected'
+                                                    : 'Pending'}
                                             </Badge>
                                         )}
                                     </td>

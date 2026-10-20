@@ -155,3 +155,16 @@ it('keeps a student able to log in after an admin adds an email', function () {
 
     $this->actingAs($student->fresh())->get(route('dashboard'))->assertOk();
 });
+
+it('marks tutor applicants that are not approved yet', function () {
+    User::factory()->tutor()->create(['name' => 'Bola Approved']);
+    User::factory()->pendingTutor()->create(['name' => 'Chidi Pending']);
+    User::factory()->rejectedTutor()->create(['name' => 'Dayo Rejected']);
+
+    $this->actingAs($this->admin)->get(route('admin.users.index', ['role' => 'tutor']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('users.data', 3)
+            ->where('users.data.0.applicationStatus', null)
+            ->where('users.data.1.applicationStatus', 'pending')
+            ->where('users.data.2.applicationStatus', 'rejected'));
+});

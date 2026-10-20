@@ -105,7 +105,7 @@ class AdminDashboard
             'periods' => collect(AdminDashboardFilters::PERIODS)->map(fn (string $label, string $value): array => ['value' => $value, 'label' => $label])->values()->all(),
             'classes' => ClassGroup::query()->where('is_active', true)->orderBy('name')->get(['id', 'name'])
                 ->map(fn (ClassGroup $group): array => ['value' => $group->id, 'label' => $group->name])->all(),
-            'tutors' => User::query()->where('role', Role::Tutor)->orderBy('name')->get(['id', 'name'])
+            'tutors' => User::query()->approvedTutors()->orderBy('name')->get(['id', 'name'])
                 ->map(fn (User $tutor): array => ['value' => $tutor->id, 'label' => $tutor->name])->all(),
         ];
     }
@@ -199,7 +199,7 @@ class AdminDashboard
         if ($filters->classId === null && $filters->tutorId === null) {
             return [
                 'activeStudents' => User::query()->where('role', Role::Student)->count(),
-                'activeTutors' => User::query()->where('role', Role::Tutor)->count(),
+                'activeTutors' => User::query()->approvedTutors()->count(),
             ];
         }
 

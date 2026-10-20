@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\ApprovalStatus;
 use App\Enums\Role;
 use App\Enums\Weekday;
 use App\Enums\YearGroup;
@@ -87,8 +86,7 @@ class ClassGroupController extends Controller
                 ->all(),
             'subjects' => Subject::options(),
             'tutors' => User::query()
-                ->where('role', Role::Tutor)
-                ->where('approval_status', ApprovalStatus::Approved)
+                ->approvedTutors()
                 ->orderBy('name')
                 ->get()
                 ->map(fn (User $tutor): array => ['value' => $tutor->id, 'label' => $tutor->name])

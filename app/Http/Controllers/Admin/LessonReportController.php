@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\ClassGroup;
 use App\Models\Lesson;
@@ -41,7 +40,7 @@ class LessonReportController extends Controller
                 ->values(),
             'classes' => fn () => ClassGroup::query()->orderBy('name')->get(['id', 'name'])
                 ->map(fn (ClassGroup $group): array => ['value' => $group->id, 'label' => $group->name]),
-            'tutors' => fn () => User::query()->where('role', Role::Tutor)->orderBy('name')->get(['id', 'name'])
+            'tutors' => fn () => User::query()->approvedTutors()->orderBy('name')->get(['id', 'name'])
                 ->map(fn (User $tutor): array => ['value' => $tutor->id, 'label' => $tutor->name]),
             'selected' => function () use ($inbox, $filters, $selectedId): ?array {
                 $lesson = $selectedId ? Lesson::find($selectedId) : $inbox->first($filters);

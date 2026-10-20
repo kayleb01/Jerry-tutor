@@ -33,6 +33,15 @@ it('shows a rejected tutor the not-approved page', function () {
         ->assertInertia(fn (Assert $page) => $page->where('status', 'rejected'));
 });
 
+it('keeps out a tutor with no approval decision at all', function () {
+    $tutor = User::factory()->tutor()->create(['approval_status' => null]);
+
+    $this->actingAs($tutor)->get(route('dashboard'))->assertRedirect(route('tutors.application'));
+    $this->actingAs($tutor)->get(route('tutors.application'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('auth/tutor-application-status')->where('status', 'pending'));
+});
+
 it('lets a pending tutor log out', function () {
     $this->actingAs(User::factory()->pendingTutor()->create())
         ->post(route('logout'))

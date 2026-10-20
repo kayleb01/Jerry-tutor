@@ -168,3 +168,14 @@ it('ignores filter values it does not understand', function () {
             ->where('filters.tutor', null)
             ->where('filters.role', null));
 });
+
+it('leaves tutor applicants out of the tutor count and the tutor filter', function () {
+    User::factory()->pendingTutor()->create(['name' => 'Pat Pending']);
+    User::factory()->rejectedTutor()->create(['name' => 'Rex Rejected']);
+    User::factory()->tutor()->create(['name' => 'Nora Nostatus', 'approval_status' => null]);
+
+    $this->actingAs($this->admin)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('stats.activeTutors', 2)
+            ->where('options.tutors', [['value' => $this->tutorA->id, 'label' => 'Ada Tutor'], ['value' => $this->tutorB->id, 'label' => 'Bayo Tutor']]));
+});

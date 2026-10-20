@@ -49,6 +49,9 @@ class UserController extends Controller
                 'role' => $user->role->value,
                 'yearGroup' => $user->studentProfile?->year_group->label(),
                 'deactivated' => $user->trashed(),
+                'applicationStatus' => $user->hasRole(Role::Tutor) && ! $user->isApprovedTutor()
+                    ? ($user->approval_status ?? ApprovalStatus::Pending)->value
+                    : null,
             ]);
 
         return Inertia::render('admin/users/index', [

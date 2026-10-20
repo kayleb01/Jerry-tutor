@@ -122,6 +122,17 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Tutors the academy has approved; applicants (pending, rejected or undecided) are left out.
+     *
+     * @param  Builder<User>  $query
+     */
+    #[Scope]
+    protected function approvedTutors(Builder $query): void
+    {
+        $query->where('role', Role::Tutor)->where('approval_status', ApprovalStatus::Approved);
+    }
+
+    /**
      * Tutor applications in the given state that admins can see: only once the email is verified.
      *
      * @param  Builder<User>  $query
