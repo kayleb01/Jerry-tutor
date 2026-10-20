@@ -34,7 +34,7 @@ class SubjectRequest extends FormRequest
         $subject = $this->route('subject');
 
         return [
-            'name' => [$subject instanceof Subject ? 'sometimes' : 'required', 'string', 'max:100'],
+            'name' => [$subject instanceof Subject ? 'filled' : 'required', 'string', 'max:100'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

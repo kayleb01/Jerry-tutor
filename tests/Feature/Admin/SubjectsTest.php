@@ -50,3 +50,12 @@ it('is for admins only', function (string $state) {
     $this->actingAs($user)->post(route('admin.subjects.store'), ['name' => 'Art'])->assertForbidden();
     $this->actingAs($user)->put(route('admin.subjects.update', $subject), ['name' => 'Art'])->assertForbidden();
 })->with(['tutor', 'student', 'guardian']);
+
+it('refuses renaming a subject to a blank name', function () {
+    $admin = User::factory()->admin()->create();
+    $subject = Subject::query()->first();
+
+    $this->actingAs($admin)->put(route('admin.subjects.update', $subject), ['name' => '   '])->assertSessionHasErrors('name');
+
+    expect($subject->fresh()->name)->toBe('Maths');
+});
