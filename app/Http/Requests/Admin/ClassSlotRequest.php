@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\Role;
 use App\Enums\Weekday;
 use App\Models\ClassGroup;
@@ -42,7 +43,12 @@ class ClassSlotRequest extends FormRequest
             'subject_id' => ['required', 'integer', Rule::exists(Subject::class, 'id')->where(
                 fn ($query) => $query->where('is_active', true)->when($slot instanceof ClassSlot, fn ($query) => $query->orWhere('id', $slot->subject_id)),
             )],
-            'tutor_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where('role', Role::Tutor->value)->whereNull('deleted_at')],
+            'tutor_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where(
+                fn ($query) => $query->where('role', Role::Tutor->value)->whereNull('deleted_at')->where(
+                    fn ($query) => $query->where('approval_status', ApprovalStatus::Approved->value)
+                        ->when($slot instanceof ClassSlot && $slot->tutor_id !== null, fn ($query) => $query->orWhere('id', $slot->tutor_id)),
+                ),
+            )],
             'weekday' => ['nullable', 'required_with:start_time', Rule::enum(Weekday::class)],
             'start_time' => ['nullable', 'required_with:weekday', 'date_format:H:i'],
             'duration_minutes' => ['required', 'integer', 'min:15', 'max:240'],

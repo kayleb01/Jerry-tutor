@@ -33,6 +33,7 @@ use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuizPlayerController;
 use App\Http\Controllers\RaisedIssueController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\TutorApplicationStatusController;
 use App\Http\Controllers\TutorCheckInController;
 use App\Http\Controllers\UpdateCardController;
 use Illuminate\Support\Facades\Route;
@@ -42,7 +43,11 @@ Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::get('tutors/application', TutorApplicationStatusController::class)
+    ->middleware(['auth', 'verified'])
+    ->name('tutors.application');
+
+Route::middleware(['auth', 'verified', 'approved.tutor'])->group(function () {
     Route::put('raised-issues/{raisedIssue}/acknowledge', [RaisedIssueController::class, 'acknowledge'])
         ->middleware('role:tutor')
         ->name('raised-issues.acknowledge');
@@ -65,7 +70,7 @@ Route::post('webhooks/{gateway}', PaymentWebhookController::class)
     ->middleware('throttle:120,1')
     ->name('webhooks.payments');
 
-Route::middleware(['auth', 'verified', 'role:student', 'quiz.access'])->group(function () {
+Route::middleware(['auth', 'verified', 'approved.tutor', 'role:student', 'quiz.access'])->group(function () {
     Route::get('quizzes', [QuizController::class, 'index'])->name('quizzes.index');
     Route::post('quizzes/{quiz:slug}/attempts', [QuizAttemptController::class, 'store'])->name('quizzes.attempts.store');
     Route::get('quiz-attempts/{attempt}', [QuizAttemptController::class, 'show'])->name('quiz-attempts.show');
@@ -74,7 +79,7 @@ Route::middleware(['auth', 'verified', 'role:student', 'quiz.access'])->group(fu
     Route::put('quiz-attempts/{attempt}/questions/{position}', [QuizPlayerController::class, 'update'])->whereNumber('position')->name('quiz-attempts.questions.update');
 });
 
-Route::middleware(['auth', 'verified', 'role:guardian,student'])->prefix('billing')->name('billing.')->group(function () {
+Route::middleware(['auth', 'verified', 'approved.tutor', 'role:guardian,student'])->prefix('billing')->name('billing.')->group(function () {
     Route::get('/', [BillingController::class, 'index'])->name('index');
     Route::post('checkout', [BillingCheckoutController::class, 'store'])->name('checkout');
     Route::get('callback/{gateway}', BillingCallbackController::class)->whereIn('gateway', ['paystack', 'flutterwave'])->name('callback');
@@ -82,13 +87,13 @@ Route::middleware(['auth', 'verified', 'role:guardian,student'])->prefix('billin
     Route::get('subscriptions/{subscription}/card', UpdateCardController::class)->name('subscriptions.card');
 });
 
-Route::middleware(['auth', 'verified', 'role:guardian'])->group(function () {
+Route::middleware(['auth', 'verified', 'approved.tutor', 'role:guardian'])->group(function () {
     Route::resource('children', ChildController::class)->except(['show', 'destroy']);
     Route::put('children/{child}/password', ChildPasswordController::class)->name('children.password.update');
     Route::get('children/{child}/attendance', ChildAttendanceController::class)->name('children.attendance');
 });
 
-Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'approved.tutor', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', UserController::class)->except(['show'])->withTrashed(['edit']);
     Route::post('users/{user}/restore', RestoreUserController::class)->withTrashed()->name('users.restore');
     Route::put('users/{user}/password', UserPasswordController::class)->name('users.password.update');

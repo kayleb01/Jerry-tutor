@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ApprovalStatus;
 use App\Enums\Weekday;
 use App\Models\AttendanceRecord;
 use App\Models\ClassGroup;
@@ -191,6 +192,30 @@ it('only accepts an active tutor', function (string $state) {
     $this->actingAs($this->admin)->post(route('admin.classes.slots.store', $this->group), slotPayload(['tutor_id' => $tutor->id]))
         ->assertSessionHasErrors('tutor_id');
 })->with(['guardian', 'deleted tutor']);
+
+it('refuses a tutor who is not approved on a new slot', function (string $state) {
+    $tutor = User::factory()->{$state}()->create();
+
+    $this->actingAs($this->admin)->post(route('admin.classes.slots.store', $this->group), slotPayload(['tutor_id' => $tutor->id]))
+        ->assertSessionHasErrors('tutor_id');
+})->with(['pendingTutor', 'rejectedTutor']);
+
+it('keeps a slot\'s existing tutor on update even if they are no longer approved', function () {
+    $slot = mondaySlot();
+    $this->tutor->forceFill(['approval_status' => ApprovalStatus::Rejected])->save();
+
+    $this->actingAs($this->admin)->put(route('admin.classes.slots.update', [$this->group, $slot]), slotPayload(['duration_minutes' => 90, 'weekday' => Weekday::Monday->value, 'start_time' => '09:00']))
+        ->assertSessionHasNoErrors();
+
+    expect($slot->fresh()->tutor_id)->toBe($this->tutor->id);
+});
+
+it('lists only approved tutors for the slot form', function () {
+    User::factory()->pendingTutor()->create();
+
+    $this->actingAs($this->admin)->get(route('admin.classes.edit', $this->group))
+        ->assertInertia(fn (Assert $page) => $page->has('tutors', 1)->where('tutors.0.value', $this->tutor->id));
+});
 
 it('refuses an inactive subject on a new slot but keeps one already on the slot', function () {
     $archived = Subject::factory()->create(['name' => 'Latin', 'is_active' => false]);

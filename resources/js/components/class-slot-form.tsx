@@ -46,6 +46,15 @@ export default function ClassSlotForm({
             ? [...subjects, { value: slot.subjectId, label: slot.subject }]
             : subjects;
 
+    const tutorOptions =
+        slot?.tutorId != null &&
+        !tutors.some((option) => option.value === slot.tutorId)
+            ? [
+                  ...tutors,
+                  { value: slot.tutorId, label: slot.tutor ?? 'Current tutor' },
+              ]
+            : tutors;
+
     return (
         <Form
             {...action}
@@ -89,7 +98,7 @@ export default function ClassSlotForm({
                             aria-describedby={id('tutor_id-error')}
                         >
                             <option value="">No tutor yet</option>
-                            {tutors.map((option) => (
+                            {tutorOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
                                     {option.label}
                                 </option>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -26,6 +27,7 @@ use InvalidArgumentException;
  * @property string|null $email
  * @property string|null $phone
  * @property Role $role
+ * @property ApprovalStatus|null $approval_status
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $remember_token
@@ -51,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'approval_status' => ApprovalStatus::class,
         ];
     }
 
@@ -91,6 +94,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasRole(Role ...$roles): bool
     {
         return in_array($this->role, $roles, true);
+    }
+
+    public function isApprovedTutor(): bool
+    {
+        return $this->hasRole(Role::Tutor) && $this->approval_status === ApprovalStatus::Approved;
+    }
+
+    public function isPendingTutor(): bool
+    {
+        return $this->hasRole(Role::Tutor) && $this->approval_status === ApprovalStatus::Pending;
+    }
+
+    public function isRejectedTutor(): bool
+    {
+        return $this->hasRole(Role::Tutor) && $this->approval_status === ApprovalStatus::Rejected;
     }
 
     /**

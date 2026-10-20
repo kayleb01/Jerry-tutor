@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\Role;
 use App\Enums\YearGroup;
 use App\Models\StudentProfile;
@@ -54,7 +55,17 @@ class UserFactory extends Factory
 
     public function tutor(): static
     {
-        return $this->state(fn (array $attributes) => ['role' => Role::Tutor]);
+        return $this->state(fn (array $attributes) => ['role' => Role::Tutor, 'approval_status' => ApprovalStatus::Approved]);
+    }
+
+    public function pendingTutor(): static
+    {
+        return $this->state(fn (array $attributes) => ['role' => Role::Tutor, 'approval_status' => ApprovalStatus::Pending]);
+    }
+
+    public function rejectedTutor(): static
+    {
+        return $this->state(fn (array $attributes) => ['role' => Role::Tutor, 'approval_status' => ApprovalStatus::Rejected]);
     }
 
     public function guardian(): static

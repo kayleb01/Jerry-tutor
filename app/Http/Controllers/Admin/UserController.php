@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Actions\CreateStudentAccount;
+use App\Enums\ApprovalStatus;
 use App\Enums\Role;
 use App\Enums\YearGroup;
 use App\Http\Controllers\Controller;
@@ -81,7 +82,11 @@ class UserController extends Controller
                 'email' => $request->validated('email'),
                 'password' => Hash::make($request->validated('password')),
             ]);
-            $user->forceFill(['role' => $role, 'email_verified_at' => now()])->save();
+            $user->forceFill([
+                'role' => $role,
+                'approval_status' => $role === Role::Tutor ? ApprovalStatus::Approved : null,
+                'email_verified_at' => now(),
+            ])->save();
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$user->name} has been created."]);
