@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 import { register } from '@/routes';
+import { join } from '@/routes/tutors';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
@@ -93,6 +94,15 @@ export default function Login({
                         <Button type="submit" size="lg" disabled={processing}>
                             {processing ? 'Logging in…' : 'Log in'}
                         </Button>
+                        <p className="text-center text-sm text-muted-foreground">
+                            Joining as a tutor?{' '}
+                            <Link
+                                href={join()}
+                                className="font-medium text-link underline-offset-4 hover:underline"
+                            >
+                                Apply here
+                            </Link>
+                        </p>
                         {canRegister && (
                             <p className="text-center text-sm text-muted-foreground">
                                 New parent or guardian?{' '}

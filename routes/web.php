@@ -33,6 +33,7 @@ use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuizPlayerController;
 use App\Http\Controllers\RaisedIssueController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\TutorApplicationController;
 use App\Http\Controllers\TutorApplicationStatusController;
 use App\Http\Controllers\TutorCheckInController;
 use App\Http\Controllers\UpdateCardController;
@@ -42,6 +43,13 @@ use Laravel\Fortify\Features;
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
+
+Route::middleware('guest')->group(function () {
+    Route::get('tutors/join', [TutorApplicationController::class, 'create'])->name('tutors.join');
+    Route::post('tutors/join', [TutorApplicationController::class, 'store'])
+        ->middleware('throttle:tutor-join')
+        ->name('tutors.join.store');
+});
 
 Route::get('tutors/application', TutorApplicationStatusController::class)
     ->middleware(['auth', 'verified'])

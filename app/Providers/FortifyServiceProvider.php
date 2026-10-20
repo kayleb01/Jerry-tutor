@@ -64,6 +64,7 @@ class FortifyServiceProvider extends ServiceProvider
 
         Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password'));
 
+        RateLimiter::for('tutor-join', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
         RateLimiter::for('register', fn (Request $request) => Limit::perMinute(5)->by($request->ip()));
 
         $this->app->booted(function (): void {

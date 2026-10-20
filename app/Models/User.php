@@ -186,6 +186,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * The class and subject pairs a tutor applicant asked to teach.
+     *
+     * @return HasMany<TutorClassRequest, $this>
+     */
+    public function requestedClasses(): HasMany
+    {
+        return $this->hasMany(TutorClassRequest::class, 'tutor_id');
+    }
+
+    /**
      * The timetable slots this tutor teaches; removed slots are excluded.
      *
      * @return HasMany<ClassSlot, $this>
