@@ -8,7 +8,7 @@ use App\Enums\YearGroup;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
-use App\Models\ClassGroup;
+use App\Models\ClassSlot;
 use App\Models\User;
 use App\Services\LessonScheduler;
 use Illuminate\Database\Eloquent\Builder;
@@ -136,9 +136,9 @@ class UserController extends Controller
         DB::transaction(function () use ($user, $scheduler): void {
             $user->delete();
 
-            $user->classGroupsTaught()->each(function (ClassGroup $group) use ($scheduler): void {
-                $group->update(['tutor_id' => null]);
-                $scheduler->rescheduleFuture($group);
+            $user->classSlotsTaught()->each(function (ClassSlot $slot) use ($scheduler): void {
+                $slot->update(['tutor_id' => null]);
+                $scheduler->rescheduleFuture($slot);
             });
         });
 

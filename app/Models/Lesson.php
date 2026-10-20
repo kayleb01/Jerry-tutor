@@ -15,10 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * One dated occurrence of a ClassGroup. Times are UTC.
+ * One dated occurrence of a ClassSlot. It snapshots the slot's tutor and times. Times are UTC.
  *
  * @property int $id
  * @property int $class_group_id
+ * @property int $class_slot_id
  * @property int $tutor_id
  * @property CarbonImmutable $starts_at
  * @property CarbonImmutable $ends_at
@@ -29,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['class_group_id', 'tutor_id', 'starts_at', 'ends_at', 'status', 'cancelled_reason'])]
+#[Fillable(['class_group_id', 'class_slot_id', 'tutor_id', 'starts_at', 'ends_at', 'status', 'cancelled_reason'])]
 class Lesson extends Model
 {
     /** @use HasFactory<LessonFactory> */
@@ -56,6 +57,16 @@ class Lesson extends Model
     public function classGroup(): BelongsTo
     {
         return $this->belongsTo(ClassGroup::class);
+    }
+
+    /**
+     * Includes removed slots, so past lessons keep their subject.
+     *
+     * @return BelongsTo<ClassSlot, $this>
+     */
+    public function slot(): BelongsTo
+    {
+        return $this->belongsTo(ClassSlot::class, 'class_slot_id')->withTrashed();
     }
 
     /**

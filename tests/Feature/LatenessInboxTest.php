@@ -15,7 +15,7 @@ use Carbon\CarbonImmutable;
 beforeEach(function () {
     config(['academy.timezone' => 'Africa/Lagos', 'academy.lateness_grace_minutes' => 0]);
     $this->travelTo(CarbonImmutable::parse('2026-10-14 12:00:00', 'UTC'));
-    $this->group = ClassGroup::factory()->create(['name' => 'Year 4 Number']);
+    $this->group = ClassGroup::factory()->withSlot()->create(['name' => 'Year 4 Number']);
     $this->tolu = User::factory()->student(YearGroup::Year4)->create(['name' => 'Tolu Ade']);
     $this->group->enrol($this->tolu);
 });
@@ -24,7 +24,7 @@ function lateFor(User $who, string $date, int $minutes = 12, ?ClassGroup $group 
 {
     $group ??= test()->group;
     $startsAt = CarbonImmutable::parse("{$date} 13:00:00", 'UTC');
-    $lesson = Lesson::factory()->for($group)->create(['tutor_id' => $group->tutor_id, 'starts_at' => $startsAt, 'ends_at' => $startsAt->addHour()]);
+    $lesson = Lesson::factory()->for($group)->create(['starts_at' => $startsAt, 'ends_at' => $startsAt->addHour()]);
 
     return app(RecordAttendance::class)->handle($lesson, $who, AttendanceStatus::Present, null, $startsAt->addMinutes($minutes))->latenessReport;
 }
@@ -50,7 +50,7 @@ it('splits reports into new and followed up, combined with the other filters', f
     $new = lateFor($this->tolu, '2026-10-13');
     $followed = lateFor($this->tolu, '2026-10-12');
     $followed->update(['reviewed_at' => now(), 'follow_up_notes' => 'Spoke to mum.']);
-    $tutorLate = lateFor($this->group->tutor, '2026-10-11', 5);
+    $tutorLate = lateFor($this->group->slots()->first()->tutor, '2026-10-11', 5);
     $query = app(LatenessReportQuery::class);
 
     expect(latenessIds())->toBe([$new->id, $tutorLate->id])
@@ -109,7 +109,7 @@ it('gives the person their recent history and repeat count', function () {
 });
 
 it('only offers to notify a parent for students with a guardian', function () {
-    $tutorReport = lateFor($this->group->tutor, '2026-10-12', 5);
+    $tutorReport = lateFor($this->group->slots()->first()->tutor, '2026-10-12', 5);
     $report = lateFor($this->tolu, '2026-10-13');
     $inbox = app(LatenessInbox::class);
 

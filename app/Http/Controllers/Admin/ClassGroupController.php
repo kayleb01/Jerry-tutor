@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\Role;
-use App\Enums\Weekday;
 use App\Enums\YearGroup;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ClassGroupRequest;
 use App\Models\ClassGroup;
+use App\Models\ClassSlot;
 use App\Models\Lesson;
 use App\Models\User;
 use App\Services\LessonScheduler;
@@ -23,7 +23,7 @@ class ClassGroupController extends Controller
     public function index(): Response
     {
         $classes = ClassGroup::query()
-            ->with(['tutor', 'lessons' => fn (HasMany $query) => $query->where('starts_at', '>', now())->orderBy('starts_at')->limit(1)])
+            ->with(['slots' => fn (HasMany $query) => $query->with(['subject', 'tutor'])->orderBy('weekday')->orderBy('start_time'), 'lessons' => fn (HasMany $query) => $query->where('starts_at', '>', now())->orderBy('starts_at')->limit(1)])
             ->withCount('activeStudents')
             ->orderByDesc('is_active')
             ->orderBy('name')
@@ -31,8 +31,7 @@ class ClassGroupController extends Controller
             ->map(fn (ClassGroup $group): array => [
                 'id' => $group->id,
                 'name' => $group->name,
-                'tutor' => $group->tutor?->name,
-                'schedule' => $group->scheduleLabel(),
+                'slots' => $group->slots->map(fn (ClassSlot $slot): string => $this->slotSummary($slot))->all(),
                 'students' => $group->active_students_count,
                 'nextLesson' => $group->lessons->first()?->starts_at->setTimezone(config('academy.timezone'))->format('D j M, H:i'),
                 'isActive' => $group->is_active,
@@ -46,10 +45,9 @@ class ClassGroupController extends Controller
         return Inertia::render('admin/classes/create', $this->formOptions());
     }
 
-    public function store(ClassGroupRequest $request, LessonScheduler $scheduler): RedirectResponse
+    public function store(ClassGroupRequest $request): RedirectResponse
     {
         $group = ClassGroup::create($request->validated());
-        $scheduler->generateFor($group);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$group->name} has been created."]);
 
@@ -63,14 +61,15 @@ class ClassGroupController extends Controller
             'classGroup' => [
                 'id' => $classGroup->id,
                 'name' => $classGroup->name,
-                'tutorId' => $classGroup->tutor_id,
                 'yearGroup' => $classGroup->year_group?->value,
-                'location' => $classGroup->location,
-                'weekday' => $classGroup->weekday?->value,
-                'startTime' => $classGroup->start_time,
-                'durationMinutes' => $classGroup->duration_minutes,
                 'isActive' => $classGroup->is_active,
-                'schedule' => $classGroup->scheduleLabel(),
+                'slots' => $classGroup->slots()
+                    ->with(['subject', 'tutor'])
+                    ->orderBy('weekday')
+                    ->orderBy('start_time')
+                    ->get()
+                    ->map(fn (ClassSlot $slot): string => $this->slotSummary($slot))
+                    ->all(),
             ],
             'students' => $classGroup->activeStudents()
                 ->with('studentProfile')
@@ -116,11 +115,11 @@ class ClassGroupController extends Controller
     public function update(ClassGroupRequest $request, ClassGroup $classGroup, LessonScheduler $scheduler): RedirectResponse
     {
         $classGroup->fill($request->validated());
-        $scheduleChanged = $classGroup->isDirty(['weekday', 'start_time', 'duration_minutes', 'tutor_id', 'is_active']);
+        $activeChanged = $classGroup->isDirty('is_active');
         $classGroup->save();
 
-        if ($scheduleChanged) {
-            $scheduler->rescheduleFuture($classGroup);
+        if ($activeChanged) {
+            $classGroup->slots->each(fn (ClassSlot $slot) => $scheduler->rescheduleFuture($slot));
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$classGroup->name} has been saved."]);
@@ -129,19 +128,20 @@ class ClassGroupController extends Controller
     }
 
     /**
-     * @return array{tutors: array<int, array{value: int, label: string}>, weekdays: array<int, array{value: int, label: string}>, yearGroups: array<int, array{value: int, label: string}>}
+     * @return array{yearGroups: array<int, array{value: int, label: string}>}
      */
     private function formOptions(): array
     {
         return [
-            'tutors' => User::query()
-                ->where('role', Role::Tutor)
-                ->orderBy('name')
-                ->get(['id', 'name'])
-                ->map(fn (User $tutor): array => ['value' => $tutor->id, 'label' => $tutor->name])
-                ->all(),
-            'weekdays' => Weekday::options(),
             'yearGroups' => YearGroup::options(),
         ];
+    }
+
+    /**
+     * e.g. "Maths · Mon 09:00–11:00 · Ada Obi".
+     */
+    private function slotSummary(ClassSlot $slot): string
+    {
+        return "{$slot->subject->name} · {$slot->timeLabel()} · ".($slot->tutor?->name ?? 'No tutor');
     }
 }

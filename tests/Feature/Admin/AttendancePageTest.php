@@ -19,7 +19,6 @@ beforeEach(function () {
     $this->year4 = ClassGroup::factory()->create(['name' => 'Year 4 · Number', 'year_group' => YearGroup::Year4]);
 
     $this->lesson = fn (ClassGroup $group, string $start, array $extra = []) => Lesson::factory()->for($group)->create([
-        'tutor_id' => $group->tutor_id,
         'starts_at' => CarbonImmutable::parse($start, 'UTC'),
         'ends_at' => CarbonImmutable::parse($start, 'UTC')->addHour(),
         ...$extra,

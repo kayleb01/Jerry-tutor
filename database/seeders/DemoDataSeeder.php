@@ -10,9 +10,11 @@ use App\Enums\LessonStatus;
 use App\Enums\Weekday;
 use App\Enums\YearGroup;
 use App\Models\ClassGroup;
+use App\Models\ClassSlot;
 use App\Models\LatenessReport;
 use App\Models\Lesson;
 use App\Models\LessonReport;
+use App\Models\Subject;
 use App\Models\User;
 use App\Services\LessonScheduler;
 use Carbon\CarbonImmutable;
@@ -50,7 +52,7 @@ class DemoDataSeeder extends Seeder
      */
     private const CLASSES = [
         ['name' => 'Year 3 & 4 Maths', 'tutor' => 0, 'year' => 4, 'weekday' => Weekday::Monday, 'start' => '16:00', 'minutes' => 60, 'years' => [3, 4], 'location' => 'Room 1'],
-        ['name' => 'Year 5 Maths', 'tutor' => 1, 'year' => 5, 'weekday' => Weekday::Tuesday, 'start' => '16:30', 'minutes' => 60, 'years' => [5], 'location' => 'Room 2'],
+        ['name' => 'Year 5', 'tutor' => 1, 'year' => 5, 'weekday' => Weekday::Tuesday, 'start' => '16:30', 'minutes' => 60, 'years' => [5], 'location' => 'Room 2'],
         ['name' => 'Year 6 SATs Prep', 'tutor' => 0, 'year' => 6, 'weekday' => Weekday::Thursday, 'start' => '17:00', 'minutes' => 75, 'years' => [6], 'location' => 'Room 1'],
         ['name' => '11+ Preparation', 'tutor' => 2, 'year' => null, 'weekday' => Weekday::Saturday, 'start' => '09:00', 'minutes' => 90, 'years' => [5, 6], 'location' => 'Hall'],
         ['name' => 'Year 7 Maths', 'tutor' => 2, 'year' => 7, 'weekday' => Weekday::Wednesday, 'start' => '15:30', 'minutes' => 60, 'years' => [7], 'location' => 'Room 3'],
@@ -74,6 +76,13 @@ class DemoDataSeeder extends Seeder
         10 => ['Funmilayo Ade', 'Kelechi Uche', 'Maryam Musa'],
         11 => ['Uchenna Eze', 'Bisola Okonkwo', 'Joseph Akpan'],
     ];
+
+    /**
+     * A second, Science slot for the Year 5 class: same day as its Maths, after it, with another tutor.
+     *
+     * @var array{class: int, tutor: int, start: string, minutes: int, location: string}
+     */
+    private const SCIENCE_SLOT = ['class' => 1, 'tutor' => 0, 'start' => '17:45', 'minutes' => 60, 'location' => 'Lab'];
 
     private const RELIABLY_LATE_STUDENT = 'Emeka Obi';
 
@@ -138,7 +147,7 @@ class DemoDataSeeder extends Seeder
 
         $now = CarbonImmutable::now();
         foreach ($classes as $group) {
-            $this->history($group, $now);
+            $group->slots->each(fn (ClassSlot $slot) => $this->history($slot, $now));
         }
 
         app(LessonScheduler::class)->generate();
@@ -211,17 +220,35 @@ class DemoDataSeeder extends Seeder
      */
     private function classes(array $tutors, array $students): array
     {
-        return array_map(function (array $definition) use ($tutors, $students): ClassGroup {
+        $maths = Subject::firstOrCreate(['name' => 'Maths']);
+        $science = Subject::firstOrCreate(['name' => 'Science'], ['sort_order' => 1]);
+
+        return array_map(function (array $definition) use ($tutors, $students, $maths, $science): ClassGroup {
             $group = ClassGroup::create([
                 'name' => $definition['name'],
-                'tutor_id' => $tutors[$definition['tutor']]->id,
                 'year_group' => $definition['year'] === null ? null : YearGroup::from($definition['year']),
+                'is_active' => true,
+            ]);
+
+            $group->slots()->create([
+                'subject_id' => $maths->id,
+                'tutor_id' => $tutors[$definition['tutor']]->id,
                 'location' => $definition['location'],
                 'weekday' => $definition['weekday'],
                 'start_time' => $definition['start'],
                 'duration_minutes' => $definition['minutes'],
-                'is_active' => true,
             ]);
+
+            if ($definition === self::CLASSES[self::SCIENCE_SLOT['class']]) {
+                $group->slots()->create([
+                    'subject_id' => $science->id,
+                    'tutor_id' => $tutors[self::SCIENCE_SLOT['tutor']]->id,
+                    'location' => self::SCIENCE_SLOT['location'],
+                    'weekday' => $definition['weekday'],
+                    'start_time' => self::SCIENCE_SLOT['start'],
+                    'duration_minutes' => self::SCIENCE_SLOT['minutes'],
+                ]);
+            }
 
             foreach ($students as $student) {
                 $inYears = in_array($student->studentProfile->year_group->value, $definition['years'], true);
@@ -236,28 +263,28 @@ class DemoDataSeeder extends Seeder
     }
 
     /**
-     * Past weekly lessons for the class, each with a full register and some reports.
+     * Past weekly lessons for the slot, each with a full register and some reports.
      */
-    private function history(ClassGroup $group, CarbonImmutable $now): void
+    private function history(ClassSlot $slot, CarbonImmutable $now): void
     {
         $timezone = config('academy.timezone');
-        [$hour, $minute] = array_map('intval', explode(':', $group->start_time));
+        [$hour, $minute] = array_map('intval', explode(':', $slot->start_time));
         $thisWeek = $now->setTimezone($timezone)->startOfWeek(CarbonImmutable::MONDAY);
 
         for ($weeksAgo = self::WEEKS_OF_HISTORY; $weeksAgo >= 0; $weeksAgo--) {
-            $startsAt = $thisWeek->subWeeks($weeksAgo)->addDays($group->weekday->value - 1)->setTime($hour, $minute)->utc();
-            $endsAt = $startsAt->addMinutes($group->duration_minutes);
+            $startsAt = $thisWeek->subWeeks($weeksAgo)->addDays($slot->weekday->value - 1)->setTime($hour, $minute)->utc();
+            $endsAt = $startsAt->addMinutes($slot->duration_minutes);
 
             if ($endsAt->greaterThan($now) || $startsAt->isSameDay($now->setTimezone($timezone))) {
                 continue;
             }
 
             $lesson = Lesson::firstOrCreate(
-                ['class_group_id' => $group->id, 'starts_at' => $startsAt],
-                ['tutor_id' => $group->tutor_id, 'ends_at' => $endsAt, 'status' => LessonStatus::Completed],
+                ['class_slot_id' => $slot->id, 'starts_at' => $startsAt],
+                ['class_group_id' => $slot->class_group_id, 'tutor_id' => $slot->tutor_id, 'ends_at' => $endsAt, 'status' => LessonStatus::Completed],
             );
 
-            $this->register($lesson, $group, full: true, tutorLateChance: $group->tutor_id === $this->reliablyLateTutorId() ? 65 : 8);
+            $this->register($lesson, $slot->classGroup, full: true, tutorLateChance: $slot->tutor_id === $this->reliablyLateTutorId() ? 65 : 8);
             $this->reports($lesson, $now);
         }
     }
@@ -276,22 +303,24 @@ class DemoDataSeeder extends Seeder
         // Times are relative to now so each lesson really is finished, running or still to come;
         // any that would fall outside today (late at night or early morning) are skipped.
         $plans = array_filter([
-            ['class' => $classes[0], 'start' => $local->subMinutes($classes[0]->duration_minutes + 90)->startOfMinute(), 'state' => 'finished'],
-            ['class' => $classes[4], 'start' => $local->subMinutes(20)->startOfMinute(), 'state' => 'in_progress'],
-            ['class' => $classes[1], 'start' => $local->addHours(2)->startOfHour(), 'state' => 'upcoming'],
-            ['class' => $classes[5], 'start' => $local->addHours(3)->startOfHour(), 'state' => 'cancelled'],
+            ['slot' => $classes[0]->slots->first(), 'start' => $local->subMinutes($classes[0]->slots->first()->duration_minutes + 90)->startOfMinute(), 'state' => 'finished'],
+            ['slot' => $classes[4]->slots->first(), 'start' => $local->subMinutes(20)->startOfMinute(), 'state' => 'in_progress'],
+            ['slot' => $classes[1]->slots->first(), 'start' => $local->addHours(2)->startOfHour(), 'state' => 'upcoming'],
+            ['slot' => $classes[5]->slots->first(), 'start' => $local->addHours(3)->startOfHour(), 'state' => 'cancelled'],
         ], fn (array $plan): bool => $plan['start']->greaterThanOrEqualTo($todayStart) && $plan['start']->lessThanOrEqualTo($todayEnd));
 
         foreach ($plans as $plan) {
-            /** @var ClassGroup $group */
-            $group = $plan['class'];
+            /** @var ClassSlot $slot */
+            $slot = $plan['slot'];
+            $group = $slot->classGroup;
             $startsAt = $plan['start']->utc();
 
             $lesson = Lesson::firstOrCreate(
-                ['class_group_id' => $group->id, 'starts_at' => $startsAt],
+                ['class_slot_id' => $slot->id, 'starts_at' => $startsAt],
                 [
-                    'tutor_id' => $group->tutor_id,
-                    'ends_at' => $startsAt->addMinutes($group->duration_minutes),
+                    'class_group_id' => $group->id,
+                    'tutor_id' => $slot->tutor_id,
+                    'ends_at' => $startsAt->addMinutes($slot->duration_minutes),
                     'status' => match ($plan['state']) {
                         'finished' => LessonStatus::Completed,
                         'in_progress' => LessonStatus::InProgress,

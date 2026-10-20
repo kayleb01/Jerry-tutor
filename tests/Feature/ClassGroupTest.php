@@ -7,25 +7,27 @@ use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 
-it('belongs to a tutor and describes its schedule', function () {
+it('has a timetable of slots, each with its own subject and tutor', function () {
     $tutor = User::factory()->tutor()->create();
-    $group = ClassGroup::factory()->for($tutor, 'tutor')->create([
-        'weekday' => Weekday::Saturday,
-        'start_time' => '10:00',
-        'duration_minutes' => 90,
-    ]);
+    $group = ClassGroup::factory()->withSlot($tutor, ['weekday' => Weekday::Saturday, 'start_time' => '10:00', 'duration_minutes' => 90])->create();
+    $slot = $group->slots()->sole();
 
-    expect($group->tutor->is($tutor))->toBeTrue()
-        ->and($group->hasSchedule())->toBeTrue()
-        ->and($group->scheduleLabel())->toBe('Saturdays at 10:00 · 90 min')
-        ->and($tutor->classGroupsTaught()->first()->is($group))->toBeTrue();
+    expect($slot->tutor->is($tutor))->toBeTrue()
+        ->and($slot->subject->name)->toBe('Maths')
+        ->and($slot->hasSchedule())->toBeTrue()
+        ->and($slot->timeLabel())->toBe('Sat 10:00–11:30')
+        ->and($tutor->classSlotsTaught()->sole()->is($slot))->toBeTrue();
 });
 
-it('has no schedule label without a weekday and time', function () {
-    $group = ClassGroup::factory()->create(['weekday' => null, 'start_time' => null]);
+it('counts a class as taught by a tutor while they teach one of its slots', function () {
+    $tutor = User::factory()->tutor()->create();
+    $taught = ClassGroup::factory()->withSlot($tutor)->create();
+    $removed = ClassGroup::factory()->withSlot($tutor)->create();
+    $removed->slots()->sole()->delete();
+    ClassGroup::factory()->withSlot()->create();
 
-    expect($group->hasSchedule())->toBeFalse()
-        ->and($group->scheduleLabel())->toBe('No regular schedule');
+    expect(ClassGroup::query()->taughtBy($tutor)->pluck('id')->all())->toBe([$taught->id])
+        ->and($removed->slots()->count())->toBe(0);
 });
 
 it('enrols, withdraws and re-enrols a student, keeping one row', function () {
@@ -62,4 +64,10 @@ it('allows only one lesson per class at a given start time', function () {
     $lesson = Lesson::factory()->create();
 
     Lesson::factory()->for($lesson->classGroup)->create(['starts_at' => $lesson->starts_at]);
+})->throws(UniqueConstraintViolationException::class);
+
+it('allows only one lesson per slot at a given start time', function () {
+    $lesson = Lesson::factory()->create();
+
+    Lesson::factory()->create(['class_slot_id' => $lesson->class_slot_id, 'starts_at' => $lesson->starts_at]);
 })->throws(UniqueConstraintViolationException::class);

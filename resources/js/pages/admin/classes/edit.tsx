@@ -24,7 +24,7 @@ import type { Option } from '@/types';
 export type EditableClassGroup = ClassGroupDefaults & {
     id: number;
     name: string;
-    schedule: string;
+    slots: string[];
 };
 
 type Student = {
@@ -47,8 +47,6 @@ type EditClassProps = {
     lessons: ClassLesson[];
     students: Student[];
     candidates: Option[];
-    tutors: Option[];
-    weekdays: Option[];
     yearGroups: Option[];
 };
 
@@ -57,8 +55,6 @@ export default function EditClass({
     lessons,
     students,
     candidates,
-    tutors,
-    weekdays,
     yearGroups,
 }: EditClassProps) {
     return (
@@ -68,8 +64,9 @@ export default function EditClass({
                     <CardHeader>
                         <CardTitle>Details</CardTitle>
                         <CardDescription>
-                            {classGroup.schedule}. Changing the day, time,
-                            length or tutor updates upcoming lessons.
+                            {classGroup.slots.length === 0
+                                ? 'No timetable yet.'
+                                : classGroup.slots.join(' / ')}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -81,8 +78,6 @@ export default function EditClass({
                                 <>
                                     <ClassGroupFields
                                         errors={errors}
-                                        tutors={tutors}
-                                        weekdays={weekdays}
                                         yearGroups={yearGroups}
                                         defaults={classGroup}
                                     />

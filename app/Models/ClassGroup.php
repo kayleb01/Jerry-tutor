@@ -3,35 +3,30 @@
 namespace App\Models;
 
 use App\Enums\Role;
-use App\Enums\Weekday;
 use App\Enums\YearGroup;
 use Database\Factories\ClassGroupFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
 
 /**
- * A recurring class, e.g. "Year 5 Maths – Saturday". Each dated occurrence is a Lesson.
+ * A group of students, e.g. "Year 5". Its weekly timetable is a set of ClassSlots, each with
+ * its own subject and tutor; each dated occurrence of a slot is a Lesson.
  *
  * @property int $id
  * @property string $name
- * @property int|null $tutor_id
  * @property YearGroup|null $year_group
- * @property string|null $location
- * @property Weekday|null $weekday
- * @property string|null $start_time
- * @property int $duration_minutes
  * @property bool $is_active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'tutor_id', 'year_group', 'location', 'weekday', 'start_time', 'duration_minutes', 'is_active'])]
+#[Fillable(['name', 'year_group', 'is_active'])]
 class ClassGroup extends Model
 {
     /** @use HasFactory<ClassGroupFactory> */
@@ -46,29 +41,29 @@ class ClassGroup extends Model
     {
         return [
             'year_group' => YearGroup::class,
-            'weekday' => Weekday::class,
-            'duration_minutes' => 'integer',
             'is_active' => 'boolean',
         ];
     }
 
     /**
-     * Read as "HH:MM"; stored as "HH:MM:00" so dirty checks match what MySQL and SQLite return.
+     * The class's timetable; removed slots are excluded.
+     *
+     * @return HasMany<ClassSlot, $this>
      */
-    protected function startTime(): Attribute
+    public function slots(): HasMany
     {
-        return Attribute::make(
-            get: fn (?string $value): ?string => $value === null ? null : substr($value, 0, 5),
-            set: fn (?string $value): ?string => $value === null ? null : substr($value, 0, 5).':00',
-        );
+        return $this->hasMany(ClassSlot::class);
     }
 
     /**
-     * @return BelongsTo<User, $this>
+     * Classes where the tutor teaches at least one (non-removed) slot.
+     *
+     * @param  Builder<ClassGroup>  $query
      */
-    public function tutor(): BelongsTo
+    #[Scope]
+    protected function taughtBy(Builder $query, User $tutor): void
     {
-        return $this->belongsTo(User::class, 'tutor_id');
+        $query->whereHas('slots', fn (Builder $slots) => $slots->where('tutor_id', $tutor->id));
     }
 
     /**
@@ -127,19 +122,5 @@ class ClassGroup extends Model
     public function withdraw(User $student): void
     {
         $this->students()->updateExistingPivot($student->id, ['left_at' => now()->toDateString()]);
-    }
-
-    public function hasSchedule(): bool
-    {
-        return $this->weekday !== null && $this->start_time !== null;
-    }
-
-    public function scheduleLabel(): string
-    {
-        if (! $this->hasSchedule()) {
-            return 'No regular schedule';
-        }
-
-        return "{$this->weekday->plural()} at {$this->start_time} · {$this->duration_minutes} min";
     }
 }

@@ -10,7 +10,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 beforeEach(function () {
     config(['academy.timezone' => 'Africa/Lagos', 'academy.lateness_grace_minutes' => 0]);
     $this->tutor = User::factory()->tutor()->create();
-    $this->group = ClassGroup::factory()->for($this->tutor, 'tutor')->create(['name' => 'Year 5 Maths', 'location' => 'Room 2']);
+    $this->group = ClassGroup::factory()->withSlot($this->tutor, ['location' => 'Room 2'])->create(['name' => 'Year 5 Maths']);
     $this->group->enrol(User::factory()->student()->create());
 
     $this->lessonAt = fn (string $startsAt, array $attributes = []): Lesson => Lesson::factory()->for($this->group)->create([

@@ -6,6 +6,7 @@ use App\Enums\AttendanceStatus;
 use App\Enums\AttendeeRole;
 use App\Enums\QuizAttemptStatus;
 use App\Enums\YearGroup;
+use App\Models\ClassGroup;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -42,7 +43,7 @@ class StudentsToWatch
             ->with('studentProfile')
             ->whereIn('id', DB::table('class_group_student')
                 ->join('class_groups', 'class_groups.id', '=', 'class_group_student.class_group_id')
-                ->where('class_groups.tutor_id', $tutor->id)
+                ->whereIn('class_groups.id', ClassGroup::query()->taughtBy($tutor)->select('id'))
                 ->where('class_groups.is_active', true)
                 ->whereNull('class_group_student.left_at')
                 ->select('class_group_student.student_id'))

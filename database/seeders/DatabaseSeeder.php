@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\Weekday;
 use App\Enums\YearGroup;
 use App\Models\ClassGroup;
+use App\Models\Subject;
 use App\Models\User;
 use App\Services\LessonScheduler;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -41,16 +42,19 @@ class DatabaseSeeder extends Seeder
 
         $class = ClassGroup::create([
             'name' => 'Year 5 Maths – Saturday',
-            'tutor_id' => $tutor->id,
             'year_group' => YearGroup::Year5,
+            'is_active' => true,
+        ]);
+        $slot = $class->slots()->create([
+            'subject_id' => Subject::firstOrCreate(['name' => 'Maths'])->id,
+            'tutor_id' => $tutor->id,
             'location' => 'Room 1',
             'weekday' => Weekday::Saturday,
             'start_time' => '10:00',
             'duration_minutes' => 60,
-            'is_active' => true,
         ]);
         $class->enrol($ava);
-        app(LessonScheduler::class)->generateFor($class);
+        app(LessonScheduler::class)->generateFor($slot);
 
         $this->call([DemoDataSeeder::class, DemoQuestionSeeder::class, DemoSubscriptionSeeder::class]);
     }

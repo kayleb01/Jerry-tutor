@@ -15,7 +15,7 @@ beforeEach(function () {
     // Wednesday 15 October 2025, 12:00 in Lagos.
     $this->travelTo(CarbonImmutable::parse('2025-10-15 11:00:00', 'UTC'));
     $this->ava = User::factory()->student(YearGroup::Year5)->create();
-    $this->group = ClassGroup::factory()->create(['name' => 'Year 5 Maths', 'location' => 'Room 1']);
+    $this->group = ClassGroup::factory()->withSlot(null, ['location' => 'Room 1'])->create(['name' => 'Year 5 Maths']);
     $this->group->enrol($this->ava);
     $this->lessonAt = fn (string $utcStart, int $minutes = 60, ?ClassGroup $group = null) => Lesson::factory()->for($group ?? $this->group)->create([
         'starts_at' => CarbonImmutable::parse($utcStart, 'UTC'),

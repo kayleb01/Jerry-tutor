@@ -12,7 +12,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-10-14 12:00:00', 'UTC'));
     $this->tutor = User::factory()->tutor()->create();
     $this->admin = User::factory()->admin()->create(['name' => 'Mrs J. Great']);
-    $group = ClassGroup::factory()->for($this->tutor, 'tutor')->create(['name' => 'Year 4 Number']);
+    $group = ClassGroup::factory()->withSlot($this->tutor)->create(['name' => 'Year 4 Number']);
     $startsAt = CarbonImmutable::parse('2026-10-13 13:00:00', 'UTC');
     $this->lesson = Lesson::factory()->for($group)->create(['starts_at' => $startsAt, 'ends_at' => $startsAt->addHour()]);
 });

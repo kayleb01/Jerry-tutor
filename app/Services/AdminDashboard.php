@@ -7,6 +7,7 @@ use App\Enums\AttendeeRole;
 use App\Enums\Role;
 use App\Models\AttendanceRecord;
 use App\Models\ClassGroup;
+use App\Models\ClassSlot;
 use App\Models\LatenessReport;
 use App\Models\Lesson;
 use App\Models\LessonReport;
@@ -203,7 +204,7 @@ class AdminDashboard
 
         $classes = ClassGroup::query()
             ->when($filters->classId, fn (Builder $query, int $class) => $query->whereKey($class))
-            ->when($filters->tutorId, fn (Builder $query, int $tutor) => $query->where('tutor_id', $tutor));
+            ->when($filters->tutorId, fn (Builder $query, int $tutor) => $query->whereHas('slots', fn (Builder $slots) => $slots->where('tutor_id', $tutor)));
 
         return [
             'activeStudents' => User::query()
@@ -212,7 +213,11 @@ class AdminDashboard
                     ->whereIn('class_groups.id', (clone $classes)->select('id'))
                     ->whereNull('class_group_student.left_at'))
                 ->count(),
-            'activeTutors' => User::query()->where('role', Role::Tutor)->whereIn('id', (clone $classes)->select('tutor_id'))->count(),
+            'activeTutors' => User::query()
+                ->where('role', Role::Tutor)
+                ->whereIn('id', ClassSlot::query()->whereIn('class_group_id', (clone $classes)->select('id'))->select('tutor_id'))
+                ->when($filters->tutorId, fn (Builder $query, int $tutor) => $query->whereKey($tutor))
+                ->count(),
         ];
     }
 

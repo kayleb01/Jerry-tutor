@@ -14,7 +14,7 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-10-14 12:00:00', 'UTC'));
     $this->admin = User::factory()->admin()->create(['name' => 'Academy Admin']);
     $this->tutor = User::factory()->tutor()->create(['name' => 'Tunde Bakare']);
-    $this->group = ClassGroup::factory()->for($this->tutor, 'tutor')->create(['name' => 'Year 5 Maths']);
+    $this->group = ClassGroup::factory()->withSlot($this->tutor)->create(['name' => 'Year 5 Maths']);
     $this->lessonWithReport = function (string $start): Lesson {
         $startsAt = CarbonImmutable::parse($start, 'UTC');
         $lesson = Lesson::factory()->for($this->group)->create(['starts_at' => $startsAt, 'ends_at' => $startsAt->addHour()]);

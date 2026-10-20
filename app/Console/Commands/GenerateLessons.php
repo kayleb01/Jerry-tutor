@@ -8,7 +8,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('lessons:generate {--days= : How many days ahead to generate}')]
-#[Description("Create upcoming lessons from each class's weekly schedule")]
+#[Description("Create upcoming lessons from each class slot's weekly time")]
 class GenerateLessons extends Command
 {
     /**

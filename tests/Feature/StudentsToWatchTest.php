@@ -16,7 +16,7 @@ use Carbon\CarbonImmutable;
 beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-10-16 12:00:00', 'UTC'));
     $this->tutor = User::factory()->tutor()->create();
-    $this->group = ClassGroup::factory()->create(['tutor_id' => $this->tutor->id]);
+    $this->group = ClassGroup::factory()->withSlot($this->tutor)->create();
 });
 
 function watchedStudent(ClassGroup $group, string $name, YearGroup $year = YearGroup::Year5): User
@@ -41,7 +41,7 @@ function markStudent(ClassGroup $group, User $student, AttendanceStatus $status,
         'attendee_role' => AttendeeRole::Student,
         'status' => $status,
         'notes' => $note,
-        'recorded_by_id' => $byPerson ? $group->tutor_id : null,
+        'recorded_by_id' => $byPerson ? $lesson->tutor_id : null,
     ]);
 }
 
@@ -154,7 +154,7 @@ it('lists at most five, attendance concerns first, and only the tutor\'s own stu
     $otherGroup = ClassGroup::factory()->create();
     $outsider = watchedStudent($otherGroup, 'Outsider');
     markStudent($otherGroup, $outsider, AttendanceStatus::Absent, '3');
-    $inactive = ClassGroup::factory()->create(['tutor_id' => $this->tutor->id, 'is_active' => false]);
+    $inactive = ClassGroup::factory()->withSlot($this->tutor)->create(['is_active' => false]);
     $dormant = watchedStudent($inactive, 'Dormant');
     takeQuizzes($dormant, $geometry, 3, 10);
 

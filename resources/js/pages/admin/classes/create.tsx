@@ -7,16 +7,10 @@ import { store } from '@/routes/admin/classes';
 import type { Option } from '@/types';
 
 type CreateClassProps = {
-    tutors: Option[];
-    weekdays: Option[];
     yearGroups: Option[];
 };
 
-export default function CreateClass({
-    tutors,
-    weekdays,
-    yearGroups,
-}: CreateClassProps) {
+export default function CreateClass({ yearGroups }: CreateClassProps) {
     return (
         <AppLayout title="Add class">
             <Card className="max-w-2xl">
@@ -26,8 +20,6 @@ export default function CreateClass({
                             <>
                                 <ClassGroupFields
                                     errors={errors}
-                                    tutors={tutors}
-                                    weekdays={weekdays}
                                     yearGroups={yearGroups}
                                 />
                                 <Button

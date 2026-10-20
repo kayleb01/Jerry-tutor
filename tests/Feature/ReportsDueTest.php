@@ -12,8 +12,8 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     config(['academy.timezone' => 'Africa/Lagos']);
-    $this->group = ClassGroup::factory()->create(['name' => 'Year 5 Maths']);
-    $this->tutor = $this->group->tutor;
+    $this->group = ClassGroup::factory()->withSlot()->create(['name' => 'Year 5 Maths']);
+    $this->tutor = $this->group->slots()->first()->tutor;
     // Monday 13 Oct 2025, 17:00–18:00 Lagos.
     $this->lesson = Lesson::factory()->for($this->group)->create([
         'tutor_id' => $this->tutor->id,

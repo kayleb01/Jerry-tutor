@@ -13,15 +13,14 @@ beforeEach(function () {
     config(['academy.timezone' => 'Africa/Lagos', 'academy.lateness_grace_minutes' => 0]);
     $this->travelTo(CarbonImmutable::parse('2025-10-31 12:00:00', 'UTC'));
     $this->admin = User::factory()->admin()->create(['name' => 'Admin']);
-    $this->group = ClassGroup::factory()->create(['name' => 'Year 5 Maths']);
-    $this->tutor = $this->group->tutor;
+    $this->group = ClassGroup::factory()->withSlot()->create(['name' => 'Year 5 Maths']);
+    $this->tutor = $this->group->slots()->first()->tutor;
     $this->tutor->update(['name' => 'Tunde Tutor']);
     $this->ava = User::factory()->student()->create(['name' => 'Ava']);
     $this->group->enrol($this->ava);
     $this->lateOn = function (string $date, User $who, int $minutes = 7, ?ClassGroup $group = null) {
         $group ??= $this->group;
         $lesson = Lesson::factory()->for($group)->create([
-            'tutor_id' => $group->tutor_id,
             'starts_at' => CarbonImmutable::parse("{$date} 09:00:00", 'UTC'),
             'ends_at' => CarbonImmutable::parse("{$date} 10:00:00", 'UTC'),
         ]);

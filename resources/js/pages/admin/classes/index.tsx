@@ -7,8 +7,7 @@ import { create, edit } from '@/routes/admin/classes';
 type Row = {
     id: number;
     name: string;
-    tutor: string | null;
-    schedule: string;
+    slots: string[];
     students: number;
     nextLesson: string | null;
     isActive: boolean;
@@ -40,13 +39,7 @@ export default function ClassesIndex({ classes }: { classes: Row[] }) {
                                     scope="col"
                                     className="px-4 py-3 font-semibold"
                                 >
-                                    Tutor
-                                </th>
-                                <th
-                                    scope="col"
-                                    className="px-4 py-3 font-semibold"
-                                >
-                                    Schedule
+                                    Timetable
                                 </th>
                                 <th
                                     scope="col"
@@ -72,7 +65,7 @@ export default function ClassesIndex({ classes }: { classes: Row[] }) {
                             {classes.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={5}
                                         className="px-4 py-6 text-center text-muted-foreground sm:py-8"
                                     >
                                         No classes yet. Add your first class to
@@ -96,15 +89,16 @@ export default function ClassesIndex({ classes }: { classes: Row[] }) {
                                             </Badge>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3">
-                                        {row.tutor ?? (
-                                            <span className="text-muted-foreground">
-                                                No tutor
-                                            </span>
-                                        )}
-                                    </td>
                                     <td className="px-4 py-3 text-muted-foreground">
-                                        {row.schedule}
+                                        {row.slots.length === 0 ? (
+                                            'No timetable yet'
+                                        ) : (
+                                            <ul>
+                                                {row.slots.map((slot) => (
+                                                    <li key={slot}>{slot}</li>
+                                                ))}
+                                            </ul>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3 tabular-nums">
                                         {row.students}

@@ -72,7 +72,7 @@ it('withdraws unread notices when the lateness is corrected away', function () {
     $group = ClassGroup::factory()->create();
     $group->enrol($this->tolu);
     $startsAt = CarbonImmutable::parse('2026-10-13 13:00:00', 'UTC');
-    $lesson = Lesson::factory()->for($group)->create(['tutor_id' => $group->tutor_id, 'starts_at' => $startsAt, 'ends_at' => $startsAt->addHour()]);
+    $lesson = Lesson::factory()->for($group)->create(['starts_at' => $startsAt, 'ends_at' => $startsAt->addHour()]);
     $record = app(RecordAttendance::class);
     $report = $record->handle($lesson, $this->tolu, AttendanceStatus::Present, null, $startsAt->addMinutes(12))->latenessReport;
     GuardianNotice::factory()->create(['student_id' => $this->tolu->id, 'lateness_report_id' => $report->id]);

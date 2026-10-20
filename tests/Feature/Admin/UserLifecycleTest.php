@@ -2,6 +2,8 @@
 
 use App\Enums\Weekday;
 use App\Models\ClassGroup;
+use App\Models\ClassSlot;
+use App\Models\Subject;
 use App\Models\User;
 use App\Services\LessonScheduler;
 use Carbon\CarbonImmutable;
@@ -75,13 +77,17 @@ it('keeps lifecycle actions admin-only', function (string $method, string $route
     'password' => ['put', 'admin.users.password.update'],
 ]);
 
-it('takes a deactivated tutor off their classes and clears their upcoming lessons', function () {
+it('clears a deactivated tutor from their slots', function () {
     $this->travelTo(CarbonImmutable::parse('2025-10-01 11:00:00', 'UTC'));
-    $group = ClassGroup::factory()->create(['weekday' => Weekday::Saturday]);
-    app(LessonScheduler::class)->generateFor($group);
+    $group = ClassGroup::factory()->create();
+    $maths = ClassSlot::factory()->for($group)->create(['weekday' => Weekday::Saturday, 'start_time' => '09:00']);
+    $science = ClassSlot::factory()->for($group)->create(['subject_id' => Subject::factory(), 'weekday' => Weekday::Saturday, 'start_time' => '12:00']);
+    app(LessonScheduler::class)->generate();
 
-    $this->actingAs($this->admin)->delete(route('admin.users.destroy', $group->tutor));
+    $this->actingAs($this->admin)->delete(route('admin.users.destroy', $maths->tutor));
 
-    expect($group->fresh()->tutor_id)->toBeNull()
-        ->and($group->lessons()->count())->toBe(0);
+    expect($maths->fresh()->tutor_id)->toBeNull()
+        ->and($maths->lessons()->count())->toBe(0)
+        ->and($science->fresh()->tutor_id)->not->toBeNull()
+        ->and($science->lessons()->count())->toBe(4);
 });

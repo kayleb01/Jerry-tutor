@@ -57,7 +57,7 @@ class RegisterController extends Controller
         $user = $request->user();
         $canEdit = $user->can('takeRegister', $lesson);
 
-        $lesson->load(['classGroup', 'tutor', 'attendanceRecords']);
+        $lesson->load(['classGroup', 'slot', 'tutor', 'attendanceRecords']);
         $records = $lesson->attendanceRecords->keyBy('user_id');
 
         $studentIds = $lesson->classGroup->activeStudents()->pluck('users.id')
@@ -81,7 +81,7 @@ class RegisterController extends Controller
                 'date' => $lesson->localStart()->format('l j F'),
                 'dateLong' => $lesson->localStart()->format('l j F'),
                 'time' => $lesson->localStart()->format('H:i').'–'.$lesson->localEnd()->format('H:i'),
-                'location' => $lesson->classGroup->location,
+                'location' => $lesson->slot->location,
                 'status' => $lesson->status->value,
             ],
             'tutor' => $this->row($lesson->tutor, $records->get($lesson->tutor_id)),

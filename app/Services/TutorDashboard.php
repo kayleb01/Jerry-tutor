@@ -89,6 +89,7 @@ class TutorDashboard
             ->where('status', '!=', LessonStatus::Cancelled)
             ->with([
                 'classGroup' => fn (BelongsTo $query) => $query->withCount('activeStudents'),
+                'slot',
                 'attendanceRecords' => fn (HasMany $query) => $query->where('user_id', $tutor->id)->where('attendee_role', AttendeeRole::Tutor),
             ])
             ->orderBy('starts_at');
@@ -111,7 +112,7 @@ class TutorDashboard
             'id' => $lesson->id,
             'className' => $lesson->classGroup->name,
             'time' => $this->timeRange($lesson),
-            'location' => $lesson->classGroup->location,
+            'location' => $lesson->slot->location,
             'students' => $lesson->classGroup->active_students_count,
             'startsAt' => $lesson->starts_at->toIso8601String(),
             'dateLabel' => $lesson->starts_at->setTimezone(config('academy.timezone'))->format('l j M'),

@@ -168,11 +168,13 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * @return HasMany<ClassGroup, $this>
+     * The timetable slots this tutor teaches; removed slots are excluded.
+     *
+     * @return HasMany<ClassSlot, $this>
      */
-    public function classGroupsTaught(): HasMany
+    public function classSlotsTaught(): HasMany
     {
-        return $this->hasMany(ClassGroup::class, 'tutor_id');
+        return $this->hasMany(ClassSlot::class, 'tutor_id');
     }
 
     /**

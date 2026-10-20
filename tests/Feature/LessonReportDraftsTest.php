@@ -14,8 +14,8 @@ use Inertia\Testing\AssertableInertia as Assert;
 beforeEach(function () {
     config(['academy.timezone' => 'Africa/Lagos']);
     $this->travelTo(CarbonImmutable::parse('2025-10-15 11:00:00', 'UTC'));
-    $this->group = ClassGroup::factory()->create();
-    $this->tutor = $this->group->tutor;
+    $this->group = ClassGroup::factory()->withSlot()->create();
+    $this->tutor = $this->group->slots()->first()->tutor;
     $this->lesson = Lesson::factory()->for($this->group)->create([
         'tutor_id' => $this->tutor->id,
         'starts_at' => CarbonImmutable::parse('2025-10-15 08:00:00', 'UTC'),

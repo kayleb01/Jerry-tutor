@@ -45,7 +45,7 @@ it('summarises today for students and tutors alike', function () {
     $tutor = User::factory()->tutor()->create(['name' => 'Kofi Mensah']);
     $ava = User::factory()->student(YearGroup::Year5)->create();
     $ben = User::factory()->student(YearGroup::Year8)->create();
-    $group = ClassGroup::factory()->for($tutor, 'tutor')->create(['name' => 'Year 5 Maths']);
+    $group = ClassGroup::factory()->withSlot($tutor)->create(['name' => 'Year 5 Maths']);
     $group->enrol($ava);
     $group->enrol($ben);
 

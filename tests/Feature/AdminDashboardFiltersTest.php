@@ -18,8 +18,8 @@ beforeEach(function () {
 
     $this->tutorA = User::factory()->tutor()->create(['name' => 'Ada Tutor']);
     $this->tutorB = User::factory()->tutor()->create(['name' => 'Bayo Tutor']);
-    $this->groupA = ClassGroup::factory()->for($this->tutorA, 'tutor')->create(['name' => 'Year 5 Maths']);
-    $this->groupB = ClassGroup::factory()->for($this->tutorB, 'tutor')->create(['name' => 'Year 8 Maths']);
+    $this->groupA = ClassGroup::factory()->withSlot($this->tutorA)->create(['name' => 'Year 5 Maths']);
+    $this->groupB = ClassGroup::factory()->withSlot($this->tutorB)->create(['name' => 'Year 8 Maths']);
     $this->ava = User::factory()->student()->create(['name' => 'Ava']);
     $this->ben = User::factory()->student()->create(['name' => 'Ben']);
     $this->groupA->enrol($this->ava);
@@ -28,7 +28,7 @@ beforeEach(function () {
     // Records a lesson on a given date (09:00 Lagos) with a student status; $late = minutes late.
     $this->lesson = function (ClassGroup $group, string $date, User $student, AttendanceStatus $status, int $late = 0): Lesson {
         $start = CarbonImmutable::parse("{$date} 08:00:00", 'UTC');
-        $lesson = Lesson::factory()->for($group)->create(['tutor_id' => $group->tutor_id, 'starts_at' => $start, 'ends_at' => $start->addHour()]);
+        $lesson = Lesson::factory()->for($group)->create(['starts_at' => $start, 'ends_at' => $start->addHour()]);
         app(RecordAttendance::class)->handle($lesson, $student, $status, null, $status === AttendanceStatus::Present ? $start->addMinutes($late) : null);
 
         return $lesson;

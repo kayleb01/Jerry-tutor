@@ -17,6 +17,14 @@ enum Weekday: int
         return $this->name;
     }
 
+    /**
+     * e.g. "Mon".
+     */
+    public function shortLabel(): string
+    {
+        return substr($this->name, 0, 3);
+    }
+
     public function plural(): string
     {
         return $this->name.'s';

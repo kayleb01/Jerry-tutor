@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Enums\Weekday;
 use App\Models\ClassGroup;
+use App\Models\ClassSlot;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -20,14 +20,25 @@ class ClassGroupFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => 'Year '.fake()->numberBetween(3, 9).' Maths – '.fake()->dayOfWeek(),
-            'tutor_id' => User::factory()->tutor(),
+            'name' => 'Year '.fake()->numberBetween(3, 9).' – '.fake()->word(),
             'year_group' => null,
-            'location' => fake()->randomElement(['Room 1', 'Room 2', 'Online']),
-            'weekday' => fake()->randomElement(Weekday::cases()),
-            'start_time' => '10:00',
-            'duration_minutes' => 60,
             'is_active' => true,
         ];
+    }
+
+    /**
+     * Give the class a weekly Maths slot (random day, 10:00, 60 minutes), taught by $tutor or a new tutor.
+     *
+     * @param  array<string, mixed>  $slot  attributes overriding the slot's defaults
+     */
+    public function withSlot(?User $tutor = null, array $slot = []): static
+    {
+        return $this->has(
+            ClassSlot::factory()->state([
+                'tutor_id' => $tutor ?? User::factory()->tutor(),
+                ...$slot,
+            ]),
+            'slots',
+        );
     }
 }

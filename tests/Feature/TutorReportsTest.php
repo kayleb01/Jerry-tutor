@@ -14,7 +14,7 @@ use Carbon\CarbonImmutable;
 beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2025-10-20 12:00:00', 'UTC'));
     $this->tutor = User::factory()->tutor()->create();
-    $this->group = ClassGroup::factory()->create(['tutor_id' => $this->tutor->id]);
+    $this->group = ClassGroup::factory()->withSlot($this->tutor)->create();
     $this->reports = app(TutorReports::class);
 
     $this->lessonAt = function (string $startsAt, ?User $tutor = null, array $overrides = []): Lesson {

@@ -129,8 +129,8 @@ it('puts a lesson back in review when a report arrives after the review', functi
 it('filters by class, tutor, dates and search, and counts every queue', function () {
     $tunde = User::factory()->tutor()->create(['name' => 'Tunde Bakare']);
     $ada = User::factory()->tutor()->create(['name' => 'Ada Obi']);
-    $year5 = ClassGroup::factory()->for($tunde, 'tutor')->create(['name' => 'Year 5 Maths']);
-    $gcse = ClassGroup::factory()->for($ada, 'tutor')->create(['name' => 'GCSE 100% Club']);
+    $year5 = ClassGroup::factory()->withSlot($tunde)->create(['name' => 'Year 5 Maths']);
+    $gcse = ClassGroup::factory()->withSlot($ada)->create(['name' => 'GCSE 100% Club']);
     $recent = inboxLesson('2026-10-13 09:00:00', group: $year5);
     inboxReport($recent, AttendeeRole::Student);
     $older = inboxLesson('2026-10-06 09:00:00', group: $gcse);

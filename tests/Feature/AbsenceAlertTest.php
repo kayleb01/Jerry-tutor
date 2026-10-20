@@ -15,7 +15,7 @@ beforeEach(function () {
     config(['academy.timezone' => 'Africa/Lagos', 'academy.lateness_grace_minutes' => 0]);
     $this->travelTo(CarbonImmutable::parse('2025-10-04 09:30:00', 'UTC'));
     $this->tutor = User::factory()->tutor()->create(['name' => 'Tunde Tutor']);
-    $this->group = ClassGroup::factory()->for($this->tutor, 'tutor')->create(['name' => 'Year 5 Maths']);
+    $this->group = ClassGroup::factory()->withSlot($this->tutor)->create(['name' => 'Year 5 Maths']);
     $this->ava = User::factory()->student(YearGroup::Year5)->create(['name' => 'Ava Obi']);
     $this->bola = User::factory()->student(YearGroup::Year5)->create(['name' => 'Bola Ade']);
     $this->group->enrol($this->ava);
