@@ -18,6 +18,7 @@ type Row = {
     role: string;
     yearGroup: string | null;
     deactivated: boolean;
+    trialEndsLabel: string | null;
     applicationStatus: 'pending' | 'rejected' | null;
 };
 
@@ -156,6 +157,12 @@ export default function UsersIndex({ users, filters, roles }: UsersIndexProps) {
                                                 className="ml-2"
                                             >
                                                 Deactivated
+                                            </Badge>
+                                        )}
+                                        {user.trialEndsLabel && (
+                                            <Badge tone="gold" className="ml-2">
+                                                Trial · ends{' '}
+                                                {user.trialEndsLabel}
                                             </Badge>
                                         )}
                                         {user.applicationStatus && (

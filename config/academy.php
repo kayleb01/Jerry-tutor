@@ -36,4 +36,16 @@ return [
 
     'lesson_horizon_days' => 28,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Free Trial
+    |--------------------------------------------------------------------------
+    |
+    | Days of quiz access every newly created student gets from the moment
+    | their account is made.
+    |
+    */
+
+    'trial_days' => (int) env('ACADEMY_TRIAL_DAYS', 30),
+
 ];

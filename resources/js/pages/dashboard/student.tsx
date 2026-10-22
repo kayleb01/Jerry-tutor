@@ -1,12 +1,15 @@
+import { Link } from '@inertiajs/react';
 import Icon from '@/components/icon';
 import LessonActivityCard from '@/components/lesson-activity-card';
 import StatCard from '@/components/stat-card';
 import StrandCard from '@/components/strand-card';
+import { buttonClasses } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import WeeklyActivity from '@/components/weekly-activity';
 import ReportsDue from '@/components/reports-due';
 import type { ReportDue } from '@/components/reports-due';
 import AppLayout from '@/layouts/app-layout';
+import { index as billingIndex } from '@/routes/billing';
 import type {
     DashboardDay,
     DashboardLesson,
@@ -24,6 +27,10 @@ type StudentDashboardProps = {
     nextWeek: boolean;
     reportsDue: ReportDue[];
     quizAccess: boolean;
+    trial: {
+        message: string;
+        action: 'subscribe' | 'ask-parent' | null;
+    } | null;
 };
 
 const percent = (value: number | null) => (value === null ? '—' : `${value}%`);
@@ -38,6 +45,7 @@ export default function StudentDashboard({
     nextWeek,
     reportsDue,
     quizAccess,
+    trial,
 }: StudentDashboardProps) {
     return (
         <AppLayout
@@ -79,6 +87,25 @@ export default function StudentDashboard({
                     tone="gold"
                 />
             </section>
+
+            {trial && (
+                <Card className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm sm:px-5">
+                    <p className="font-medium">{trial.message}</p>
+                    {trial.action === 'subscribe' && (
+                        <Link
+                            href={billingIndex()}
+                            className={buttonClasses('accent', 'sm')}
+                        >
+                            Subscribe
+                        </Link>
+                    )}
+                    {trial.action === 'ask-parent' && (
+                        <span className="text-muted-foreground">
+                            Ask your parent to subscribe
+                        </span>
+                    )}
+                </Card>
+            )}
 
             <ReportsDue reports={reportsDue} />
 

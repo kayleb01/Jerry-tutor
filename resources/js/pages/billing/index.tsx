@@ -28,7 +28,7 @@ type Child = {
     id: number;
     name: string;
     yearGroup: string | null;
-    state: 'covered' | 'pending' | 'none';
+    state: 'covered' | 'pending' | 'trial' | 'none';
     note: string;
     /** Someone else (a parent, or the student themselves) is part-way through paying. */
     pendingOther: boolean;

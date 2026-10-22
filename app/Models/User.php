@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ApprovalStatus;
 use App\Enums\Role;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -26,6 +27,7 @@ use InvalidArgumentException;
  * @property int $id
  * @property string $name
  * @property string|null $username
+ * @property Carbon|null $trial_ends_at
  * @property string|null $email
  * @property string|null $phone
  * @property Role $role
@@ -56,6 +58,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'role' => Role::class,
             'approval_status' => ApprovalStatus::class,
+            'trial_ends_at' => 'datetime',
         ];
     }
 
@@ -194,7 +197,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Staff always have quiz access; a student needs a subscription that is paid up (or within grace).
+     * Staff always have quiz access; a student needs a free trial that hasn't ended or a subscription that is paid up (or within grace).
      */
     public function hasQuizAccess(): bool
     {
@@ -202,7 +205,25 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
-        return $this->hasRole(Role::Student) && $this->coveringSubscriptions()->grantingAccess()->exists();
+        return $this->hasRole(Role::Student) && ($this->isOnTrial() || $this->coveringSubscriptions()->grantingAccess()->exists());
+    }
+
+    /**
+     * Whether this student's free trial is still running.
+     */
+    public function isOnTrial(?CarbonImmutable $now = null): bool
+    {
+        return $this->hasRole(Role::Student)
+            && $this->trial_ends_at !== null
+            && $this->trial_ends_at->isAfter($now ?? CarbonImmutable::now());
+    }
+
+    /**
+     * The day the free trial ends in academy time, like "21 Nov"; null when there is no trial.
+     */
+    public function trialEndsLabel(): ?string
+    {
+        return $this->trial_ends_at?->setTimezone(config('academy.timezone'))->format('j M');
     }
 
     /**

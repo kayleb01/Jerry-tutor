@@ -18,6 +18,9 @@ class StudentDashboard
 {
     public function __construct(private AttendanceStats $attendanceStats) {}
 
+    /** From this many days before it ends, the trial notice counts down and asks for a subscription. */
+    private const TRIAL_WARNING_DAYS = 7;
+
     /**
      * Maths strands shown on the dashboard. Quiz progress for each arrives in Phase 5.
      */
@@ -71,6 +74,7 @@ class StudentDashboard
             ],
             'strands' => $this->strands($student),
             'quizAccess' => $student->hasQuizAccess(),
+            'trial' => $this->trialNotice($student, $now),
             'today' => $today->values()->all(),
             'todayMinutes' => $today->reject(fn (array $card): bool => $card['state'] === 'cancelled')->sum('minutes'),
             'week' => $weekLessons
@@ -90,6 +94,34 @@ class StudentDashboard
                 ->values()
                 ->all(),
             'nextWeek' => $nextWeek,
+        ];
+    }
+
+    /**
+     * The free-trial notice, or null when the student isn't on a trial or a subscription already covers them.
+     *
+     * @return array{message: string, action: 'subscribe'|'ask-parent'|null}|null
+     */
+    private function trialNotice(User $student, CarbonImmutable $now): ?array
+    {
+        if (! $student->isOnTrial($now) || $student->coveringSubscriptions()->grantingAccess($now)->exists()) {
+            return null;
+        }
+
+        $timezone = config('academy.timezone');
+        $daysLeft = (int) $now->setTimezone($timezone)->startOfDay()->diffInDays($student->trial_ends_at->setTimezone($timezone)->startOfDay());
+
+        if ($daysLeft > self::TRIAL_WARNING_DAYS) {
+            return ['message' => 'Free trial — ends '.$student->trialEndsLabel(), 'action' => null];
+        }
+
+        return [
+            'message' => match ($daysLeft) {
+                0 => 'Your free trial ends today',
+                1 => 'Your free trial ends in 1 day',
+                default => "Your free trial ends in {$daysLeft} days",
+            },
+            'action' => $student->guardians()->exists() ? 'ask-parent' : 'subscribe',
         ];
     }
 

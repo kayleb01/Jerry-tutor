@@ -9,12 +9,12 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
 /**
- * Whether a student has quiz access, as the person looking at it should read it: covered (perhaps with a failed renewal), waiting for a payment, or not covered.
+ * Whether a student has quiz access, as the person looking at it should read it: covered (perhaps with a failed renewal), on a free trial, waiting for a payment, or not covered.
  */
 class QuizAccessState
 {
     /**
-     * @return array{state: 'covered'|'pending'|'none', note: string, pendingOther: bool, paymentFailed: bool}
+     * @return array{state: 'covered'|'pending'|'trial'|'none', note: string, pendingOther: bool, paymentFailed: bool}
      */
     public function for(User $student, User $viewer, ?CarbonImmutable $now = null): array
     {
@@ -33,6 +33,7 @@ class QuizAccessState
             $covering !== null => ['covered', $covering->plan->name.' · '.$this->shortStatus($covering).$this->paidBy($covering, $viewer)],
             $pendingOther => ['pending', Str::before($pending->payer->name, ' ').' started paying'.($student->is($viewer) ? ' for you' : '')],
             $pending !== null => ['pending', 'Waiting for the payment to be confirmed'],
+            $student->isOnTrial($now) => ['trial', 'Free trial · ends '.$student->trialEndsLabel()],
             default => ['none', 'No quiz access yet'],
         };
 

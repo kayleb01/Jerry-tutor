@@ -49,6 +49,7 @@ class UserController extends Controller
                 'role' => $user->role->value,
                 'yearGroup' => $user->studentProfile?->year_group->label(),
                 'deactivated' => $user->trashed(),
+                'trialEndsLabel' => $user->isOnTrial() ? $user->trialEndsLabel() : null,
                 'applicationStatus' => $user->hasRole(Role::Tutor) && ! $user->isApprovedTutor()
                     ? ($user->approval_status ?? ApprovalStatus::Pending)->value
                     : null,

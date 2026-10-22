@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Enums\YearGroup;
 use App\Models\StudentProfile;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -82,5 +83,13 @@ class UserFactory extends Factory
             ->afterCreating(fn (User $user) => StudentProfile::factory()
                 ->for($user)
                 ->create(['year_group' => $yearGroup]));
+    }
+
+    /**
+     * A student whose free trial runs until the given time (default: a month from now).
+     */
+    public function onTrial(?CarbonImmutable $endsAt = null): static
+    {
+        return $this->state(fn (array $attributes) => ['trial_ends_at' => $endsAt ?? CarbonImmutable::now()->addDays(30)]);
     }
 }

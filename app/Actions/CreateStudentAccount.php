@@ -28,6 +28,7 @@ class CreateStudentAccount
                 'role' => Role::Student,
                 'username' => $data['username'],
                 'email_verified_at' => $email === null ? null : now(),
+                'trial_ends_at' => now()->addDays(config('academy.trial_days')),
             ])->save();
 
             $student->studentProfile()->create([

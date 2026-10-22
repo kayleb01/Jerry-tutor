@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import type { BadgeTone } from '@/components/ui/badge';
 
 export type QuizAccess = {
-    state: 'covered' | 'pending' | 'none';
+    state: 'covered' | 'pending' | 'trial' | 'none';
     /** Still covered during the grace period, but the last renewal failed. */
     paymentFailed: boolean;
 };
@@ -10,12 +10,14 @@ export type QuizAccess = {
 const tones: Record<QuizAccess['state'], BadgeTone> = {
     covered: 'present',
     pending: 'gold',
+    trial: 'brand',
     none: 'neutral',
 };
 
 const labels: Record<QuizAccess['state'], string> = {
     covered: 'Quiz access',
     pending: 'Waiting',
+    trial: 'Free trial',
     none: 'No access',
 };
 

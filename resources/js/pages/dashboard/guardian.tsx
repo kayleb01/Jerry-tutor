@@ -150,7 +150,8 @@ function ChildCard({
                         />
                         {(child.access.paymentFailed ||
                             (paymentsAvailable &&
-                                child.access.state === 'none')) && (
+                                (child.access.state === 'none' ||
+                                    child.access.state === 'trial'))) && (
                             <Link
                                 href={billingIndex()}
                                 className={buttonClasses('accent', 'sm')}
