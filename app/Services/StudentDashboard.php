@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
  */
 class StudentDashboard
 {
-    public function __construct(private AttendanceStats $attendanceStats) {}
+    public function __construct(private AttendanceStats $attendanceStats, private StudentCheckIn $checkIn) {}
 
     /** From this many days before it ends, the trial notice counts down and asks for a subscription. */
     private const TRIAL_WARNING_DAYS = 7;
@@ -75,6 +75,7 @@ class StudentDashboard
             'strands' => $this->strands($student),
             'quizAccess' => $student->hasQuizAccess(),
             'trial' => $this->trialNotice($student, $now),
+            'checkIn' => $this->checkIn->card($student),
             'today' => $today->values()->all(),
             'todayMinutes' => $today->reject(fn (array $card): bool => $card['state'] === 'cancelled')->sum('minutes'),
             'week' => $weekLessons
