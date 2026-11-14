@@ -122,6 +122,7 @@ class TutorDashboard
             'checkedInAt' => $own?->arrived_at?->setTimezone(config('academy.timezone'))->format('H:i'),
             'isLate' => $own?->status === AttendanceStatus::Late,
             'minutesLate' => $own?->status === AttendanceStatus::Late ? $own->minutes_late : null,
+            'checkInCode' => $isToday && $lesson->isOpenForStudentCheckIn($now) ? $lesson->checkInCode() : null,
         ];
     }
 

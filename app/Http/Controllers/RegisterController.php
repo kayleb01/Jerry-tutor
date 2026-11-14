@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\AlertGuardiansOfAbsence;
 use App\Actions\RecordAttendance;
 use App\Enums\AttendanceStatus;
+use App\Enums\AttendeeRole;
 use App\Enums\LessonStatus;
 use App\Http\Requests\UpdateRegisterRequest;
 use App\Models\AttendanceRecord;
@@ -91,6 +92,8 @@ class RegisterController extends Controller
             'checkIn' => $lesson->tutor_id === $user->id ? $this->checkIn($user, $lesson, $records->get($lesson->tutor_id)) : null,
             'canEditTutor' => $user->can('recordTutorAttendance', $lesson),
             'canReport' => $user->can('submitReport', $lesson),
+            // Only the lesson's tutor and admins reach this page (viewRegister), so they are the ones who see it.
+            'checkInCode' => $lesson->isOpenForStudentCheckIn() ? $lesson->checkInCode() : null,
             'statuses' => [
                 ['value' => 'present', 'label' => 'On time'],
                 ['value' => 'late', 'label' => 'Late'],
@@ -190,7 +193,7 @@ class RegisterController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string, yearGroup: string|null, status: string|null, arrivedAt: string|null, minutesLate: int|null, notes: string|null}
+     * @return array{id: int, name: string, yearGroup: string|null, status: string|null, arrivedAt: string|null, minutesLate: int|null, notes: string|null, selfCheckIn: bool, hasParent: bool}
      */
     private function row(User $person, ?AttendanceRecord $record): array
     {
@@ -202,6 +205,7 @@ class RegisterController extends Controller
             'arrivedAt' => $record?->arrived_at?->setTimezone(config('academy.timezone'))->format('H:i'),
             'minutesLate' => $record?->minutes_late,
             'notes' => $record?->notes,
+            'selfCheckIn' => $record?->attendee_role === AttendeeRole::Student && $record->recorded_by_id === $person->id,
             // Whether marking them absent would alert a parent.
             'hasParent' => (bool) ($person->guardians_exists ?? false),
         ];

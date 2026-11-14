@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\RecordAttendance;
 use App\Enums\AttendanceStatus;
 use App\Enums\YearGroup;
 use App\Models\ClassGroup;
@@ -233,4 +234,29 @@ it('keeps an on-time arrival time, and treats one after the start as late', func
         ->and($records[$this->ava->id]->arrived_at->setTimezone('Africa/Lagos')->format('H:i'))->toBe('09:56')
         ->and($records[$this->bola->id]->status)->toBe(AttendanceStatus::Late)
         ->and($records[$this->bola->id]->minutes_late)->toBe(7);
+});
+
+it('shows the lesson tutor and admins the check-in code while check-in is open', function () {
+    $admin = User::factory()->admin()->create();
+
+    foreach ([$this->tutor, $admin] as $viewer) {
+        $this->actingAs($viewer)->get(route('lessons.register.show', $this->lesson))
+            ->assertInertia(fn (Assert $page) => $page->where('checkInCode', fn (?string $code) => preg_match('/^\d{4}$/', (string) $code) === 1));
+    }
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 08:00:00', 'UTC'));
+    $this->actingAs($this->tutor)->get(route('lessons.register.show', $this->lesson))
+        ->assertInertia(fn (Assert $page) => $page->where('checkInCode', null));
+});
+
+it('marks a student who checked in themselves', function () {
+    app(RecordAttendance::class)->handle($this->lesson, $this->ava, AttendanceStatus::Present, $this->ava, CarbonImmutable::now());
+    app(RecordAttendance::class)->handle($this->lesson, $this->bola, AttendanceStatus::Present, $this->tutor, CarbonImmutable::now());
+
+    $this->actingAs($this->tutor)->get(route('lessons.register.show', $this->lesson))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('students.0.name', 'Ava')
+            ->where('students.0.selfCheckIn', true)
+            ->where('students.1.selfCheckIn', false)
+            ->where('tutor.selfCheckIn', false));
 });

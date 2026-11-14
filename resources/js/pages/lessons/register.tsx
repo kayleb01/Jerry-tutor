@@ -36,6 +36,8 @@ type RegisterProps = {
     } | null;
     canEditTutor: boolean;
     canReport: boolean;
+    /** The code students type to check in, while check-in is open. */
+    checkInCode: string | null;
     graceMinutes: number;
 };
 
@@ -62,6 +64,7 @@ export default function Register({
     checkIn,
     canEditTutor,
     canReport,
+    checkInCode,
     graceMinutes,
 }: RegisterProps) {
     const startTime = lesson.time.split('–')[0];
@@ -129,6 +132,20 @@ export default function Register({
                             id="attendance-error"
                             message={errors.attendance}
                         />
+
+                        {checkInCode && (
+                            <Card className="flex flex-wrap items-center justify-between gap-3 p-card">
+                                <p className="text-body font-semibold">
+                                    Students check in with this code
+                                </p>
+                                <p
+                                    className="font-mono text-4xl font-bold tracking-[0.3em] tabular-nums sm:text-5xl"
+                                    aria-label={`Check-in code ${checkInCode.split('').join(' ')}`}
+                                >
+                                    {checkInCode}
+                                </p>
+                            </Card>
+                        )}
 
                         <section
                             className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4"
