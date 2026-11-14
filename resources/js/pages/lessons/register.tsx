@@ -41,7 +41,7 @@ type RegisterProps = {
     graceMinutes: number;
     /** When these props were built; the save skips self check-ins made after it. */
     loadedAt: string;
-    /** Whether students can check in now, so the page refreshes itself. */
+    /** Whether the page should refresh itself: the lesson's day, until it ends. */
     pollForCheckIns: boolean;
 };
 
@@ -91,11 +91,32 @@ export default function Register({
         setMarks((current) => ({ ...current, [id]: mark }));
     };
 
-    usePoll(
+    const poll = usePoll(
         15000,
-        { only: ['students', 'tutor', 'checkIn', 'loadedAt'] },
+        {
+            only: [
+                'students',
+                'tutor',
+                'checkIn',
+                'loadedAt',
+                'checkInCode',
+                'pollForCheckIns',
+                'canEdit',
+                'editingNote',
+            ],
+        },
         { autoStart: pollForCheckIns },
     );
+
+    useEffect(() => {
+        // The server says when to stop (the lesson ended), and a page opened early starts once props allow.
+        if (pollForCheckIns) {
+            poll.start();
+        } else {
+            poll.stop();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pollForCheckIns]);
 
     useEffect(() => {
         setMarks((current) => ({

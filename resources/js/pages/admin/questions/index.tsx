@@ -309,7 +309,7 @@ export default function QuestionsIndex({
                 <div
                     role="region"
                     aria-label="Bulk actions"
-                    className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-lg border bg-surface p-3 shadow-lg"
+                    className="sticky bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 flex flex-wrap items-center gap-3 rounded-lg border bg-surface p-3 shadow-lg lg:bottom-4"
                 >
                     <span className="text-sm font-semibold">
                         {visibleSelected.length} selected

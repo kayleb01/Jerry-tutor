@@ -182,8 +182,11 @@ class Lesson extends Model
     public function checkInCode(): string
     {
         if ($this->check_in_code === null) {
-            $this->check_in_code = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-            $this->save();
+            // Only fills an empty code, so two requests racing here both end up with the one that was stored.
+            static::query()->whereKey($this->id)->whereNull('check_in_code')
+                ->update(['check_in_code' => str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT)]);
+            $this->check_in_code = static::query()->whereKey($this->id)->value('check_in_code');
+            $this->syncOriginalAttribute('check_in_code');
         }
 
         return $this->check_in_code;

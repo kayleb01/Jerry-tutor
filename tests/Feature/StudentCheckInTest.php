@@ -7,6 +7,7 @@ use App\Models\ClassGroup;
 use App\Models\Lesson;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -117,4 +118,28 @@ it('refuses a lesson the student cannot check in to', function () {
     $this->actingAs($this->student)
         ->post(route('check-in.store', $other), ['code' => $other->checkInCode()])
         ->assertForbidden();
+});
+
+it('counts every try towards the limit, including a right code after the limit', function () {
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:04:00', 'UTC'));
+    $wrong = $this->lesson->checkInCode() === '0000' ? '1111' : '0000';
+    $key = "student-check-in:{$this->student->id}:{$this->lesson->id}";
+
+    foreach (range(1, 5) as $try) {
+        $this->actingAs($this->student)->post(route('check-in.store', $this->lesson), ['code' => $wrong]);
+    }
+
+    $this->actingAs($this->student)->post(route('check-in.store', $this->lesson), ['code' => $this->lesson->checkInCode()]);
+
+    expect(RateLimiter::attempts($key))->toBe(6);
+});
+
+it('clears the tries once the student checks in', function () {
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:04:00', 'UTC'));
+    $wrong = $this->lesson->checkInCode() === '0000' ? '1111' : '0000';
+    $this->actingAs($this->student)->post(route('check-in.store', $this->lesson), ['code' => $wrong]);
+
+    $this->actingAs($this->student)->post(route('check-in.store', $this->lesson), ['code' => $this->lesson->checkInCode()]);
+
+    expect(RateLimiter::attempts("student-check-in:{$this->student->id}:{$this->lesson->id}"))->toBe(0);
 });

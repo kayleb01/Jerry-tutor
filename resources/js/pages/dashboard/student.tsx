@@ -71,8 +71,19 @@ export default function StudentDashboard({
                             {checkIn.title} starts at {checkIn.startsAt}
                         </p>
                         {checkIn.stamp && (
-                            <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-present">
-                                <Icon name="check" className="size-4" />
+                            <p
+                                className={`mt-1 inline-flex items-center gap-1.5 text-sm font-semibold ${
+                                    checkIn.stamp.time
+                                        ? checkIn.stamp.status === 'late'
+                                            ? 'text-late'
+                                            : 'text-present'
+                                        : 'text-muted-foreground'
+                                }`}
+                            >
+                                <Icon
+                                    name={checkIn.stamp.time ? 'check' : 'info'}
+                                    className="size-4"
+                                />
                                 {checkIn.stamp.time
                                     ? `Checked in at ${checkIn.stamp.time} · ${
                                           checkIn.stamp.status === 'late' &&

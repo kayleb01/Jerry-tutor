@@ -100,9 +100,9 @@ class RegisterController extends Controller
                 ['value' => 'absent', 'label' => 'Absent'],
             ],
             'graceMinutes' => (int) config('academy.lateness_grace_minutes'),
-            // While students can check in, the page refreshes itself, and its save skips check-ins newer than this.
+            // On the lesson's day the page refreshes itself; its save skips self check-ins made at or after this.
             'loadedAt' => CarbonImmutable::now()->toIso8601String(),
-            'pollForCheckIns' => $canEdit && $lesson->isOpenForStudentCheckIn(),
+            'pollForCheckIns' => $this->shouldPoll($lesson),
         ]);
     }
 
@@ -111,11 +111,14 @@ class RegisterController extends Controller
         /** @var array<int|string, array{status: string, arrived_at?: string|null, notes?: string|null}> $attendance */
         $attendance = $request->validated('attendance');
         $people = User::withTrashed()->whereKey(array_keys($attendance))->get()->keyBy('id');
-        $existing = $lesson->attendanceRecords()->get()->keyBy('user_id');
         $loadedAt = $request->filled('loaded_at') ? CarbonImmutable::parse($request->validated('loaded_at')) : null;
         $kept = [];
 
-        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $alertGuardians, $people, $existing, $loadedAt, &$kept): void {
+        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $alertGuardians, $people, $loadedAt, &$kept): void {
+            // Read the records under the lesson lock, so a student checking in right now is seen here.
+            Lesson::query()->whereKey($lesson->id)->lockForUpdate()->first();
+            $existing = $lesson->attendanceRecords()->get()->keyBy('user_id');
+
             foreach ($attendance as $userId => $entry) {
                 $record = $existing->get((int) $userId);
 
@@ -184,6 +187,18 @@ class RegisterController extends Controller
     }
 
     /**
+     * Refresh an open register from the day of the lesson until it ends, so the code appears when check-in opens.
+     */
+    private function shouldPoll(Lesson $lesson): bool
+    {
+        $now = CarbonImmutable::now();
+
+        return ! $lesson->isCancelled()
+            && $now->lessThanOrEqualTo($lesson->ends_at)
+            && $lesson->localStart()->isSameDay($now->setTimezone(config('academy.timezone')));
+    }
+
+    /**
      * A student checked themselves in after the tutor's page loaded, so the tutor's row for them is out of date.
      */
     private function isSelfCheckInNewerThan(?AttendanceRecord $record, ?CarbonImmutable $loadedAt): bool
@@ -193,7 +208,7 @@ class RegisterController extends Controller
             && $record->attendee_role === AttendeeRole::Student
             && $record->recorded_by_id === $record->user_id
             && $record->arrived_at !== null
-            && $record->updated_at->greaterThan($loadedAt);
+            && $record->updated_at->greaterThanOrEqualTo($loadedAt);
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Services\StudentCheckIn;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,6 +41,7 @@ class StudentCheckInController extends Controller
             CarbonImmutable::now(),
             onlyIfUnrecorded: true,
         );
+        RateLimiter::clear(StudentCheckInRequest::throttleKey($request->user(), $lesson));
 
         if ($record->wasRecentlyCreated) {
             $time = $record->arrived_at->setTimezone(config('academy.timezone'))->format('H:i');

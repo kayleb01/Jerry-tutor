@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { store } from '@/routes/check-in';
 
 type Stamp = {
@@ -34,6 +35,14 @@ const statusWords: Record<string, string> = {
     late: 'late',
     absent: 'absent',
     excused: 'excused',
+};
+
+/** Colours match the attendance badges elsewhere, so an absence never looks like a tick. */
+const stampTone: Record<string, string> = {
+    present: 'bg-present-soft text-present',
+    late: 'bg-late-soft text-late',
+    absent: 'bg-absent-soft text-absent',
+    excused: 'bg-excused-soft text-excused',
 };
 
 function stampLine(stamp: Stamp): string {
@@ -78,8 +87,17 @@ export default function CheckIn({ card, next, timezone }: CheckInProps) {
                             frozenAt={card.stamp?.time ?? null}
                         />
                         {card.stamp ? (
-                            <p className="inline-flex items-center gap-2 rounded-full bg-present-soft px-4 py-2 text-sm font-semibold text-present">
-                                <Icon name="check" className="size-4" />
+                            <p
+                                className={cn(
+                                    'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold',
+                                    stampTone[card.stamp.status] ??
+                                        stampTone.excused,
+                                )}
+                            >
+                                <Icon
+                                    name={card.stamp.time ? 'check' : 'info'}
+                                    className="size-4"
+                                />
                                 {stampLine(card.stamp)}
                             </p>
                         ) : (

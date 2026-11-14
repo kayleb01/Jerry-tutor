@@ -55,3 +55,11 @@ it('refuses a cancelled lesson, a tutor and a student of another class', functio
 
     expect($this->student->can('studentCheckIn', $this->lesson->fresh()))->toBeFalse();
 });
+
+it('returns the stored code even when another request generated it first', function () {
+    $stale = Lesson::find($this->lesson->id);
+    $stored = $this->lesson->checkInCode();
+
+    expect($stale->checkInCode())->toBe($stored)
+        ->and($this->lesson->fresh()->check_in_code)->toBe($stored);
+});
