@@ -1,5 +1,5 @@
-import { Form, Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { Form, Link, usePoll } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 import AttendanceStatusBadge from '@/components/attendance-status-badge';
 import type { AttendanceStatus } from '@/components/attendance-status-badge';
 import FieldError from '@/components/field-error';
@@ -39,6 +39,10 @@ type RegisterProps = {
     /** The code students type to check in, while check-in is open. */
     checkInCode: string | null;
     graceMinutes: number;
+    /** When these props were built; the save skips self check-ins made after it. */
+    loadedAt: string;
+    /** Whether students can check in now, so the page refreshes itself. */
+    pollForCheckIns: boolean;
 };
 
 const smallCaps =
@@ -66,6 +70,8 @@ export default function Register({
     canReport,
     checkInCode,
     graceMinutes,
+    loadedAt,
+    pollForCheckIns,
 }: RegisterProps) {
     const startTime = lesson.time.split('–')[0];
     const [marks, setMarks] = useState<Record<number, Mark>>(() =>
@@ -76,19 +82,54 @@ export default function Register({
             ]),
         ),
     );
-    const setMark = (id: number, mark: Mark) =>
+    // Rows the tutor has changed on this page; refreshes never overwrite them.
+    const touched = useRef(new Set<number>());
+    // The oldest view the tutor's unsaved edits may be based on: a save keeps self check-ins made after it.
+    const [editsSince, setEditsSince] = useState(loadedAt);
+    const setMark = (id: number, mark: Mark) => {
+        touched.current.add(id);
         setMarks((current) => ({ ...current, [id]: mark }));
+    };
+
+    usePoll(
+        15000,
+        { only: ['students', 'tutor', 'checkIn', 'loadedAt'] },
+        { autoStart: pollForCheckIns },
+    );
+
+    useEffect(() => {
+        setMarks((current) => ({
+            ...current,
+            ...Object.fromEntries(
+                [tutor, ...students]
+                    .filter((person) => !touched.current.has(person.id))
+                    .map((person) => [person.id, initialMark(person)]),
+            ),
+        }));
+    }, [tutor, students]);
+
+    useEffect(() => {
+        // With no unsaved edits, every row shows the latest data, so the save can trust this newer view.
+        if (touched.current.size === 0) {
+            setEditsSince(loadedAt);
+        }
+    }, [loadedAt]);
+
+    // A student added since the page loaded has no mark until the refresh effect runs.
+    const markFor = (person: RegisterPerson): Mark =>
+        marks[person.id] ?? initialMark(person);
 
     const saved = students.map((student) =>
-        effectiveStatus(marks[student.id], startTime, graceMinutes),
+        effectiveStatus(markFor(student), startTime, graceMinutes),
     );
     const count = (...statuses: string[]) =>
         saved.filter((status) => statuses.includes(status)).length;
     const unmarked = students.filter(
-        (student) => marks[student.id].status === '',
+        (student) => markFor(student).status === '',
     );
 
-    const markUnmarkedOnTime = () =>
+    const markUnmarkedOnTime = () => {
+        unmarked.forEach((student) => touched.current.add(student.id));
         setMarks((current) => ({
             ...current,
             ...Object.fromEntries(
@@ -98,6 +139,7 @@ export default function Register({
                 ]),
             ),
         }));
+    };
 
     return (
         <AppLayout
@@ -125,9 +167,21 @@ export default function Register({
             >
                 ← Dashboard
             </Link>
-            <Form {...update.form(lesson.id)} className="flex flex-col gap-6">
+            <Form
+                {...update.form(lesson.id)}
+                className="flex flex-col gap-6"
+                onSuccess={(page) => {
+                    touched.current.clear();
+                    setEditsSince(page.props.loadedAt as string);
+                }}
+            >
                 {({ errors, processing }) => (
                     <>
+                        <input
+                            type="hidden"
+                            name="loaded_at"
+                            value={editsSince}
+                        />
                         <FieldError
                             id="attendance-error"
                             message={errors.attendance}
@@ -185,7 +239,7 @@ export default function Register({
                                     <RegisterRow
                                         person={tutor}
                                         role="tutor"
-                                        mark={marks[tutor.id]}
+                                        mark={markFor(tutor)}
                                         onChange={(mark) =>
                                             setMark(tutor.id, mark)
                                         }
@@ -252,7 +306,7 @@ export default function Register({
                                         key={student.id}
                                         person={student}
                                         role="student"
-                                        mark={marks[student.id]}
+                                        mark={markFor(student)}
                                         onChange={(mark) =>
                                             setMark(student.id, mark)
                                         }

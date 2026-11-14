@@ -100,6 +100,9 @@ class RegisterController extends Controller
                 ['value' => 'absent', 'label' => 'Absent'],
             ],
             'graceMinutes' => (int) config('academy.lateness_grace_minutes'),
+            // While students can check in, the page refreshes itself, and its save skips check-ins newer than this.
+            'loadedAt' => CarbonImmutable::now()->toIso8601String(),
+            'pollForCheckIns' => $canEdit && $lesson->isOpenForStudentCheckIn(),
         ]);
     }
 
@@ -109,10 +112,18 @@ class RegisterController extends Controller
         $attendance = $request->validated('attendance');
         $people = User::withTrashed()->whereKey(array_keys($attendance))->get()->keyBy('id');
         $existing = $lesson->attendanceRecords()->get()->keyBy('user_id');
+        $loadedAt = $request->filled('loaded_at') ? CarbonImmutable::parse($request->validated('loaded_at')) : null;
+        $kept = [];
 
-        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $alertGuardians, $people, $existing): void {
+        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $alertGuardians, $people, $existing, $loadedAt, &$kept): void {
             foreach ($attendance as $userId => $entry) {
                 $record = $existing->get((int) $userId);
+
+                if ($this->isSelfCheckInNewerThan($record, $loadedAt)) {
+                    $kept[] = $people[(int) $userId]->name.' checked in at '.$record->arrived_at->setTimezone(config('academy.timezone'))->format('H:i').' while you were editing. Their check-in was kept.';
+
+                    continue;
+                }
 
                 if ($this->isUnchanged($lesson, $record, $entry)) {
                     continue;
@@ -140,7 +151,7 @@ class RegisterController extends Controller
             }
         });
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Register saved.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => implode(' ', ['Register saved.', ...$kept])]);
 
         return to_route('lessons.register.show', $lesson);
     }
@@ -170,6 +181,19 @@ class RegisterController extends Controller
             'minutesLate' => $checkedIn ? $record->minutes_late : null,
             'canCheckIn' => ! $checkedIn && $record === null && $user->can('checkIn', $lesson),
         ];
+    }
+
+    /**
+     * A student checked themselves in after the tutor's page loaded, so the tutor's row for them is out of date.
+     */
+    private function isSelfCheckInNewerThan(?AttendanceRecord $record, ?CarbonImmutable $loadedAt): bool
+    {
+        return $loadedAt !== null
+            && $record !== null
+            && $record->attendee_role === AttendeeRole::Student
+            && $record->recorded_by_id === $record->user_id
+            && $record->arrived_at !== null
+            && $record->updated_at->greaterThan($loadedAt);
     }
 
     /**
