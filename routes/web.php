@@ -34,6 +34,7 @@ use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuizPlayerController;
 use App\Http\Controllers\RaisedIssueController;
 use App\Http\Controllers\RegisterController;
+use App\Http\Controllers\StudentCheckInController;
 use App\Http\Controllers\Tutor\ClassController as TutorClassController;
 use App\Http\Controllers\Tutor\StudentController as TutorStudentController;
 use App\Http\Controllers\TutorApplicationController;
@@ -76,6 +77,10 @@ Route::middleware(['auth', 'verified', 'approved.tutor'])->group(function () {
         Route::get('/', [TutorClassController::class, 'index'])->name('index');
         Route::get('{classGroup}/students/create', [TutorStudentController::class, 'create'])->name('students.create');
         Route::post('{classGroup}/students', [TutorStudentController::class, 'store'])->name('students.store');
+    });
+    Route::middleware('role:student')->group(function () {
+        Route::get('/check-in', [StudentCheckInController::class, 'show'])->name('check-in.show');
+        Route::post('/check-in/{lesson}', [StudentCheckInController::class, 'store'])->name('check-in.store');
     });
     Route::get('/lessons/{lesson}/report', [LessonReportController::class, 'edit'])->name('lessons.report.edit');
     Route::put('/lessons/{lesson}/report', [LessonReportController::class, 'update'])->name('lessons.report.update');
