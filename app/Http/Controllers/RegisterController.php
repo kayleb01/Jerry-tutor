@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\AlertGuardiansOfAbsence;
 use App\Actions\RecordAttendance;
 use App\Enums\AttendanceStatus;
+use App\Enums\AttendeeRole;
 use App\Enums\LessonStatus;
 use App\Http\Requests\UpdateRegisterRequest;
 use App\Models\AttendanceRecord;
@@ -91,12 +92,17 @@ class RegisterController extends Controller
             'checkIn' => $lesson->tutor_id === $user->id ? $this->checkIn($user, $lesson, $records->get($lesson->tutor_id)) : null,
             'canEditTutor' => $user->can('recordTutorAttendance', $lesson),
             'canReport' => $user->can('submitReport', $lesson),
+            // Only the lesson's tutor and admins reach this page (viewRegister), so they are the ones who see it.
+            'checkInCode' => $lesson->isOpenForStudentCheckIn() ? $lesson->checkInCode() : null,
             'statuses' => [
                 ['value' => 'present', 'label' => 'On time'],
                 ['value' => 'late', 'label' => 'Late'],
                 ['value' => 'absent', 'label' => 'Absent'],
             ],
             'graceMinutes' => (int) config('academy.lateness_grace_minutes'),
+            // On the lesson's day the page refreshes itself; its save skips self check-ins made at or after this.
+            'loadedAt' => CarbonImmutable::now()->toIso8601String(),
+            'pollForCheckIns' => $this->shouldPoll($lesson),
         ]);
     }
 
@@ -105,11 +111,22 @@ class RegisterController extends Controller
         /** @var array<int|string, array{status: string, arrived_at?: string|null, notes?: string|null}> $attendance */
         $attendance = $request->validated('attendance');
         $people = User::withTrashed()->whereKey(array_keys($attendance))->get()->keyBy('id');
-        $existing = $lesson->attendanceRecords()->get()->keyBy('user_id');
+        $loadedAt = $request->filled('loaded_at') ? CarbonImmutable::parse($request->validated('loaded_at')) : null;
+        $kept = [];
 
-        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $alertGuardians, $people, $existing): void {
+        DB::transaction(function () use ($attendance, $request, $lesson, $recordAttendance, $alertGuardians, $people, $loadedAt, &$kept): void {
+            // Read the records under the lesson lock, so a student checking in right now is seen here.
+            Lesson::query()->whereKey($lesson->id)->lockForUpdate()->first();
+            $existing = $lesson->attendanceRecords()->get()->keyBy('user_id');
+
             foreach ($attendance as $userId => $entry) {
                 $record = $existing->get((int) $userId);
+
+                if ($this->isSelfCheckInNewerThan($record, $loadedAt)) {
+                    $kept[] = $people[(int) $userId]->name.' checked in at '.$record->arrived_at->setTimezone(config('academy.timezone'))->format('H:i').' while you were editing. Their check-in was kept.';
+
+                    continue;
+                }
 
                 if ($this->isUnchanged($lesson, $record, $entry)) {
                     continue;
@@ -137,7 +154,7 @@ class RegisterController extends Controller
             }
         });
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Register saved.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => implode(' ', ['Register saved.', ...$kept])]);
 
         return to_route('lessons.register.show', $lesson);
     }
@@ -170,6 +187,31 @@ class RegisterController extends Controller
     }
 
     /**
+     * Refresh an open register from the day of the lesson until it ends, so the code appears when check-in opens.
+     */
+    private function shouldPoll(Lesson $lesson): bool
+    {
+        $now = CarbonImmutable::now();
+
+        return ! $lesson->isCancelled()
+            && $now->lessThanOrEqualTo($lesson->ends_at)
+            && $lesson->localStart()->isSameDay($now->setTimezone(config('academy.timezone')));
+    }
+
+    /**
+     * A student checked themselves in after the tutor's page loaded, so the tutor's row for them is out of date.
+     */
+    private function isSelfCheckInNewerThan(?AttendanceRecord $record, ?CarbonImmutable $loadedAt): bool
+    {
+        return $loadedAt !== null
+            && $record !== null
+            && $record->attendee_role === AttendeeRole::Student
+            && $record->recorded_by_id === $record->user_id
+            && $record->arrived_at !== null
+            && $record->updated_at->greaterThanOrEqualTo($loadedAt);
+    }
+
+    /**
      * A row the form re-submitted exactly as stored is left alone, so its arrival time and recorder are kept.
      *
      * @param  array{status: string, arrived_at?: string|null, notes?: string|null}  $entry
@@ -190,7 +232,7 @@ class RegisterController extends Controller
     }
 
     /**
-     * @return array{id: int, name: string, yearGroup: string|null, status: string|null, arrivedAt: string|null, minutesLate: int|null, notes: string|null}
+     * @return array{id: int, name: string, yearGroup: string|null, status: string|null, arrivedAt: string|null, minutesLate: int|null, notes: string|null, selfCheckIn: bool, hasParent: bool}
      */
     private function row(User $person, ?AttendanceRecord $record): array
     {
@@ -202,6 +244,7 @@ class RegisterController extends Controller
             'arrivedAt' => $record?->arrived_at?->setTimezone(config('academy.timezone'))->format('H:i'),
             'minutesLate' => $record?->minutes_late,
             'notes' => $record?->notes,
+            'selfCheckIn' => $record?->attendee_role === AttendeeRole::Student && $record->recorded_by_id === $person->id,
             // Whether marking them absent would alert a parent.
             'hasParent' => (bool) ($person->guardians_exists ?? false),
         ];

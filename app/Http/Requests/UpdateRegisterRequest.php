@@ -35,6 +35,7 @@ class UpdateRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'loaded_at' => ['nullable', 'date'],
             'attendance' => ['required', 'array', 'min:1'],
             'attendance.*.status' => ['required', 'in:present,late,absent,excused'],
             'attendance.*.arrived_at' => ['nullable', 'required_if:attendance.*.status,late', 'date_format:H:i'],

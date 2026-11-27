@@ -32,6 +32,8 @@ type NextLesson = {
     checkedInAt: string | null;
     isLate: boolean;
     minutesLate: number | null;
+    /** The code students type to check in, while check-in is open today. */
+    checkInCode: string | null;
 };
 
 type WeekLesson = {
@@ -303,6 +305,14 @@ function Banner({ lesson, nowMs }: { lesson: NextLesson; nowMs: number }) {
                         Check-in opens 30 minutes before the start.
                     </p>
                 ) : null}
+                {lesson.checkInCode && (
+                    <p className="flex items-center gap-2 rounded-md bg-primary-10/40 px-3 py-1.5 text-sm text-primary-90">
+                        Student code
+                        <span className="font-mono text-lg font-bold tracking-[0.2em] text-brand-foreground tabular-nums">
+                            {lesson.checkInCode}
+                        </span>
+                    </p>
+                )}
             </div>
         </section>
     );

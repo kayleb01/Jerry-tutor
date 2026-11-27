@@ -73,7 +73,15 @@ it('greets the tutor and shows the next class with check-in', function () {
             'checkedInAt' => null,
             'isLate' => false,
             'minutesLate' => null,
-        ]);
+            'checkInCode' => $lesson->fresh()->check_in_code,
+        ])
+        ->and($props['nextLesson']['checkInCode'])->toMatch('/^\d{4}$/');
+});
+
+it('shows no check-in code for a class on another day', function () {
+    ($this->lessonAt)('2026-10-14 15:00:00');
+
+    expect(($this->dashboard)()['nextLesson']['checkInCode'])->toBeNull();
 });
 
 it('says good morning and good evening at the right hours', function (string $utc, string $greeting) {

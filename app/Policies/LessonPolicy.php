@@ -27,6 +27,16 @@ class LessonPolicy
     }
 
     /**
+     * A student checks themselves in to a lesson of a class they are still in, while it is open for check-in.
+     */
+    public function studentCheckIn(User $user, Lesson $lesson): bool
+    {
+        return $user->hasRole(Role::Student)
+            && $lesson->isOpenForStudentCheckIn()
+            && $lesson->classGroup->activeStudents()->whereKey($user->id)->exists();
+    }
+
+    /**
      * Admins and the lesson's own tutor can always look at a register, whether or not it is still open for changes.
      */
     public function viewRegister(User $user, Lesson $lesson): bool

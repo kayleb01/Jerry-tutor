@@ -52,6 +52,10 @@ class HandleInertiaRequests extends Middleware
                 // Students with no parent account pay for themselves, so they get a Billing menu item.
                 'selfPay' => $request->user()?->role === Role::Student,
             ],
+            // Whether a student can open Tests, for the quick-action bar; null for everyone else.
+            'quizAccess' => fn (): ?bool => $request->user()?->role === Role::Student
+                ? $request->user()->hasQuizAccess()
+                : null,
             'badges' => fn (): array => $request->user()?->role === Role::Admin
                 ? ['classReports' => $this->classReportsToReview(), 'lateness' => LatenessReport::whereNull('reviewed_at')->count(), 'subscriptions' => Subscription::where('status', SubscriptionStatus::PastDue)->count()]
                 : [],

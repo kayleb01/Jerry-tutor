@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\RecordAttendance;
 use App\Enums\AttendanceStatus;
 use App\Enums\YearGroup;
 use App\Models\ClassGroup;
@@ -233,4 +234,96 @@ it('keeps an on-time arrival time, and treats one after the start as late', func
         ->and($records[$this->ava->id]->arrived_at->setTimezone('Africa/Lagos')->format('H:i'))->toBe('09:56')
         ->and($records[$this->bola->id]->status)->toBe(AttendanceStatus::Late)
         ->and($records[$this->bola->id]->minutes_late)->toBe(7);
+});
+
+it('shows the lesson tutor and admins the check-in code while check-in is open', function () {
+    $admin = User::factory()->admin()->create();
+
+    foreach ([$this->tutor, $admin] as $viewer) {
+        $this->actingAs($viewer)->get(route('lessons.register.show', $this->lesson))
+            ->assertInertia(fn (Assert $page) => $page->where('checkInCode', fn (?string $code) => preg_match('/^\d{4}$/', (string) $code) === 1));
+    }
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 08:00:00', 'UTC'));
+    $this->actingAs($this->tutor)->get(route('lessons.register.show', $this->lesson))
+        ->assertInertia(fn (Assert $page) => $page->where('checkInCode', null));
+});
+
+it('marks a student who checked in themselves', function () {
+    app(RecordAttendance::class)->handle($this->lesson, $this->ava, AttendanceStatus::Present, $this->ava, CarbonImmutable::now());
+    app(RecordAttendance::class)->handle($this->lesson, $this->bola, AttendanceStatus::Present, $this->tutor, CarbonImmutable::now());
+
+    $this->actingAs($this->tutor)->get(route('lessons.register.show', $this->lesson))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('students.0.name', 'Ava')
+            ->where('students.0.selfCheckIn', true)
+            ->where('students.1.selfCheckIn', false)
+            ->where('tutor.selfCheckIn', false));
+});
+
+it('keeps a self check-in made after the tutor opened the register', function () {
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:00:00', 'UTC'));
+    $loadedAt = null;
+    $this->actingAs($this->tutor)->get(route('lessons.register.show', $this->lesson))
+        ->assertInertia(function (Assert $page) use (&$loadedAt) {
+            $loadedAt = $page->toArray()['props']['loadedAt'];
+        });
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:03:00', 'UTC'));
+    app(RecordAttendance::class)->handle($this->lesson, $this->ava, AttendanceStatus::Present, $this->ava, CarbonImmutable::now());
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:10:00', 'UTC'));
+    $this->actingAs($this->tutor)->put(route('lessons.register.update', $this->lesson), [
+        'loaded_at' => $loadedAt,
+        'attendance' => [$this->ava->id => ['status' => 'absent'], $this->bola->id => ['status' => 'absent']],
+    ])->assertInertiaFlash('toast.message', 'Register saved. Ava checked in at 10:03 while you were editing. Their check-in was kept.');
+
+    $ava = $this->lesson->attendanceRecords()->where('user_id', $this->ava->id)->first();
+    expect($ava->status)->toBe(AttendanceStatus::Late)
+        ->and($ava->arrived_at->format('H:i'))->toBe('09:03')
+        ->and($ava->absenceNotice()->exists())->toBeFalse()
+        ->and($this->lesson->attendanceRecords()->where('user_id', $this->bola->id)->first()->status)->toBe(AttendanceStatus::Absent);
+});
+
+it('lets the tutor change a self check-in they have seen', function () {
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:03:00', 'UTC'));
+    app(RecordAttendance::class)->handle($this->lesson, $this->ava, AttendanceStatus::Present, $this->ava, CarbonImmutable::now());
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:05:00', 'UTC'));
+    $this->actingAs($this->tutor)->put(route('lessons.register.update', $this->lesson), [
+        'loaded_at' => CarbonImmutable::now()->toIso8601String(),
+        'attendance' => [$this->ava->id => ['status' => 'absent']],
+    ]);
+
+    expect($this->lesson->attendanceRecords()->where('user_id', $this->ava->id)->first()->status)->toBe(AttendanceStatus::Absent);
+});
+
+it('refreshes the register only while students can check in', function () {
+    $this->actingAs($this->tutor)->get(route('lessons.register.show', $this->lesson))
+        ->assertInertia(fn (Assert $page) => $page->where('pollForCheckIns', true)->has('loadedAt'));
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 10:30:00', 'UTC'));
+    $this->actingAs($this->tutor)->get(route('lessons.register.show', $this->lesson))
+        ->assertInertia(fn (Assert $page) => $page->where('pollForCheckIns', false));
+});
+
+it('keeps a self check-in made in the same second the register loaded', function () {
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:03:00', 'UTC'));
+    $loadedAt = CarbonImmutable::now()->toIso8601String();
+    app(RecordAttendance::class)->handle($this->lesson, $this->ava, AttendanceStatus::Present, $this->ava, CarbonImmutable::now());
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 09:10:00', 'UTC'));
+    $this->actingAs($this->tutor)->put(route('lessons.register.update', $this->lesson), [
+        'loaded_at' => $loadedAt,
+        'attendance' => [$this->ava->id => ['status' => 'absent']],
+    ]);
+
+    expect($this->lesson->attendanceRecords()->where('user_id', $this->ava->id)->first()->status)->toBe(AttendanceStatus::Late);
+});
+
+it('refreshes a register opened before check-in opens, without showing the code yet', function () {
+    $this->travelTo(CarbonImmutable::parse('2025-10-04 08:20:00', 'UTC'));
+
+    $this->actingAs($this->tutor)->get(route('lessons.register.show', $this->lesson))
+        ->assertInertia(fn (Assert $page) => $page->where('pollForCheckIns', true)->where('checkInCode', null));
 });

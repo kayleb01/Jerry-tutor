@@ -16,6 +16,8 @@ export type RegisterPerson = {
     notes: string | null;
     /** Whether marking them absent alerts a parent. */
     hasParent: boolean;
+    /** Whether the student checked themselves in with the class code. */
+    selfCheckIn: boolean;
 };
 
 export type Mark = { status: string; arrived: string };
@@ -115,7 +117,16 @@ export default function RegisterRow({
                 <div className="flex min-w-48 flex-1 items-center gap-3">
                     <PersonAvatar name={person.name} role={role} />
                     <div className="min-w-0">
-                        <p className="truncate font-semibold">{person.name}</p>
+                        <p className="flex min-w-0 items-center gap-2">
+                            <span className="truncate font-semibold">
+                                {person.name}
+                            </span>
+                            {person.selfCheckIn && (
+                                <span className="shrink-0 rounded-full bg-present-soft px-2 py-0.5 text-[0.6875rem] font-semibold text-present">
+                                    Self check-in
+                                </span>
+                            )}
+                        </p>
                         <p
                             className="text-[0.8125rem] text-muted-foreground"
                             aria-live="polite"

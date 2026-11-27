@@ -131,3 +131,16 @@ it('shows whole hours without a trailing 0m', function () {
     $this->actingAs($this->ava)->get(route('dashboard'))
         ->assertInertia(fn (Assert $page) => $page->where('stats.classTime', '1h'));
 });
+
+it('offers check-in on the dashboard while a class is open', function () {
+    ($this->lessonAt)('2025-10-15 11:20:00');
+
+    $this->actingAs($this->ava)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->whereNot('checkIn', null)
+            ->where('checkIn.stamp', null));
+
+    $this->travelTo(CarbonImmutable::parse('2025-10-15 08:00:00', 'UTC'));
+    $this->actingAs($this->ava)->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->where('checkIn', null));
+});

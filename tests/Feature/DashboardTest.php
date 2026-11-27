@@ -50,3 +50,11 @@ it('redirects signed-in users away from the login and register pages', function 
         ->get(route($route))
         ->assertRedirect('/dashboard');
 })->with(['login', 'register']);
+
+it('shares quiz access with students only', function () {
+    $this->actingAs(User::factory()->student()->create())->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->where('quizAccess', fn (mixed $value) => is_bool($value)));
+
+    $this->actingAs(User::factory()->tutor()->create())->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page->where('quizAccess', null));
+});

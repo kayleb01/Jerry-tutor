@@ -16,17 +16,24 @@ import { index as adminSubscriptionsIndex } from '@/routes/admin/subscriptions';
 import { index as adminTutorApplicationsIndex } from '@/routes/admin/tutor-applications';
 import { index as adminUsersIndex } from '@/routes/admin/users';
 import { index as billingIndex } from '@/routes/billing';
+import { show as checkInShow } from '@/routes/check-in';
 import { index as tutorClassesIndex } from '@/routes/tutor/classes';
 import { index as childrenIndex } from '@/routes/children';
 import { index as quizzesIndex } from '@/routes/quizzes';
 import type { Role } from '@/types';
 
-type NavItem = {
+export type NavBadge =
+    | 'classReports'
+    | 'lateness'
+    | 'subscriptions'
+    | 'pendingTutors';
+
+export type NavItem = {
     label: string;
     icon: IconName;
     href: () => { url: string; method: 'get' };
     /** A count from the shared `badges` prop, shown as a pill when above zero. */
-    badge?: 'classReports' | 'lateness' | 'subscriptions' | 'pendingTutors';
+    badge?: NavBadge;
     /** Other pages that belong under this item, so it stays highlighted there. */
     alsoActiveOn?: Array<() => { url: string; method: 'get' }>;
 };
@@ -74,12 +81,13 @@ const navItems: Record<Role, NavItem[]> = {
     ],
     tutor: [
         { label: 'Dashboard', icon: 'dashboard', href: dashboard },
-        { label: 'My classes', icon: 'classes', href: tutorClassesIndex },
-        { label: 'Take the register', icon: 'list', href: takeRegister },
-        { label: 'End-of-class report', icon: 'report', href: nextReport },
+        { label: 'Students', icon: 'classes', href: tutorClassesIndex },
+        { label: 'Attendance', icon: 'list', href: takeRegister },
+        { label: 'Report', icon: 'report', href: nextReport },
     ],
     student: [
         { label: 'Dashboard', icon: 'dashboard', href: dashboard },
+        { label: 'Check in', icon: 'clock', href: checkInShow },
         { label: 'Quizzes', icon: 'calculator', href: quizzesIndex },
     ],
     guardian: [
@@ -104,6 +112,11 @@ const roleLabels: Record<Role, string> = {
 const itemClass =
     'relative flex h-11 items-center gap-3 rounded-md px-3 text-sm transition-colors';
 
+/** Whether the current path is this page or one below it. */
+export function isActivePath(currentPath: string, url: string): boolean {
+    return currentPath === url || currentPath.startsWith(`${url}/`);
+}
+
 function initials(name: string): string {
     return name
         .split(/\s+/)
@@ -123,8 +136,7 @@ export default function AppSidebar({ collapsed, onNavigate }: AppSidebarProps) {
         return null;
     }
 
-    const isActive = (url: string) =>
-        currentPath === url || currentPath.startsWith(`${url}/`);
+    const isActive = (url: string) => isActivePath(currentPath, url);
 
     return (
         <div className="flex h-full flex-col gap-5 border-r bg-surface px-4 py-5 text-foreground">

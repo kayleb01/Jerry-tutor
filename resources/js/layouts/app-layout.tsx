@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import AppLogoImage from '@/components/app-logo-image';
 import AppSidebar from '@/components/app-sidebar';
+import QuickActionBar from '@/components/quick-action-bar';
 import Icon from '@/components/icon';
 import Toast from '@/components/toast';
 import { Badge } from '@/components/ui/badge';
@@ -196,11 +197,12 @@ export default function AppLayout({
                         </div>
                     )}
                 </header>
-                <main className="mx-auto flex max-w-[96rem] flex-col gap-4 px-4 pt-4 pb-10 sm:gap-5 sm:px-6 sm:pt-6 sm:pb-12 lg:gap-6 lg:px-8">
+                <main className="mx-auto flex max-w-[96rem] flex-col gap-4 px-4 pt-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:gap-5 sm:px-6 sm:pt-6 lg:gap-6 lg:px-8 lg:pb-12">
                     <Toast />
                     {children}
                 </main>
             </div>
+            <QuickActionBar onMore={() => setDrawerOpen(true)} />
         </div>
     );
 }

@@ -10,6 +10,7 @@ import ReportsDue from '@/components/reports-due';
 import type { ReportDue } from '@/components/reports-due';
 import AppLayout from '@/layouts/app-layout';
 import { index as billingIndex } from '@/routes/billing';
+import { show as checkInShow } from '@/routes/check-in';
 import type {
     DashboardDay,
     DashboardLesson,
@@ -31,6 +32,15 @@ type StudentDashboardProps = {
         message: string;
         action: 'subscribe' | 'ask-parent' | null;
     } | null;
+    checkIn: {
+        title: string;
+        startsAt: string;
+        stamp: {
+            time: string | null;
+            status: string;
+            minutesLate: number | null;
+        } | null;
+    } | null;
 };
 
 const percent = (value: number | null) => (value === null ? '—' : `${value}%`);
@@ -46,6 +56,7 @@ export default function StudentDashboard({
     reportsDue,
     quizAccess,
     trial,
+    checkIn,
 }: StudentDashboardProps) {
     return (
         <AppLayout
@@ -53,6 +64,48 @@ export default function StudentDashboard({
             badge={header.yearGroup ?? undefined}
             subtitle={header.weekLabel}
         >
+            {checkIn && (
+                <Card className="flex flex-wrap items-center justify-between gap-3 border-primary p-card">
+                    <div className="min-w-0">
+                        <p className="font-semibold">
+                            {checkIn.title} starts at {checkIn.startsAt}
+                        </p>
+                        {checkIn.stamp && (
+                            <p
+                                className={`mt-1 inline-flex items-center gap-1.5 text-sm font-semibold ${
+                                    checkIn.stamp.time
+                                        ? checkIn.stamp.status === 'late'
+                                            ? 'text-late'
+                                            : 'text-present'
+                                        : 'text-muted-foreground'
+                                }`}
+                            >
+                                <Icon
+                                    name={checkIn.stamp.time ? 'check' : 'info'}
+                                    className="size-4"
+                                />
+                                {checkIn.stamp.time
+                                    ? `Checked in at ${checkIn.stamp.time} · ${
+                                          checkIn.stamp.status === 'late' &&
+                                          checkIn.stamp.minutesLate
+                                              ? `${checkIn.stamp.minutesLate} min late`
+                                              : 'On time'
+                                      }`
+                                    : `Marked ${checkIn.stamp.status} by your tutor`}
+                            </p>
+                        )}
+                    </div>
+                    {!checkIn.stamp && (
+                        <Link
+                            href={checkInShow()}
+                            className={buttonClasses('primary', 'lg')}
+                        >
+                            <Icon name="clock" className="size-5" /> Check in
+                        </Link>
+                    )}
+                </Card>
+            )}
+
             <section
                 className="grid gap-3 sm:grid-cols-3 sm:gap-4"
                 aria-label="This week at a glance"

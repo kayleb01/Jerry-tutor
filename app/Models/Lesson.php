@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable $ends_at
  * @property LessonStatus $status
  * @property string|null $cancelled_reason
+ * @property string|null $check_in_code the 4-digit code students type to check in, made when first needed
  * @property CarbonImmutable|null $reports_reviewed_at when an admin last marked the reports reviewed
  * @property int|null $reports_reviewed_by_id
  * @property CarbonImmutable|null $created_at
@@ -173,6 +174,34 @@ class Lesson extends Model
     public function isCancelled(): bool
     {
         return $this->status === LessonStatus::Cancelled;
+    }
+
+    /**
+     * The code the tutor shows in the room, generated and stored the first time it is asked for.
+     */
+    public function checkInCode(): string
+    {
+        if ($this->check_in_code === null) {
+            // Only fills an empty code, so two requests racing here both end up with the one that was stored.
+            static::query()->whereKey($this->id)->whereNull('check_in_code')
+                ->update(['check_in_code' => str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT)]);
+            $this->check_in_code = static::query()->whereKey($this->id)->value('check_in_code');
+            $this->syncOriginalAttribute('check_in_code');
+        }
+
+        return $this->check_in_code;
+    }
+
+    /**
+     * Students can check in from 30 minutes before the start until the end, unless the lesson is cancelled.
+     */
+    public function isOpenForStudentCheckIn(?CarbonImmutable $now = null): bool
+    {
+        $now ??= CarbonImmutable::now();
+
+        return ! $this->isCancelled()
+            && $now->greaterThanOrEqualTo($this->starts_at->subMinutes(30))
+            && $now->lessThanOrEqualTo($this->ends_at);
     }
 
     /**
